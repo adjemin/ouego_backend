@@ -61,6 +61,11 @@ Route::prefix('v1/')->group(function () {
     //Modifier le statut d’un ramassage ou livraison (ANNULER, DEMARRER, REUSSIR, ECHOUER ) (Livreur)
     Route::put('route_points/{id}/update_status', [App\Http\Controllers\API\RoutePointAPIController::class, 'updateStatus']);
 
+
+    //Inscription par téléphone (Client)
+    Route::post('drivers/register', [App\Http\Controllers\API\DriverAPIController::class, 'register']);
+    Route::post('drivers/login', [App\Http\Controllers\API\DriverAPIController::class, 'login']);
+
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

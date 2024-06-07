@@ -9,6 +9,7 @@ use App\Repositories\DriverRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 /**
  * Class DriverAPIController
@@ -104,5 +105,138 @@ class DriverAPIController extends AppBaseController
         $driver->delete();
 
         return $this->sendSuccess('Driver deleted successfully');
+    }
+
+    public function register(Request $request){
+
+        if ($request->isJson()) {
+            $input = $request->json()->all();
+        } else {
+            $input = $request->all();
+        }
+
+        if (!array_key_exists('last_name', $input)) {
+            return $this->sendError('last_name is required');
+        }
+
+        if (!array_key_exists('first_name', $input)) {
+            return $this->sendError('first_name is required');
+        }
+
+        if (!array_key_exists('dialing_code', $input)) {
+            return $this->sendError('dialing_code is required');
+        }
+
+        if(!array_key_exists('phone_number', $input)) {
+            return $this->sendError('phone_number is required');
+        }
+
+        $input['phone'] = $input['dialing_code'].''.$input['phone_number'];
+
+        $driver = Driver::where('phone', '=', $input['phone'])->first();
+        if ($driver != null) {
+            return $this->sendError('Numéro de téléphone déjà utilisé', 400);
+        }
+
+        $driverDeleted = Driver::withTrashed()->where(['phone' => $input['phone']])->first();
+        if ($driverDeleted == null) {
+            $input['last_name'] = ucfirst(strtolower($input['last_name']));
+            $input['first_name'] = ucfirst(strtolower($input['first_name']));
+            $input['name'] = $input['first_name']." ".$input['last_name'];
+
+            $driver = Driver::create($input);
+
+        } else {
+            $driverDeleted->restore();
+            $driver = $driverDeleted;
+        }
+
+        $token = JWTAuth::fromUser($driver);
+
+
+        return $this->sendResponse([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => JWTAuth::factory()->getTTL(),
+            'server_time'=> now(),
+            'user' => $driver
+        ], 'Driver saved successfully');
+
+    }
+
+    public function login(Request $request){
+        if ($request->isJson()) {
+            $input = $request->json()->all();
+        } else {
+            $input = $request->all();
+        }
+
+        if (!array_key_exists('dialing_code', $input)) {
+            return $this->sendError('dialing_code is required');
+        }
+
+        if(!array_key_exists('phone_number', $input)) {
+            return $this->sendError('phone_number is required');
+        }
+
+        $input['phone'] = $input['dialing_code'].''.$input['phone_number'];
+
+        $driver = Driver::where('phone', '=', $input['phone'])->first();
+        if ($driver == null) {
+            return $this->sendError('Compte introuvable', 401);
+        }
+
+
+        $token = JWTAuth::fromUser($driver);
+
+
+        return $this->sendResponse([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => JWTAuth::factory()->getTTL(),
+            'server_time'=> now(),
+            'user' => $driver
+        ], 'Driver saved successfully');
+    }
+
+    public function logout(Request $request){
+
+        auth('api-drivers')->logout();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Successfully logged out',
+        ]);
+
+    }
+
+
+    public function refresh()
+    {
+
+        return $this->sendResponse([
+            'token' => auth('api-drivers')->refresh(),
+            'token_type' => 'bearer',
+            'expires_in' => JWTAuth::factory()->getTTL(),
+            'server_time'=> now(),
+            'user' => auth('api-drivers')->user()
+        ], 'Token refreshed successfully');
+    }
+
+    public function getProfil(Request $request){
+
+        $driver = auth('api-drivers')->user();
+
+        $token = JWTAuth::fromUser($driver);
+
+        return $this->sendResponse([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => JWTAuth::factory()->getTTL(),
+            'server_time'=> now(),
+            'user' => $driver
+        ], 'Driver got successfully');
+
+
     }
 }

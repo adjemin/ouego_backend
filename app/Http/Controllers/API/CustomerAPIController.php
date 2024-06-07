@@ -217,7 +217,7 @@ class CustomerAPIController extends AppBaseController
 
     public function logout(Request $request){
 
-        auth('api-customers')->logout();
+        auth('api-drivers')->logout();
 
         return response()->json([
             'success' => true,
