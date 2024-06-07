@@ -66,6 +66,11 @@ Route::prefix('v1/')->group(function () {
     Route::post('drivers/register', [App\Http\Controllers\API\DriverAPIController::class, 'register']);
     Route::post('drivers/login', [App\Http\Controllers\API\DriverAPIController::class, 'login']);
 
+    Route::post('drivers/logout', [App\Http\Controllers\API\DriverAPIController::class, 'logout'])->middleware("auth.driver:api-drivers");
+    Route::post('drivers/refresh', [App\Http\Controllers\API\DriverAPIController::class, 'refresh'])->middleware("auth.driver:api-drivers");
+    Route::put('drivers/edit_profil', [App\Http\Controllers\API\DriverAPIController::class, 'update'])->middleware("auth.driver:api-drivers");
+    Route::get('drivers/get_profil', [App\Http\Controllers\API\DriverAPIController::class, 'getProfil'])->middleware("auth.driver:api-drivers");
+
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
