@@ -15,6 +15,7 @@ use App\Models\TypeEnginModel;
 use App\Models\RoutePoint;
 use App\Models\Invoice;
 use App\Models\Driver;
+use App\Models\Carrier;
 use App\Repositories\OrderRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
