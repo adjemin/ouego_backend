@@ -869,4 +869,132 @@ class OrderAPIController extends AppBaseController
 
     }
 
+    public function estimateDeliveryPrice(Request $request){
+
+        /**
+         *
+          {
+            "service_slug":"agregats-construction",
+            "meta_data":{
+                "product_type_slug":"gravier-515-petit-grain",
+                "product_slug":"gravier",
+                "delivery_type_code":"EXPRESS"
+            },
+            "quantity":3,
+            "route_points":[
+                {
+                    "address_name":"Pharmacie Sainte Monique du plateau dokui, Abidjan, Côte d'ivoire",
+                    "latitude":5.3994128,
+                    "longitude":-3.9999536,
+                    "type":"destination",
+                    "parcel_details":"",
+                    "contact_fullname": "string",
+                    "contact_phone":"string",
+                    "contact_email":""
+                }
+            ]
+          }
+         *
+         */
+
+
+
+        if(!array_key_exists('meta_data', $request->all())){
+
+            return $this->sendError('meta_data is required', 400);
+        }
+
+        if(!array_key_exists('quantity', $request->all())){
+
+            return $this->sendError('quantity is required', 400);
+        }
+
+        if(!array_key_exists('route_points', $request->all())){
+
+            return $this->sendError('route_points is required', 400);
+        }
+
+        $meta_data = $request->input('meta_data');
+
+        $route_points = $request->input('route_points');
+
+        if(!is_array($meta_data)){
+            $meta_data = (array) $meta_data;
+        }
+
+        if(!is_array($route_points)){
+            $route_points = (array) $route_points;
+        }
+
+        if(!array_key_exists('type_engin_slug',$meta_data)){
+
+            return $this->sendError('type_engin_slug is required', 400);
+        }
+
+        if(!array_key_exists('engin_model',$meta_data)){
+
+            return $this->sendError('engin_model is required', 400);
+        }
+
+        if(!array_key_exists('delivery_type_code',$meta_data)){
+
+            return $this->sendError('delivery_type_code is required', 400);
+        }
+
+        $source_list = collect([]);
+        $destination_list = collect([]);
+
+        foreach ($route_points as $route_point_item){
+            if(!is_array($route_point_item)){
+                $route_point_item = (array)$route_point_item;
+            }
+
+            $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+            if($route_point_item_type == 'source'){
+                $source_list->push($route_point_item);
+            }
+
+            if($route_point_item_type == 'destination'){
+                $destination_list->push($route_point_item);
+            }
+
+
+        }
+
+        $carrier = Carrier::first();
+
+        //$source_point = $source_list->first();
+        $source_point = [
+            "latitude" => $carrier->location_latitude,
+            "longitude" =>  $carrier->location_longitude,
+        ];
+
+        $destination_point = $destination_list->last();
+
+        $result = GoogleMapsAPIUtils::getDistance([
+            $source_point['latitude'],
+            $source_point['longitude'],
+        ],[
+            $destination_point['latitude'],
+            $destination_point['longitude'],
+        ]);
+
+
+        $current_distance = 0;
+
+        if(array_key_exists('distance',$result)){
+            $result_distance = $result['distance']; //array
+            $result_distance_value = $result_distance['value']; //meters
+            $current_distance = $result_distance_value/1000; //kilometers
+            $current_distance = intval($current_distance);
+
+        }
+
+
+        return $this->sendResponse(PricingUtils::transport($current_distance), 'Order saved successfully');
+
+
+}
+
 }

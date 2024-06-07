@@ -47,6 +47,8 @@ Route::prefix('v1/')->group(function () {
 
     Route::post('orders/ride/estimate_price', [App\Http\Controllers\API\OrderAPIController::class, 'estimateRidePrice'])->middleware("auth.customer:api-customers");
 
+    Route::post('orders/delivery/estimate_price', [App\Http\Controllers\API\OrderAPIController::class, 'estimateDeliveryPrice'])->middleware("auth.customer:api-customers");
+
     Route::post('type-engins/create', [App\Http\Controllers\API\TypeEnginAPIController::class, 'store']);
 
     Route::get('type-engins/list', [App\Http\Controllers\API\TypeEnginAPIController::class, 'index']);
