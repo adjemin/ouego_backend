@@ -992,6 +992,8 @@ class OrderAPIController extends AppBaseController
 
         }
 
+        dd($current_distance);
+
 
         return $this->sendResponse(PricingUtils::transport($current_distance), 'Order saved successfully');
 
