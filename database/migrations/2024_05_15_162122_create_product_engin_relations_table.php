@@ -18,6 +18,7 @@ return new class extends Migration
             $table->bigInteger('product_id')->nullable();
             $table->bigInteger('type_engin_id')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

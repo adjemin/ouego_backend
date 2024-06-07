@@ -30,6 +30,7 @@ return new class extends Migration
             $table->double('discount')->nullable()->default(0);
             $table->string('coupon')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

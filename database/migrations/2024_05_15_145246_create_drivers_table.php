@@ -31,6 +31,7 @@ return new class extends Migration
             $table->json('services')->nullable();
             $table->json('driver_license_docs')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

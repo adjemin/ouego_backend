@@ -9,6 +9,7 @@ use App\Repositories\ProductRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Str;
 
 /**
  * Class ProductAPIController
@@ -44,6 +45,17 @@ class ProductAPIController extends AppBaseController
     public function store(CreateProductAPIRequest $request): JsonResponse
     {
         $input = $request->all();
+
+        if(!array_key_exists('name', $input)){
+            return $this->sendError('name is required', 400);
+        }
+
+        $input['slug'] = Str::slug($input['name']);
+
+        $product = Product::where('slug', $input['slug'])->first();
+        if($product != null){
+            return $this->sendError('This product already exist', 400);
+        }
 
         $product = $this->productRepository->create($input);
 

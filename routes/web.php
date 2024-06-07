@@ -41,3 +41,4 @@ Route::resource('invoices', App\Http\Controllers\InvoiceController::class);
 Route::resource('payments', App\Http\Controllers\PaymentController::class);
 Route::resource('order-invitations', App\Http\Controllers\OrderInvitationController::class);
 Route::resource('transactions', App\Http\Controllers\TransactionController::class);
+Route::resource('settings', App\Http\Controllers\SettingController::class);

@@ -37,6 +37,7 @@ return new class extends Migration
             $table->date('date_edition')->nullable();
             $table->string('nom_proprietaire')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

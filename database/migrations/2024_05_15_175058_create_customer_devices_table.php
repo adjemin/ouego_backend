@@ -18,6 +18,7 @@ return new class extends Migration
             $table->bigInteger('customer_id')->nullable();
             $table->string('firebase_id')->unique();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

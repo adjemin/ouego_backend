@@ -5,10 +5,23 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateOrderAPIRequest;
 use App\Http\Requests\API\UpdateOrderAPIRequest;
 use App\Models\Order;
+use App\Models\OrderInvitation;
+use App\Models\OrderItem;
+use App\Models\Service;
+use App\Models\Product;
+use App\Models\ProductType;
+use App\Models\TypeEngin;
+use App\Models\TypeEnginModel;
+use App\Models\RoutePoint;
+use App\Models\Invoice;
+use App\Models\Driver;
 use App\Repositories\OrderRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Carbon\Carbon;
+use App\Utilities\PricingUtils;
+use App\Utilities\GoogleMapsAPIUtils;
 
 /**
  * Class OrderAPIController
@@ -43,9 +56,461 @@ class OrderAPIController extends AppBaseController
      */
     public function store(CreateOrderAPIRequest $request): JsonResponse
     {
+        $customer = auth('api-customers')->user();
+
         $input = $request->all();
 
-        $order = $this->orderRepository->create($input);
+        if(empty($request->input('payment_method_code'))){
+            return $this->sendError('payment_method_code is required', 400);
+        }
+
+        if(empty($request->input('items'))){
+            return $this->sendError('items is required', 400);
+        }
+
+
+        $items = (array) $request->input('items');
+
+
+        $order = Order::create([
+            "reference" => Order::generateReference(),
+            "customer_id" => $customer->id,
+            "status" => Order::INITIATED,
+            "is_started" => false,
+            "is_running" => false,
+            "is_waiting" => true,
+            "is_completed" => false,
+            "completion_time" => null,
+            "start_time" => null,
+            "acceptation_time" => null,
+            "expected_arrival_at" => null,
+            'rating_id' => null,
+            'rating'=> null,
+            'rating_note'=> null,
+            'order_price' => 0,
+            'currency_code' => 'XOF',
+            'payment_method_code' => 'cash',
+            'delivery_type_code'=> $request->input('payment_method_code'),
+            'is_location' => null,
+            'is_product' => null,
+            'is_ride' => null
+        ]);
+
+
+        foreach ($items as $item) {
+
+            $item = (array)$item;
+
+            if(!array_key_exists('service_slug',$item)){
+                $order->forceDelete();
+                return $this->sendError('service_slug is required', 400);
+            }
+
+            $service = Service::where('slug', $item["service_slug"])->first();
+
+            if($service == null){
+                $order->forceDelete();
+                return $this->sendError('Service not found', 400);
+            }
+
+            $meta_data = [];
+
+            if($service->slug == Service::COURSE){
+
+
+                /**
+                 *
+                 *     {
+                        "service_slug":"course",
+                        "meta_data":{
+                            "type_engin_slug":"camion-benne",
+                            "engin_model":"6-roues",
+                            "delivery_type_code":"EXPRESS"
+                        },
+                        "route_points":[
+                            {
+                                "address_name":"Cocody, Abidjan, Côte d'ivoire",
+                                "latitude":4,
+                                "longitude":-5,
+                                "type":"source",
+                                "parcel_details":""
+                            },
+                            {
+                                "address_name":"Koumassi, Abidjan, Côte d'ivoire",
+                                "latitude":4,
+                                "longitude":-5,
+                                "type":"destination",
+                                "parcel_details":""
+                            }
+                        ]
+                    }
+                 *
+                 */
+
+                 if(!array_key_exists('meta_data',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('meta_data is required', 400);
+                }
+
+                if(!array_key_exists('route_points',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('route_points is required', 400);
+                }
+
+                $meta_data = $item['meta_data'];
+                if(!is_array($meta_data)){
+                    $meta_data = (array) $item['meta_data'];
+                }
+
+                if(!array_key_exists('type_engin_slug',$meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('type_engin_slug is required', 400);
+                }
+
+                if(!array_key_exists('engin_model',$meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('engin_model is required', 400);
+                }
+
+                if(!array_key_exists('delivery_type_code',$meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('delivery_type_code is required', 400);
+                }
+
+                $delivery_fees = $this->getDeliveryFees((array)$item['route_points']);
+
+                $orderItem = OrderItem::create([
+                    'order_id' => $order->id,
+                    'service_slug' => $service->slug,
+                    'meta_data' => json_encode([
+                        "type_engin_slug" => array_key_exists('type_engin_slug', $meta_data)?$meta_data['type_engin_slug']:null,
+                        "engin_model" => array_key_exists('engin_model', $meta_data)?$meta_data['engin_model']:null,
+                        "delivery_type_code" => array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:null,
+                    ]),
+                    'quantity' => 1,
+                    'quantity_unity' => null,
+                    'unit_price' => $delivery_fees,
+                    'total_amount' => $delivery_fees,
+                    'currency' => "XOF"
+                ]);
+
+
+            }
+
+            if($service->slug == Service::AGREGATS_CONSTRUCTION){
+
+                /**
+                 *
+                 *     {
+                        "service_slug":"agregats-construction",
+                        "meta_data":{
+                            "product_type_slug":"gravier-515-petit-grain",
+                            "product_slug":"gravier",
+                            "delivery_type_code":"EXPRESS"
+                        },
+                        "quantity":1,
+                        "route_points":[
+                            {
+                                "address_name":"Koumassi, Abidjan, Côte d'ivoire",
+                                "latitude":4,
+                                "longitude":-5,
+                                "type":"destination",
+                                "parcel_details":""
+                            }
+                        ]
+                    }
+                 *
+                 */
+
+                 if(!array_key_exists('meta_data',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('meta_data is required', 400);
+                }
+
+                if(!array_key_exists('route_points',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('route_points is required', 400);
+                }
+
+                if(!array_key_exists('delivery_price',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('delivery_price is required', 400);
+                }
+
+                $meta_data = $item['meta_data'];
+                if(!is_array($meta_data)){
+                    $meta_data = (array) $item['meta_data'];
+                }
+
+                if(!array_key_exists('product_type_slug',$meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('product_type_slug is required', 400);
+                }
+
+                if(!array_key_exists('product_slug',$meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('product_slug is required', 400);
+                }
+
+                if(!array_key_exists('delivery_type_code',$meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('delivery_type_code is required', 400);
+                }
+
+                if(!array_key_exists('quantity',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('quantity is required', 400);
+                }
+
+                if(!array_key_exists('product_type_slug', $meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('product_type_slug is required', 400);
+                }
+
+                if(!array_key_exists('product_slug', $meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('product_slug is required', 400);
+                }
+
+                if(!array_key_exists('delivery_type_code', $meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('delivery_type_code is required', 400);
+                }
+
+                $delivery_price = intval($item['delivery_price']);
+                $order->delivery_price =  $delivery_price;
+                $order->save();
+
+                $productType = ProductType::where(['slug' => $meta_data['product_type_slug']])->first();
+
+                $quantity = intval($item['quantity']);
+
+                $unit_price = doubleval($productType->price);
+
+                $total_amount = $quantity * $unit_price;
+
+                $currency = $productType->currency_code;
+
+                $orderItem = OrderItem::create([
+                    'order_id' => $order->id,
+                    'service_slug' => $service->slug,
+                    'meta_data' => json_encode([
+                        "product_type_slug" => array_key_exists('product_type_slug', $meta_data)?$meta_data['product_type_slug']:null,
+                        "product_slug" => array_key_exists('product_slug', $meta_data)?$meta_data['product_slug']:null,
+                        "delivery_type_code" => array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:null,
+                    ]),
+                    'quantity' => $quantity,
+                    'quantity_unity' => "T",
+                    'unit_price' => $unit_price,
+                    'total_amount' => $total_amount,
+                    'currency' => $currency
+                ]);
+
+
+            }
+
+            if($service->slug == Service::LOCATION){
+
+             /**
+                 *
+                 *     {
+                            "service_slug":"location",
+                            "meta_data":{
+                                "type_engin_slug":"camion-benne",
+                                "engin_model":"6-roues"
+                            },
+                            "quantity":1,
+                            "location_start_date":"2024-05-31",
+                            "location_end_date":"2024-06-05",
+                            "route_points":[
+                                {
+                                    "address_name":"Koumassi, Abidjan, Côte d'ivoire",
+                                    "latitude":4,
+                                    "longitude":-5,
+                                    "type":"destination",
+                                    "parcel_details":""
+                                }
+                            ]
+                        }
+                 *
+                 */
+
+                 if(!array_key_exists('meta_data',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('meta_data is required', 400);
+                }
+
+                if(!array_key_exists('route_points',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('route_points is required', 400);
+                }
+
+                $meta_data = $item['meta_data'];
+                if(!is_array($meta_data)){
+                    $meta_data = (array) $item['meta_data'];
+                }
+
+                if(!array_key_exists('type_engin_slug',$meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('type_engin_slug is required', 400);
+                }
+
+                if(!array_key_exists('engin_model',$meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('engin_model is required', 400);
+                }
+
+                if(!array_key_exists('quantity',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('quantity is required', 400);
+                }
+
+                if(!array_key_exists('location_start_date',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('location_start_date is required', 400);
+                }
+
+                if(!array_key_exists('location_end_date',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('location_end_date is required', 400);
+                }
+
+                $location_start_date = Carbon::parse($item["location_start_date"]);
+                $location_end_date = Carbon::parse($item["location_end_date"]);
+
+                $typeEngin = TypeEngin::where(['slug' => $meta_data['type_engin_slug']])->first();
+                $typeEnginModel = TypeEnginModel::where(['slug' => $meta_data['engin_model']])->first();
+
+                if($typeEngin == null){
+                    $order->forceDelete();
+                    return $this->sendError('type_engin_slug not found', 400);
+                }
+
+                if($typeEnginModel == null){
+                    $order->forceDelete();
+                    return $this->sendError('engin_model not found', 400);
+                }
+
+                $quantity = $location_start_date->diffInDays($location_end_date);
+
+                $unit_price = doubleval($typeEnginModel->price);
+
+                $total_amount = $quantity * $unit_price;
+
+                $currency = $typeEnginModel->currency_code;
+
+
+                $orderItem = OrderItem::create([
+                    'order_id' => $order->id,
+                    'service_slug' => $service->slug,
+                    'meta_data' => json_encode([
+                        "type_engin_slug" => array_key_exists('type_engin_slug', $meta_data)?$meta_data['type_engin_slug']:null,
+                        "engin_model" => array_key_exists('engin_model', $meta_data)?$meta_data['engin_model']:null
+                    ]),
+                    'quantity' => $quantity,
+                    'quantity_unity' => "days",
+                    'unit_price' => $unit_price,
+                    'total_amount' => $total_amount,
+                    'currency' => $currency,
+                    'location_start_date' => $item["location_start_date"],
+                    'location_end_date' => $item["location_end_date"]
+                ]);
+
+
+            }
+
+            $route_points = $item['route_points'];
+
+            if(!is_array($route_points)){
+                $route_points = (array)$route_points;
+            }
+
+            foreach ($route_points as $route_point) {
+
+                if(is_array($route_point)){
+                    $routePoint = RoutePoint::create([
+                        'customer_id' => $customer->id,
+                        'order_id' => $order->id,
+                        'address_name' => array_key_exists('address_name',$route_point)?$route_point['address_name']:null,
+                        'latitude' => array_key_exists('latitude',$route_point)?$route_point['latitude']:null,
+                        'longitude' => array_key_exists('longitude',$route_point)?$route_point['longitude']:null,
+                        'contact_fullname' => array_key_exists('contact_fullname',$route_point)?$route_point['contact_fullname']:null,
+                        'contact_phone' => array_key_exists('contact_phone',$route_point)?$route_point['contact_phone']:null,
+                        'contact_email' => array_key_exists('contact_email',$route_point)?$route_point['contact_email']:null,
+                        'parcel_details' => array_key_exists('parcel_details',$route_point)?$route_point['parcel_details']:null,
+                        'type' => array_key_exists('type',$route_point)?$route_point['type']:null,
+                        'status' => RoutePoint::WAITING,
+                        'delivery_fees' => 0,
+                        'currency_code' => 'XOF',
+                        'is_waiting' => true,
+                        'is_completed' => false,
+                        'is_successful' => false,
+                        'has_cash_management' => false,
+                        'has_cash_deposited' => false,
+                        'is_driver_paid' => false,
+                        'completion_time'=> null,
+                        'expected_arrival_at' => null,
+                        'visit_order' => array_key_exists('visit_order', $route_point)?$route_point['visit_order']:null,
+                        'stage' => array_key_exists('stage', $route_point)?$route_point['stage']:null,
+                        'apartment' => array_key_exists('apartment', $route_point)?$route_point['apartment']:null
+                    ]);
+
+                }
+
+            }
+
+        }
+
+        $order_items = OrderItem::where('order_id', $order->id)->get();
+
+        $order_price = $order->delivery_price;
+
+        foreach($order_items as $order_item){
+
+            $order_price = $order_price + $order_item->total_amount;
+
+            if($order_item->service_slug == Service::COURSE){
+                $order->is_ride = true;
+                $order->save();
+            }
+
+            if($order_item->service_slug == Service::AGREGATS_CONSTRUCTION){
+                $order->is_product = true;
+                $order->save();
+            }
+
+            if($order_item->service_slug == Service::LOCATION){
+                $order->is_location = true;
+                $order->save();
+            }
+
+        }
+
+        $order->order_price = $order_price;
+        $order->save();
+
+        $invoice = Invoice::create([
+            'order_id' => $order->id,
+            'customer_id' => $customer->id,
+            'reference' => Invoice::generateID("ORDER", $order->id, $customer->id),
+            'subtotal' => $order->order_price,
+            'tax' => 0,
+            'fees_delivery' => $order->delivery_price,
+            'total' => $order->order_price,
+            'status' => Invoice::UNPAID,
+            'is_paid_by_customer' => false,
+            'is_paid_by_delivery_service' => false,
+            'currency_slug' => 'XOF',
+            'driver_due' => 0,
+            'service_due' => 0,
+            'discount' => null,
+            'coupon' => null
+        ]);
+
+
+        /** @var Order $order */
+        $order = $this->orderRepository->find($order->id);
+
 
         return $this->sendResponse($order->toArray(), 'Order saved successfully');
     }
@@ -105,4 +570,303 @@ class OrderAPIController extends AppBaseController
 
         return $this->sendSuccess('Order deleted successfully');
     }
+
+    public function getCustomerOrders(Request $request){
+
+        $customer = auth('api-customers')->user();
+
+        $orders = Order::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->get();
+
+        return $this->sendResponse($orders->toArray(), 'Orders retrieved successfully');
+
+    }
+
+    public function estimateRidePrice(Request $request){
+
+                /**
+                 *
+                 *     {
+                        "service_slug":"course",
+                        "meta_data":{
+                            "type_engin_slug":"camion-benne",
+                            "engin_model":"6-roues",
+                            "delivery_type_code":"EXPRESS"
+                        },
+                        "route_points":[
+                            {
+                                "address_name":"Cocody, Abidjan, Côte d'ivoire",
+                                "latitude":4,
+                                "longitude":-5,
+                                "type":"source",
+                                "parcel_details":""
+                            },
+                            {
+                                "address_name":"Koumassi, Abidjan, Côte d'ivoire",
+                                "latitude":4,
+                                "longitude":-5,
+                                "type":"destination",
+                                "parcel_details":""
+                            }
+                        ]
+                    }
+                 *
+                 */
+
+
+
+                 if(!array_key_exists('meta_data', $request->all())){
+
+                    return $this->sendError('meta_data is required', 400);
+                }
+
+                if(!array_key_exists('route_points', $request->all())){
+
+                    return $this->sendError('route_points is required', 400);
+                }
+
+                $meta_data = $request->input('meta_data');
+
+                $route_points = $request->input('route_points');
+
+                if(!is_array($meta_data)){
+                    $meta_data = (array) $meta_data;
+                }
+
+                if(!is_array($route_points)){
+                    $route_points = (array) $route_points;
+                }
+
+                if(!array_key_exists('type_engin_slug',$meta_data)){
+
+                    return $this->sendError('type_engin_slug is required', 400);
+                }
+
+                if(!array_key_exists('engin_model',$meta_data)){
+
+                    return $this->sendError('engin_model is required', 400);
+                }
+
+                if(!array_key_exists('delivery_type_code',$meta_data)){
+
+                    return $this->sendError('delivery_type_code is required', 400);
+                }
+
+                $source_list = collect([]);
+                $destination_list = collect([]);
+
+                foreach ($route_points as $route_point_item){
+                    if(!is_array($route_point_item)){
+                        $route_point_item = (array)$route_point_item;
+                    }
+
+                    $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+                    if($route_point_item_type == 'source'){
+                        $source_list->push($route_point_item);
+                    }
+
+                    if($route_point_item_type == 'destination'){
+                        $destination_list->push($route_point_item);
+                    }
+
+
+                }
+
+                $source_point = $source_list->first();
+
+                $destination_point = $destination_list->last();
+
+                $result = GoogleMapsAPIUtils::getDistance([
+                    $source_point['latitude'],
+                    $source_point['longitude'],
+                ],[
+                    $destination_point['latitude'],
+                    $destination_point['longitude'],
+                ]);
+
+
+                $current_distance = 0;
+
+                if(array_key_exists('distance',$result)){
+                    $result_distance = $result['distance']; //array
+                    $result_distance_value = $result_distance['value']; //meters
+                    $current_distance = $result_distance_value/1000; //kilometers
+                    $current_distance = intval($current_distance);
+
+                }
+
+
+                return $this->sendResponse(PricingUtils::transport($current_distance), 'Order saved successfully');
+
+
+    }
+
+    public function getDeliveryFees(array $route_points){
+
+        /**
+         *
+         *     {
+                "route_points":[
+                    {
+                        "address_name":"Cocody, Abidjan, Côte d'ivoire",
+                        "latitude":4,
+                        "longitude":-5,
+                        "type":"source",
+                        "parcel_details":""
+                    },
+                    {
+                        "address_name":"Koumassi, Abidjan, Côte d'ivoire",
+                        "latitude":4,
+                        "longitude":-5,
+                        "type":"destination",
+                        "parcel_details":""
+                    }
+                ]
+            }
+         *
+         */
+
+
+
+        $source_list = collect([]);
+        $destination_list = collect([]);
+
+        foreach ($route_points as $route_point_item){
+            if(!is_array($route_point_item)){
+                $route_point_item = (array)$route_point_item;
+            }
+
+            $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+            if($route_point_item_type == 'source'){
+                $source_list->push($route_point_item);
+            }
+
+            if($route_point_item_type == 'destination'){
+                $destination_list->push($route_point_item);
+            }
+
+
+        }
+
+        $source_point = $source_list->first();
+
+        $destination_point = $destination_list->last();
+
+        $result = GoogleMapsAPIUtils::getDistance([
+            $source_point['latitude'],
+            $source_point['longitude'],
+        ],[
+            $destination_point['latitude'],
+            $destination_point['longitude'],
+        ]);
+
+
+        $current_distance = 0;
+
+        if(array_key_exists('distance',$result)){
+            $result_distance = $result['distance']; //array
+            $result_distance_value = $result_distance['value']; //meters
+            $current_distance = $result_distance_value/1000; //kilometers
+            $current_distance = intval($current_distance);
+
+        }
+
+
+        return PricingUtils::transport($current_distance);
+
+    }
+
+    public function confirm($id, Request $request){
+
+        /** @var Order $order */
+        $order = $this->orderRepository->find($id);
+
+        if (empty($order)) {
+            return $this->sendError('Order not found');
+        }
+
+        $input['is_draft'] = false;
+        $input['order_date'] = now();
+        $input['status'] = Order::PERFORMER_LOOKUP;
+
+        $this->assign($order);
+
+        return $this->sendResponse($order->toArray(), 'Order updated successfully');
+
+    }
+
+    public function assign($order){
+
+        $inner_radius = 0;
+
+        $outer_radius = 10;
+
+        $drivers = Driver::all();
+
+        foreach ($drivers as $driver){
+
+
+            $orderInvitation = OrderInvitation::where([
+                'driver_id' => $driver->id,
+                'order_id' => $order->id,
+            ])->first();
+
+            if($orderInvitation == null){
+                $orderInvitation = OrderInvitation::create([
+                    'driver_id' => $driver->id,
+                    'order_id' => $order->id,
+                    'is_waiting_acceptation' => true,
+                    'acceptation_time' => null,
+                    'rejection_time' => null,
+                    'latitude' => null,
+                    'longitude' => null
+                ]);
+
+                //Push Notification
+                /*$userNotification = UserNotification::create([
+                    'user_id' => $driver->id,
+                    'title' => 'Course #'.$task->id." vous a été affectée",
+                    'subtitle' => "Acceptez ou Refusez la course",
+                    'data_id' => $taskInvitation->id,
+                    'type' => $taskInvitation->table,
+                    'is_read' => false,
+                    'is_received' => false,
+                    'meta_data' => null
+                ]);
+                UserNotificationUtils::notify($userNotification);*/
+            }
+
+
+
+        }
+
+
+    }
+
+    public function performDriverLookup($id, Request $request){
+        /** @var Order $order */
+        $order = $this->orderRepository->find($id);
+
+        if (empty($order)) {
+            return $this->sendError('Commande introuvable', 400);
+        }
+
+        if($order->driver_id == null || $order->acceptation_time == null){
+
+                $orderInvitations = OrderInvitation::where([
+                    'order_id' => $order->id,
+                    "is_waiting_acceptation" => true
+                ])->get();
+
+                if(count($orderInvitations) == 0){
+                    $this->assign($order);
+                }
+
+        }
+
+        return $this->sendResponse($order->toArray(), 'Order retrieved successfully');
+
+    }
+
 }

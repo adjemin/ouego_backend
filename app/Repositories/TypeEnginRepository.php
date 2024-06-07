@@ -8,11 +8,10 @@ use App\Repositories\BaseRepository;
 class TypeEnginRepository extends BaseRepository
 {
     protected $fieldSearchable = [
-        'ability',
-        'usages',
+        'ability_tonne',
+        'usage',
         'name',
         'slug',
-        'models',
         'services'
     ];
 

@@ -15,9 +15,10 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id('id');
+            $table->string('reference')->nullable()->unique();
             $table->bigInteger('customer_id')->nullable();
             $table->bigInteger('driver_id')->nullable();
-            $table->json('services')->nullable();
+            $table->string('service_slug')->nullable();
             $table->string('status')->nullable();
             $table->text('comment')->nullable();
             $table->timestamp('order_date')->nullable();
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->integer('rating')->nullable();
             $table->string('rating_note')->nullable();
             $table->double('order_price')->nullable();
+            $table->double('delivery_price')->nullable();
             $table->string('currency_code')->nullable()->default("XOF");
             $table->string('payment_method_code')->nullable()->default("cash");
             $table->string('delivery_type_code')->nullable();
@@ -40,6 +42,7 @@ return new class extends Migration
             $table->boolean('is_product')->nullable()->default(false);
             $table->boolean('is_ride')->nullable()->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

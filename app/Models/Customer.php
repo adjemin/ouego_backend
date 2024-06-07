@@ -3,10 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class Customer extends Model
+class Customer extends Authenticatable  implements JWTSubject
 {
+
+    use SoftDeletes;
+
     public $table = 'customers';
+
+    protected $guard = 'api-customers';
 
     public $fillable = [
         'first_name',
@@ -45,12 +53,32 @@ class Customer extends Model
         'country_code' => 'string',
         'is_phone_verified' => 'boolean',
         'is_email_verified' => 'boolean',
-        'email' => 'string'
+        'email' => 'string',
     ];
 
     public static array $rules = [
-        
+
     ];
 
-    
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     *
+     * @return mixed
+     */
+    public function getJWTIdentifier()
+    {
+       return $this->getKey();
+    }
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
+
+
 }

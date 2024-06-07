@@ -16,13 +16,13 @@ return new class extends Migration
     {
         Schema::create('type_engins', function (Blueprint $table) {
             $table->id('id');
-            $table->string('ability')->nullable();
-            $table->string('usages')->nullable();
             $table->string('name')->nullable();
             $table->string('slug')->unique();
-            $table->json('models')->nullable();
+            $table->json('ability_tonne')->nullable();
+            $table->string('usage')->nullable();
             $table->json('services')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

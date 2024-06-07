@@ -9,6 +9,7 @@ use App\Repositories\ProductTypeRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Str;
 
 /**
  * Class ProductTypeAPIController
@@ -45,6 +46,17 @@ class ProductTypeAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if(!array_key_exists('name', $input)){
+            return $this->sendError('name is required', 400);
+        }
+
+        $input['slug'] = Str::slug($input['name']);
+
+        $productType = ProductType::where('slug', $input['slug'])->first();
+        if($productType != null){
+            return $this->sendError('This product_type already exist', 400);
+        }
+
         $productType = $this->productTypeRepository->create($input);
 
         return $this->sendResponse($productType->toArray(), 'Product Type saved successfully');
@@ -79,6 +91,17 @@ class ProductTypeAPIController extends AppBaseController
 
         if (empty($productType)) {
             return $this->sendError('Product Type not found');
+        }
+
+        if(array_key_exists('name', $input)){
+
+            $input['slug'] = Str::slug($input['name']);
+
+            $productType = ProductType::where('slug', $input['slug'])->first();
+            if($productType != null){
+                return $this->sendError('This product_type already exist', 400);
+            }
+
         }
 
         $productType = $this->productTypeRepository->update($input, $id);

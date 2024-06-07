@@ -10,14 +10,11 @@ class ProductRepository extends BaseRepository
     protected $fieldSearchable = [
         'name',
         'slug',
-        'price',
         'per',
         'pricing_title',
         'description',
-        'color',
+        'colors',
         'icon',
-        'product_types',
-        'currency_code',
         'tonne_options'
     ];
 

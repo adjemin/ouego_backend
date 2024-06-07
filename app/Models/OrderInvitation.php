@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderInvitation extends Model
 {
+    use SoftDeletes;
+
     public $table = 'order_invitations';
 
     public $fillable = [
@@ -26,8 +29,8 @@ class OrderInvitation extends Model
     ];
 
     public static array $rules = [
-        
+
     ];
 
-    
+
 }

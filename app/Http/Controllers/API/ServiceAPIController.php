@@ -9,6 +9,7 @@ use App\Repositories\ServiceRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Str;
 
 /**
  * Class ServiceAPIController
@@ -28,6 +29,9 @@ class ServiceAPIController extends AppBaseController
      */
     public function index(Request $request): JsonResponse
     {
+
+        $request->merge(['is_active' => true]);
+
         $services = $this->serviceRepository->all(
             $request->except(['skip', 'limit']),
             $request->get('skip'),
@@ -44,6 +48,17 @@ class ServiceAPIController extends AppBaseController
     public function store(CreateServiceAPIRequest $request): JsonResponse
     {
         $input = $request->all();
+
+        if(!array_key_exists('name', $input)){
+            return $this->sendError('name is required', 400);
+        }
+
+        $input['slug'] = Str::slug($input['name']);
+
+        $service = Service::where('slug', $input['slug'])->first();
+        if($service != null){
+            return $this->sendError('This service already exist', 400);
+        }
 
         $service = $this->serviceRepository->create($input);
 

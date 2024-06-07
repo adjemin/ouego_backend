@@ -23,6 +23,7 @@ return new class extends Migration
             $table->boolean('is_in')->nullable()->default(false);
             $table->bigInteger('order_id')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

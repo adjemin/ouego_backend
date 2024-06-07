@@ -18,6 +18,7 @@ return new class extends Migration
             $table->bigInteger('engin_id')->nullable();
             $table->string('url')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

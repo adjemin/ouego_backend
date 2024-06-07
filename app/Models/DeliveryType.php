@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DeliveryType extends Model
 {
+    use SoftDeletes;
+
     public $table = 'delivery_types';
 
     public $fillable = [
@@ -23,8 +26,8 @@ class DeliveryType extends Model
     ];
 
     public static array $rules = [
-        
+
     ];
 
-    
+
 }

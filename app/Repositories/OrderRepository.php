@@ -8,9 +8,10 @@ use App\Repositories\BaseRepository;
 class OrderRepository extends BaseRepository
 {
     protected $fieldSearchable = [
+        'reference',
         'customer_id',
         'driver_id',
-        'services',
+        'service_slug',
         'status',
         'comment',
         'order_date',
@@ -31,7 +32,8 @@ class OrderRepository extends BaseRepository
         'delivery_type_code',
         'is_location',
         'is_product',
-        'is_ride'
+        'is_ride',
+        'is_draft'
     ];
 
     public function getFieldsSearchable(): array

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id('id');
             $table->bigInteger('order_id')->nullable();
             $table->string('service_slug')->nullable();
-            $table->string('meta_data')->nullable();
+            $table->longText('meta_data')->nullable();
             $table->integer('quantity')->nullable();
             $table->string('quantity_unity')->nullable();
             $table->double('unit_price')->nullable();
@@ -26,6 +26,7 @@ return new class extends Migration
             $table->date('location_start_date')->nullable();
             $table->date('location_end_date')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

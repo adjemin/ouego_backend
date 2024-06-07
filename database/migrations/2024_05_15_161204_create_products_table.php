@@ -17,16 +17,14 @@ return new class extends Migration
             $table->id('id');
             $table->string('name')->nullable();
             $table->string('slug')->unique();
-            $table->double('price')->nullable();
             $table->string('per')->nullable();
             $table->string('pricing_title')->nullable();
             $table->string('description')->nullable();
             $table->string('color')->nullable();
             $table->string('icon')->nullable();
-            $table->json('product_types')->nullable();
-            $table->string('currency_code')->nullable()->default("XOF");
             $table->json('tonne_options')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

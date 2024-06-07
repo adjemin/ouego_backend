@@ -33,6 +33,7 @@ return new class extends Migration
             $table->boolean('is_email_verified')->nullable()->default(false);
             $table->string('email')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

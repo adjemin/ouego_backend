@@ -22,6 +22,7 @@ return new class extends Migration
             $table->boolean('is_active')->nullable()->default(false);
             $table->json('products')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

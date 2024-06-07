@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('slug')->nullable()->unique();
             $table->boolean('is_active')->default(false)->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

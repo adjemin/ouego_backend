@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Carrier extends Model
 {
+    use SoftDeletes;
     public $table = 'carriers';
 
     public $fillable = [
@@ -26,8 +28,8 @@ class Carrier extends Model
     ];
 
     public static array $rules = [
-        
+
     ];
 
-    
+
 }

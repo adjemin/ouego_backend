@@ -36,6 +36,7 @@ return new class extends Migration
             $table->string('payment_gateway_trans_status')->nullable();
             $table->string('payment_gateway_designation')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

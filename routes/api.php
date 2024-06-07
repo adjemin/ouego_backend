@@ -14,69 +14,126 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::prefix('v1/')->group(function () {
+
+    //Inscription par téléphone (Client)
+    Route::post('customers/register', [App\Http\Controllers\API\CustomerAPIController::class, 'register']);
+    Route::post('customers/login', [App\Http\Controllers\API\CustomerAPIController::class, 'login']);
+    Route::post('customers/logout', [App\Http\Controllers\API\CustomerAPIController::class, 'logout'])->middleware("auth.customer:api-customers");
+    Route::post('customers/refresh', [App\Http\Controllers\API\CustomerAPIController::class, 'refresh'])->middleware("auth.customer:api-customers");
+    Route::put('customers/edit_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'update'])->middleware("auth.customer:api-customers");
+    Route::get('customers/get_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'getProfil'])->middleware("auth.customer:api-customers");
+
+    Route::get('services/list', [App\Http\Controllers\API\ServiceAPIController::class, 'index'])->middleware("auth.customer:api-customers");
+    Route::post('services/create', [App\Http\Controllers\API\ServiceAPIController::class, 'store'])->middleware("auth.customer:api-customers");
+
+    Route::get('products/list', [App\Http\Controllers\API\ProductAPIController::class, 'index'])->middleware("auth.customer:api-customers");
+    Route::post('products/create', [App\Http\Controllers\API\ProductAPIController::class, 'store'])->middleware("auth.customer:api-customers");
+
+    Route::post('product_types/create', [App\Http\Controllers\API\ProductTypeAPIController::class, 'store'])->middleware("auth.customer:api-customers");
+
+    Route::post('orders/create', [App\Http\Controllers\API\OrderAPIController::class, 'store'])->middleware("auth.customer:api-customers");
+
+    //Confirmer une course (client)
+    Route::put('orders/{id}/confirm', [App\Http\Controllers\API\OrderAPIController::class, 'confirm']);
+
+    //Détails d'une course par ID (client)
+    Route::get('orders/{id}/info', [App\Http\Controllers\API\OrderAPIController::class, 'show']);
+
+    //Rechercher d'un livreur
+    Route::put('orders/{id}/perform_driver_lookup', [App\Http\Controllers\API\OrderAPIController::class, 'performDriverLookup']);
+
+    Route::get('customers/orders/list', [App\Http\Controllers\API\OrderAPIController::class, 'getCustomerOrders'])->middleware("auth.customer:api-customers");
+
+    Route::post('orders/ride/estimate_price', [App\Http\Controllers\API\OrderAPIController::class, 'estimateRidePrice'])->middleware("auth.customer:api-customers");
+
+    Route::post('type-engins/create', [App\Http\Controllers\API\TypeEnginAPIController::class, 'store']);
+
+    Route::get('type-engins/list', [App\Http\Controllers\API\TypeEnginAPIController::class, 'index']);
+
+    Route::post('type-engins-models/create', [App\Http\Controllers\API\TypeEnginModelAPIController::class, 'store']);
+
+
+    //Accepter ou Refuser une taches  (Livreur)
+    Route::put('order_invitations/{id}/accept', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'accept']);
+    Route::put('order_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse']);
+
+    //Modifier le statut d’un ramassage ou livraison (ANNULER, DEMARRER, REUSSIR, ECHOUER ) (Livreur)
+    Route::put('route_points/{id}/update_status', [App\Http\Controllers\API\RoutePointAPIController::class, 'updateStatus']);
+
 });
 
+//Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//    return $request->user();
+//});
+//
+//
+//Route::resource('services', App\Http\Controllers\API\ServiceAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('type-engins', App\Http\Controllers\API\TypeEnginAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//
+//Route::resource('engins', App\Http\Controllers\API\EnginAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//
+//Route::resource('drivers', App\Http\Controllers\API\DriverAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('engin-pictures', App\Http\Controllers\API\EnginPictureAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('products', App\Http\Controllers\API\ProductAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('product-types', App\Http\Controllers\API\ProductTypeAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('product-engin-relations', App\Http\Controllers\API\ProductEnginRelationAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('delivery-types', App\Http\Controllers\API\DeliveryTypeAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('carriers', App\Http\Controllers\API\CarrierAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('orders', App\Http\Controllers\API\OrderAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('order-items', App\Http\Controllers\API\OrderItemAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('customers', App\Http\Controllers\API\CustomerAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('customer-devices', App\Http\Controllers\API\CustomerDeviceAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('invoices', App\Http\Controllers\API\InvoiceAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('payments', App\Http\Controllers\API\PaymentAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('order-invitations', App\Http\Controllers\API\OrderInvitationAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('transactions', App\Http\Controllers\API\TransactionAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('route-points', App\Http\Controllers\API\RoutePointAPIController::class)
+//    ->except(['create', 'edit']);
+//
+//Route::resource('route-point-histories', App\Http\Controllers\API\RoutePointHistoryAPIController::class)
+//    ->except(['create', 'edit']);
 
-Route::resource('services', App\Http\Controllers\API\ServiceAPIController::class)
-    ->except(['create', 'edit']);
 
-Route::resource('type-engins', App\Http\Controllers\API\TypeEnginAPIController::class)
-    ->except(['create', 'edit']);
+//Route::resource('type-engin-models', App\Http\Controllers\API\TypeEnginModelAPIController::class)
+//    ->except(['create', 'edit']);
 
 
-Route::resource('engins', App\Http\Controllers\API\EnginAPIController::class)
-    ->except(['create', 'edit']);
-
-
-Route::resource('drivers', App\Http\Controllers\API\DriverAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('engin-pictures', App\Http\Controllers\API\EnginPictureAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('products', App\Http\Controllers\API\ProductAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('product-types', App\Http\Controllers\API\ProductTypeAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('product-engin-relations', App\Http\Controllers\API\ProductEnginRelationAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('delivery-types', App\Http\Controllers\API\DeliveryTypeAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('carriers', App\Http\Controllers\API\CarrierAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('orders', App\Http\Controllers\API\OrderAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('order-pickups', App\Http\Controllers\API\OrderPickupAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('order-deliveries', App\Http\Controllers\API\OrderDeliveryAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('order-items', App\Http\Controllers\API\OrderItemAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('customers', App\Http\Controllers\API\CustomerAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('customer-devices', App\Http\Controllers\API\CustomerDeviceAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('invoices', App\Http\Controllers\API\InvoiceAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('payments', App\Http\Controllers\API\PaymentAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('order-invitations', App\Http\Controllers\API\OrderInvitationAPIController::class)
-    ->except(['create', 'edit']);
-
-Route::resource('transactions', App\Http\Controllers\API\TransactionAPIController::class)
+Route::resource('settings', App\Http\Controllers\API\SettingAPIController::class)
     ->except(['create', 'edit']);

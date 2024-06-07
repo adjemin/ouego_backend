@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Engin extends Model
 {
+    use SoftDeletes;
+
     public $table = 'engins';
 
     public $fillable = [

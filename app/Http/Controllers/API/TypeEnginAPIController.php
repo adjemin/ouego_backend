@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTypeEnginAPIRequest;
 use App\Http\Requests\API\UpdateTypeEnginAPIRequest;
+use Illuminate\Support\Str;
 use App\Models\TypeEngin;
 use App\Repositories\TypeEnginRepository;
 use Illuminate\Http\JsonResponse;
@@ -44,6 +45,13 @@ class TypeEnginAPIController extends AppBaseController
     public function store(CreateTypeEnginAPIRequest $request): JsonResponse
     {
         $input = $request->all();
+
+        $input['slug'] = Str::slug($input['name']);
+
+        $typeEngin = TypeEngin::where('slug', $input['slug'])->first();
+        if($typeEngin != null){
+            return $this->sendError('This typeEngin already exist', 400);
+        }
 
         $typeEngin = $this->typeEnginRepository->create($input);
 

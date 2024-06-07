@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EnginPicture extends Model
 {
+
+    use SoftDeletes;
+
     public $table = 'engin_pictures';
 
     public $fillable = [
@@ -19,8 +23,8 @@ class EnginPicture extends Model
     ];
 
     public static array $rules = [
-        
+
     ];
 
-    
+
 }

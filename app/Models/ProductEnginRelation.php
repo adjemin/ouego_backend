@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductEnginRelation extends Model
 {
+
+    use SoftDeletes;
+
     public $table = 'product_engin_relations';
 
     public $fillable = [
@@ -19,8 +23,8 @@ class ProductEnginRelation extends Model
     ];
 
     public static array $rules = [
-        
+
     ];
 
-    
+
 }

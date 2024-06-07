@@ -3,10 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Service extends Model
 {
+
+    use SoftDeletes;
+
     public $table = 'services';
+
+    const COURSE = "course";
+    const AGREGATS_CONSTRUCTION = "agregats-construction";
+    const LOCATION = "location";
 
     public $fillable = [
         'name',
@@ -25,8 +33,8 @@ class Service extends Model
     ];
 
     public static array $rules = [
-        
+
     ];
 
-    
+
 }
