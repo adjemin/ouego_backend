@@ -982,7 +982,7 @@ class OrderAPIController extends AppBaseController
             $destination_point['longitude'],
         ]);
 
-        dd($result);
+        dd($destination_point);
 
         $current_distance = 0;
 
