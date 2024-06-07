@@ -971,6 +971,8 @@ class OrderAPIController extends AppBaseController
             "longitude" =>  $carrier->location_longitude,
         ];
 
+        dd($source_point);
+
         $destination_point = $destination_list->last();
 
         $result = GoogleMapsAPIUtils::getDistance([
