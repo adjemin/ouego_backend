@@ -926,14 +926,14 @@ class OrderAPIController extends AppBaseController
             $route_points = (array) $route_points;
         }
 
-        if(!array_key_exists('type_engin_slug',$meta_data)){
+        if(!array_key_exists('product_type_slug',$meta_data)){
 
-            return $this->sendError('type_engin_slug is required', 400);
+            return $this->sendError('product_type_slug is required', 400);
         }
 
-        if(!array_key_exists('engin_model',$meta_data)){
+        if(!array_key_exists('product_slug',$meta_data)){
 
-            return $this->sendError('engin_model is required', 400);
+            return $this->sendError('product_slug is required', 400);
         }
 
         if(!array_key_exists('delivery_type_code',$meta_data)){
