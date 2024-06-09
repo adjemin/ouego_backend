@@ -976,13 +976,13 @@ class OrderAPIController extends AppBaseController
 
         $result = GoogleMapsAPIUtils::getDistance([
             $source_point['latitude'],
-            $source_point['longitude'],
+            $source_point['longitude']
         ],[
             $destination_point['latitude'],
-            $destination_point['longitude'],
+            $destination_point['longitude']
+
         ]);
 
-        dd($result);
 
         $current_distance = 0;
 
@@ -994,7 +994,7 @@ class OrderAPIController extends AppBaseController
 
         }
 
-        dd($current_distance);
+        //dd($current_distance);
 
 
         return $this->sendResponse(PricingUtils::transport($current_distance), 'Order saved successfully');
