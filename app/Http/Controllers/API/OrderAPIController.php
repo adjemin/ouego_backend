@@ -183,11 +183,11 @@ class OrderAPIController extends AppBaseController
                 $orderItem = OrderItem::create([
                     'order_id' => $order->id,
                     'service_slug' => $service->slug,
-                    'meta_data' => json_encode([
+                    'meta_data' => [
                         "type_engin_slug" => array_key_exists('type_engin_slug', $meta_data)?$meta_data['type_engin_slug']:null,
                         "engin_model" => array_key_exists('engin_model', $meta_data)?$meta_data['engin_model']:null,
                         "delivery_type_code" => array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:null,
-                    ]),
+                    ],
                     'quantity' => 1,
                     'quantity_unity' => null,
                     'unit_price' => $delivery_fees,
@@ -295,11 +295,11 @@ class OrderAPIController extends AppBaseController
                 $orderItem = OrderItem::create([
                     'order_id' => $order->id,
                     'service_slug' => $service->slug,
-                    'meta_data' => json_encode([
+                    'meta_data' => [
                         "product_type_slug" => array_key_exists('product_type_slug', $meta_data)?$meta_data['product_type_slug']:null,
                         "product_slug" => array_key_exists('product_slug', $meta_data)?$meta_data['product_slug']:null,
                         "delivery_type_code" => array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:null,
-                    ]),
+                    ],
                     'quantity' => $quantity,
                     'quantity_unity' => "T",
                     'unit_price' => $unit_price,
@@ -404,10 +404,10 @@ class OrderAPIController extends AppBaseController
                 $orderItem = OrderItem::create([
                     'order_id' => $order->id,
                     'service_slug' => $service->slug,
-                    'meta_data' => json_encode([
+                    'meta_data' => [
                         "type_engin_slug" => array_key_exists('type_engin_slug', $meta_data)?$meta_data['type_engin_slug']:null,
                         "engin_model" => array_key_exists('engin_model', $meta_data)?$meta_data['engin_model']:null
-                    ]),
+                    ],
                     'quantity' => $quantity,
                     'quantity_unity' => "days",
                     'unit_price' => $unit_price,
