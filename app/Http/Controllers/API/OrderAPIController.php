@@ -695,9 +695,22 @@ class OrderAPIController extends AppBaseController
                     $current_distance = intval($current_distance);
 
                 }
+                $duration = "";
+
+                if(array_key_exists('duration',$result)){
+                    $result_duration = $result['duration']; //array
+                    $duration = $result_duration['text'];
+                }
+
+                $amount = PricingUtils::transport($current_distance);
 
 
-                return $this->sendResponse(PricingUtils::transport($current_distance), 'Order saved successfully');
+
+                return $this->sendResponse([
+                    "distance" => $current_distance,
+                    "duration" => $duration,
+                    "amount" => $amount
+                ], 'Order saved successfully');
 
 
     }
