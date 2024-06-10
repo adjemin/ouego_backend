@@ -18,7 +18,7 @@ class Customer extends Authenticatable  implements JWTSubject
 
     public $fillable = [
         'first_name',
-        'last_time',
+        'last_name',
         'name',
         'dialing_code',
         'phone_number',
@@ -38,7 +38,7 @@ class Customer extends Authenticatable  implements JWTSubject
 
     protected $casts = [
         'first_name' => 'string',
-        'last_time' => 'string',
+        'last_name' => 'string',
         'name' => 'string',
         'dialing_code' => 'string',
         'phone_number' => 'string',

@@ -9,7 +9,7 @@ class CustomerRepository extends BaseRepository
 {
     protected $fieldSearchable = [
         'first_name',
-        'last_time',
+        'last_name',
         'name',
         'dialing_code',
         'phone_number',
