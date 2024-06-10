@@ -58,7 +58,43 @@ class OrderItem extends Model
 
         if($value != null && is_string($value)){
 
-            return json_decode(stripslashes($value), true);
+            $json_array =  json_decode(stripslashes($value), true);
+
+            if($this->service_slug ==  "course"){
+
+                if(array_key_exists('type_engin_slug', $json_array)){
+                    $json_array['type_engin'] = TypeEngin::where('slug', $json_array['type_engin_slug'])->first();
+                }
+
+                if( array_key_exists('engin_model', $json_array)){
+                    $json_array['engin_model_object'] = TypeEnginModel::where('slug', $json_array['engin_model'])->first();
+                }
+            }
+
+            if($this->service_slug ==  "agregats-construction"){
+
+                if(array_key_exists('product_slug', $json_array)){
+                    $json_array['product'] = Product::where('slug', $json_array['product_slug'])->first();
+                }
+
+                if( array_key_exists('product_type_slug', $json_array)){
+                    $json_array['product_type'] = ProductType::where('slug', $json_array['product_type_slug'])->first();
+                }
+            }
+
+            if($this->service_slug ==  "location"){
+
+                if(array_key_exists('type_engin_slug', $json_array)){
+                    $json_array['type_engin'] = TypeEngin::where('slug', $json_array['type_engin_slug'])->first();
+                }
+
+                if( array_key_exists('engin_model', $json_array)){
+                    $json_array['engin_model_object'] = TypeEnginModel::where('slug', $json_array['engin_model'])->first();
+                }
+            }
+
+            return $json_array;
+
         }else{
             return $value;
         }
