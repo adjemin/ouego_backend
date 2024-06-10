@@ -54,6 +54,16 @@ class OrderItem extends Model
         ])->first();
     }
 
+    public function getMetaDataAttribute($value){
+
+        if($value != null && is_string($value)){
+
+            return json_decode($value);
+        }
+
+        return $value;
+    }
+
     public function getSource()
     {
         return RoutePoint::where([
