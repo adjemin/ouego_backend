@@ -30,7 +30,7 @@ class OrderItem extends Model
     protected $casts = [
         'order_id' => 'integer',
         'service_slug' => 'string',
-        'meta_data' => AsArrayObject::class,
+        'meta_data' => "array",
         'quantity' => 'integer',
         'quantity_unity' => 'string',
         'unit_price' => 'double',
