@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 
 class OrderItem extends Model
 {
@@ -29,7 +30,7 @@ class OrderItem extends Model
     protected $casts = [
         'order_id' => 'integer',
         'service_slug' => 'string',
-        'meta_data' => 'array',
+        'meta_data' => AsArrayObject::class,
         'quantity' => 'integer',
         'quantity_unity' => 'string',
         'unit_price' => 'double',
@@ -49,7 +50,7 @@ class OrderItem extends Model
     public function getServiceAttribute()
     {
         return Service::where([
-            'slug' => 'service_slug'
+            'slug' => $this->service_slug
         ])->first();
     }
 
