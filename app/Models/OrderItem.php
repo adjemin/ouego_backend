@@ -54,17 +54,17 @@ class OrderItem extends Model
         ])->first();
     }
 
-    /*public function getMetaDataAttribute($value){
+    public function getMetaDataAttribute($value){
 
         if($value != null && is_string($value)){
 
-            return json_decode($value, true);
+            return json_decode(stripslashes($value), true);
         }else{
             return $value;
         }
 
 
-    }*/
+    }
 
     public function getSource()
     {
