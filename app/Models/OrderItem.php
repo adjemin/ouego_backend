@@ -58,7 +58,7 @@ class OrderItem extends Model
 
         if($value != null && is_string($value)){
 
-            return json_decode($value);
+            return json_decode($value, true);
         }
 
         return $value;
