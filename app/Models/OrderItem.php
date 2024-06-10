@@ -54,7 +54,7 @@ class OrderItem extends Model
         ])->first();
     }
 
-    public function getMetaDataAttribute($value){
+    /*public function getMetaDataAttribute($value){
 
         if($value != null && is_string($value)){
 
@@ -64,7 +64,7 @@ class OrderItem extends Model
         }
 
 
-    }
+    }*/
 
     public function getSource()
     {
