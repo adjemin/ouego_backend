@@ -33,6 +33,7 @@ class Product extends Model
         'description' => 'string',
         'color' => 'string',
         'icon' => 'string',
+        'tonne_options' => 'array'
     ];
 
     public static array $rules = [

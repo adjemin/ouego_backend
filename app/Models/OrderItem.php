@@ -69,6 +69,7 @@ class OrderItem extends Model
                 if( array_key_exists('engin_model', $json_array)){
                     $json_array['engin_model_object'] = TypeEnginModel::where('slug', $json_array['engin_model'])->first();
                 }
+
             }
 
             if($this->service_slug ==  "agregats-construction"){
