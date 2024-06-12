@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateDriverAPIRequest;
 use App\Http\Requests\API\UpdateDriverAPIRequest;
 use App\Models\Driver;
+use App\Models\Engin;
+use App\Models\EnginPicture;
 use App\Repositories\DriverRepository;
 use App\Repositories\EnginRepository;
 use Illuminate\Http\JsonResponse;
@@ -291,6 +293,9 @@ class DriverAPIController extends AppBaseController
         ]);
 
         $pictures = $request->input("pictures");
+        if(!is_array($pictures)){
+            $pictures = (array)$pictures;
+        }
 
         if(!empty($pictures)){
             foreach($pictures as $picture){
@@ -323,8 +328,6 @@ class DriverAPIController extends AppBaseController
         } else {
             $input = $request->all();
         }
-
-        $car = Engin::where('id', $id)->first();
 
         /** @var Engin $engin */
         $engin = $this->enginRepository->find($id);
