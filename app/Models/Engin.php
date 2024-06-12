@@ -11,6 +11,8 @@ class Engin extends Model
 
     public $table = 'engins';
 
+    protected $appends = ['pictures'];
+
     public $fillable = [
         'driver_id',
         'immatriculation',
@@ -32,7 +34,8 @@ class Engin extends Model
         'cylindree',
         'date_mise_en_production',
         'date_edition',
-        'nom_proprietaire'
+        'nom_proprietaire',
+        'car_docs'
     ];
 
     protected $casts = [
@@ -55,12 +58,17 @@ class Engin extends Model
         'cylindree' => 'string',
         'date_mise_en_production' => 'date',
         'date_edition' => 'date',
-        'nom_proprietaire' => 'string'
+        'nom_proprietaire' => 'string',
+        'car_docs'=> 'array'
     ];
 
     public static array $rules = [
 
     ];
+
+    public function getPicturesAttribute(){
+        return EnginPicture::where('engin_id', $this->id)->get();
+    }
 
 
 }

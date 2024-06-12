@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreateDriverAPIRequest;
 use App\Http\Requests\API\UpdateDriverAPIRequest;
 use App\Models\Driver;
 use App\Repositories\DriverRepository;
+use App\Repositories\EnginRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -18,9 +19,12 @@ class DriverAPIController extends AppBaseController
 {
     private DriverRepository $driverRepository;
 
-    public function __construct(DriverRepository $driverRepo)
+    private EnginRepository $enginRepository;
+
+    public function __construct(DriverRepository $driverRepo, EnginRepository $enginRepo)
     {
         $this->driverRepository = $driverRepo;
+        $this->enginRepository = $enginRepo;
     }
 
     /**
@@ -69,10 +73,14 @@ class DriverAPIController extends AppBaseController
 
     /**
      * Update the specified Driver in storage.
-     * PUT/PATCH /drivers/{id}
+     * PUT/PATCH /drivers/edit_profil
      */
-    public function update($id, UpdateDriverAPIRequest $request): JsonResponse
+    public function update(UpdateDriverAPIRequest $request): JsonResponse
     {
+
+        $driver = auth('api-drivers')->user();
+        $id = $driver->id;
+
         $input = $request->all();
 
         /** @var Driver $driver */
@@ -82,9 +90,36 @@ class DriverAPIController extends AppBaseController
             return $this->sendError('Driver not found');
         }
 
+        if(!empty($request->input("photo_url"))){
+            $driver->photo_url = $request->input("photo_url");
+            $driver->update();
+            unset($input['photo_url']);
+        }
+
+        if(!empty($request->input("services"))){
+            $driver->services = $request->input("services");
+            $driver->update();
+            unset($input['services']);
+        }
+
+        if(!empty($request->input("driver_license_docs"))){
+            $driver->driver_license_docs = $request->input("driver_license_docs");
+            $driver->update();
+            unset($input['driver_license_docs']);
+        }
+
+
         $driver = $this->driverRepository->update($input, $id);
 
-        return $this->sendResponse($driver->toArray(), 'Driver updated successfully');
+        $token = JWTAuth::fromUser($driver);
+
+        return $this->sendResponse([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => JWTAuth::factory()->getTTL(),
+            'server_time'=> now(),
+            'user' => $driver
+        ], 'Driver saved successfully');
     }
 
     /**
@@ -238,5 +273,78 @@ class DriverAPIController extends AppBaseController
         ], 'Driver got successfully');
 
 
+    }
+
+    public function createCar(Request $request){
+
+        $driver = auth('api-drivers')->user();
+
+        if ($request->isJson()) {
+            $input = $request->json()->all();
+        } else {
+            $input = $request->all();
+        }
+
+        $car = Engin::create([
+            "car_docs" => $request->input("car_docs"),
+            "driver_id" => $driver->id
+        ]);
+
+        $pictures = $request->input("pictures");
+
+        if(!empty($pictures)){
+            foreach($pictures as $picture){
+                EnginPicture::create([
+                    "engin_id" => $car->id,
+                    "url" => $picture
+                ]);
+            }
+        }
+
+        $driver = auth('api-drivers')->user();
+
+        $token = JWTAuth::fromUser($driver);
+
+        return $this->sendResponse([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => JWTAuth::factory()->getTTL(),
+            'server_time'=> now(),
+            'user' => $driver
+        ], 'Driver got successfully');
+
+
+    }
+
+    public function updateCar($id, Request $request){
+
+        if ($request->isJson()) {
+            $input = $request->json()->all();
+        } else {
+            $input = $request->all();
+        }
+
+        $car = Engin::where('id', $id)->first();
+
+        /** @var Engin $engin */
+        $engin = $this->enginRepository->find($id);
+
+        if (empty($engin)) {
+            return $this->sendError('Engin not found');
+        }
+
+        $engin = $this->enginRepository->update($input, $id);
+
+        $driver = auth('api-drivers')->user();
+
+        $token = JWTAuth::fromUser($driver);
+
+        return $this->sendResponse([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => JWTAuth::factory()->getTTL(),
+            'server_time'=> now(),
+            'user' => $driver
+        ], 'Driver got successfully');
     }
 }

@@ -15,6 +15,8 @@ class Driver extends Authenticatable  implements JWTSubject
 
     protected $guard = 'api-drivers';
 
+    protected $appends = ['cars'];
+
     public $fillable = [
         'first_name',
         'last_name',
@@ -44,7 +46,9 @@ class Driver extends Authenticatable  implements JWTSubject
         'current_balance' => 'double',
         'old_balance' => 'double',
         'last_location_latitude' => 'double',
-        'last_location_longitude' => 'double'
+        'last_location_longitude' => 'double',
+        'driver_license_docs' => 'array',
+        'serives' => 'array'
     ];
 
     public static array $rules = [
@@ -69,6 +73,10 @@ class Driver extends Authenticatable  implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function getCarsAttribute(){
+        return Engin::where('driver_id', $this->id)->get();
     }
 
 

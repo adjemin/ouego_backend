@@ -24,10 +24,10 @@ Route::prefix('v1/')->group(function () {
     Route::put('customers/edit_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'update'])->middleware("auth.customer:api-customers");
     Route::get('customers/get_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'getProfil'])->middleware("auth.customer:api-customers");
 
-    Route::get('services/list', [App\Http\Controllers\API\ServiceAPIController::class, 'index'])->middleware("auth.customer:api-customers");
+    Route::get('services/list', [App\Http\Controllers\API\ServiceAPIController::class, 'index']);
     Route::post('services/create', [App\Http\Controllers\API\ServiceAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
-    Route::get('products/list', [App\Http\Controllers\API\ProductAPIController::class, 'index'])->middleware("auth.customer:api-customers");
+    Route::get('products/list', [App\Http\Controllers\API\ProductAPIController::class, 'index']);
     Route::post('products/create', [App\Http\Controllers\API\ProductAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
     Route::post('product_types/create', [App\Http\Controllers\API\ProductTypeAPIController::class, 'store'])->middleware("auth.customer:api-customers");
@@ -44,6 +44,9 @@ Route::prefix('v1/')->group(function () {
     Route::put('orders/{id}/perform_driver_lookup', [App\Http\Controllers\API\OrderAPIController::class, 'performDriverLookup']);
 
     Route::get('customers/orders/list', [App\Http\Controllers\API\OrderAPIController::class, 'getCustomerOrders'])->middleware("auth.customer:api-customers");
+
+    Route::get('drivers/orders/list', [App\Http\Controllers\API\OrderAPIController::class, 'getDriverOrders'])->middleware("auth.driver:api-drivers");
+
 
     Route::post('orders/ride/estimate_price', [App\Http\Controllers\API\OrderAPIController::class, 'estimateRidePrice'])->middleware("auth.customer:api-customers");
 
@@ -72,6 +75,9 @@ Route::prefix('v1/')->group(function () {
     Route::post('drivers/refresh', [App\Http\Controllers\API\DriverAPIController::class, 'refresh'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/edit_profil', [App\Http\Controllers\API\DriverAPIController::class, 'update'])->middleware("auth.driver:api-drivers");
     Route::get('drivers/get_profil', [App\Http\Controllers\API\DriverAPIController::class, 'getProfil'])->middleware("auth.driver:api-drivers");
+
+    Route::post('drivers/cars/create', [App\Http\Controllers\API\DriverAPIController::class, 'createCar'])->middleware("auth.driver:api-drivers");
+    Route::put('drivers/cars/{id}/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateCar'])->middleware("auth.driver:api-drivers");
 
 });
 

@@ -582,6 +582,16 @@ class OrderAPIController extends AppBaseController
 
     }
 
+    public function getDriverOrders(Request $request){
+
+        $driver = auth('api-drivers')->user();
+
+        $orders = Order::where('driver_id', $driver->id)->orderBy('created_at', 'desc')->get();
+
+        return $this->sendResponse($orders->toArray(), 'Orders retrieved successfully');
+
+    }
+
     public function estimateRidePrice(Request $request){
 
                 /**
