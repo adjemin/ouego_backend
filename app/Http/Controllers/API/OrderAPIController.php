@@ -828,49 +828,59 @@ class OrderAPIController extends AppBaseController
 
         $outer_radius = 10;
 
-        $all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
-
-        $drivers = $all->where([
-            'is_active' => true,
-            'is_available' => true])->whereJsonContains('services', $order->service_slug)->get();
-
-        foreach ($drivers as $driver){
+        $route_point = RoutePoint::where([
+            'order_id' => $order->id,
+            'type' => 'source'
+        ])->first();
 
 
-            $orderInvitation = OrderInvitation::where([
-                'driver_id' => $driver->id,
-                'order_id' => $order->id,
-            ])->first();
+        if($route_point != null){
+            $latitude = $route_point->latitude;
+            $longitude = $route_point->longitude;
 
-            if($orderInvitation == null){
-                $orderInvitation = OrderInvitation::create([
+            $all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
+
+            $drivers = $all->where([
+                'is_active' => true,
+                'is_available' => true])->whereJsonContains('services', $order->service_slug)->get();
+
+            foreach ($drivers as $driver){
+
+
+                $orderInvitation = OrderInvitation::where([
                     'driver_id' => $driver->id,
                     'order_id' => $order->id,
-                    'is_waiting_acceptation' => true,
-                    'acceptation_time' => null,
-                    'rejection_time' => null,
-                    'latitude' => null,
-                    'longitude' => null
-                ]);
+                ])->first();
 
-                //Push Notification
-                $driverNotification = DriverNotification::create([
-                    'driver_id' => $driver->id,
-                    'title' => 'Course #'.$order->id." vous a été affectée",
-                    'subtitle' => "Acceptez ou Refusez la course",
-                    'data_id' => $orderInvitation->id,
-                    'type' => $orderInvitation->table,
-                    'is_read' => false,
-                    'is_received' => false,
-                    'meta_data' => null
-                ]);
-                DriverNotificationUtils::notify($driverNotification);
+                if($orderInvitation == null){
+                    $orderInvitation = OrderInvitation::create([
+                        'driver_id' => $driver->id,
+                        'order_id' => $order->id,
+                        'is_waiting_acceptation' => true,
+                        'acceptation_time' => null,
+                        'rejection_time' => null,
+                        'latitude' => null,
+                        'longitude' => null
+                    ]);
+
+                    //Push Notification
+                    $driverNotification = DriverNotification::create([
+                        'driver_id' => $driver->id,
+                        'title' => 'Course #'.$order->id." vous a été affectée",
+                        'subtitle' => "Acceptez ou Refusez la course",
+                        'data_id' => $orderInvitation->id,
+                        'type' => $orderInvitation->table,
+                        'is_read' => false,
+                        'is_received' => false,
+                        'meta_data' => null
+                    ]);
+                    DriverNotificationUtils::notify($driverNotification);
+                }
+
+
+
             }
-
-
-
         }
-
 
     }
 
@@ -992,16 +1002,35 @@ class OrderAPIController extends AppBaseController
 
         }
 
-        $carrier = Carrier::first();
+        //$carrier = Carrier::first();
 
-        //$source_point = $source_list->first();
+        $inner_radius = 0;
+
+        $outer_radius = 10;
+
+        $destination_point = $destination_list->last();
+
+        $latitude = $destination_point['latitude'];
+        $longitude = $destination_point['longitude'];
+
+        $all = Carrier::geofence($latitude, $longitude, $inner_radius, $outer_radius);
+
+        $carriers = $all->where([
+            'is_active' => true])/*->whereJsonContains('services', $order->service_slug)*/->get();
+
+        if(count($carriers)==0){
+            return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
+        }
+
+        $carrier = $carriers->first();
+
         $source_point = [
             "latitude" => $carrier->location_latitude,
             "longitude" =>  $carrier->location_longitude,
         ];
 
 
-        $destination_point = $destination_list->last();
+
 
         $result = GoogleMapsAPIUtils::getDistance([
             $source_point['latitude'],
