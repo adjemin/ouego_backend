@@ -17,7 +17,7 @@ use App\Models\Invoice;
 use App\Models\Driver;
 use App\Models\Carrier;
 use App\Models\DriverNotification;
-use App\Utilities\DriverNotificationUtils;
+use App\Utilities\DriverNotificationsUtils;
 use App\Repositories\OrderRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

@@ -7,7 +7,7 @@ use App\Models\DriverDevice;
 use App\Models\DriverNotification;
 use Illuminate\Support\Facades\Mail;
 
-class DriverNotificationUtils
+class DriverNotificationsUtils
 {
 
     /**
