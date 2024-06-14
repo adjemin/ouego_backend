@@ -97,6 +97,13 @@ class Driver extends Authenticatable  implements JWTSubject
         return $value;
     }
 
+    public function getDriverLicenseDocsAttribute($value){
+        if($value == null){
+            return [];
+        }
+        return $value;
+    }
+
 
 
 }
