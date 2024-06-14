@@ -378,7 +378,7 @@ class DriverAPIController extends AppBaseController
 
         $input_driver = [
             'driver_id' => $driver->id,
-            'is_available' => array_key_exists('is_available', $input)?$input['is_available']:null,
+            'is_available' => array_key_exists('is_available', $input)?$input['is_available']:true,
             'last_location_latitude' => $input['latitude'],
             'last_location_longitude' => $input['longitude'],
         ];
