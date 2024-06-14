@@ -197,6 +197,9 @@ class OrderAPIController extends AppBaseController
                     'currency' => "XOF"
                 ]);
 
+                $order->service_slug = $service->slug;
+                $order->save();
+
 
             }
 
@@ -426,6 +429,9 @@ class OrderAPIController extends AppBaseController
                     'location_start_date' => $item["location_start_date"],
                     'location_end_date' => $item["location_end_date"]
                 ]);
+
+                $order->service_slug = $service->slug;
+                $order->save();
 
 
             }
