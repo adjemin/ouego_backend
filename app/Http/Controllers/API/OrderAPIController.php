@@ -16,6 +16,8 @@ use App\Models\RoutePoint;
 use App\Models\Invoice;
 use App\Models\Driver;
 use App\Models\Carrier;
+use App\Models\DriverNotification;
+use App\Utilities\DriverNotificationUtils;
 use App\Repositories\OrderRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -852,17 +854,17 @@ class OrderAPIController extends AppBaseController
                 ]);
 
                 //Push Notification
-                /*$userNotification = UserNotification::create([
-                    'user_id' => $driver->id,
-                    'title' => 'Course #'.$task->id." vous a été affectée",
+                $driverNotification = DriverNotification::create([
+                    'driver_id' => $driver->id,
+                    'title' => 'Course #'.$order->id." vous a été affectée",
                     'subtitle' => "Acceptez ou Refusez la course",
-                    'data_id' => $taskInvitation->id,
-                    'type' => $taskInvitation->table,
+                    'data_id' => $orderInvitation->id,
+                    'type' => $orderInvitation->table,
                     'is_read' => false,
                     'is_received' => false,
                     'meta_data' => null
                 ]);
-                UserNotificationUtils::notify($userNotification);*/
+                DriverNotificationUtils::notify($driverNotification);
             }
 
 
