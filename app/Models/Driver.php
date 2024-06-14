@@ -90,6 +90,13 @@ class Driver extends Authenticatable  implements JWTSubject
         return Engin::where('driver_id', $this->id)->get();
     }
 
+    public function getServicesAttribute($value){
+        if($value == null){
+            return [];
+        }
+        return $value;
+    }
+
 
 
 }
