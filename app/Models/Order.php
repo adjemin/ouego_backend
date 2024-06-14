@@ -65,7 +65,7 @@ class Order extends Model
     //cancelled_with_payment //Final status for paid cancellation
     const CANCELLED_WITH_PAYMENT = "cancelled_with_payment";
 
-    protected $appends = ['service','items', 'invoice', 'route_points'];
+    protected $appends = ['customer', 'service','items', 'invoice', 'route_points'];
 
     public $fillable = [
         'reference',
@@ -158,6 +158,12 @@ class Order extends Model
     public function getRoutePointsAttribute()
     {
         return RoutePoint::where(['order_id' => $this->id])->orderBy('visit_order', 'ASC')->get();
+    }
+
+    public function getCustomerAttribute()
+    {
+
+        return Customer::where(['id' => $this->customer_id])->first();
     }
 
     public function getDriverAttribute()
