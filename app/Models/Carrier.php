@@ -4,10 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Geographical;
 
 class Carrier extends Model
 {
     use SoftDeletes;
+    use Geographical;
+
+
+    protected static $kilometers = true;
+
+    const LATITUDE  = 'location_latitude';
+    const LONGITUDE = 'location_longitude';
+
     public $table = 'carriers';
 
     public $fillable = [

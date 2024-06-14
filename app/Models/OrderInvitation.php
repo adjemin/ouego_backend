@@ -11,6 +11,8 @@ class OrderInvitation extends Model
 
     public $table = 'order_invitations';
 
+    protected $appends = ['order'];
+
     public $fillable = [
         'driver_id',
         'order_id',
@@ -31,6 +33,11 @@ class OrderInvitation extends Model
     public static array $rules = [
 
     ];
+
+    public function getOrderAttribute(){
+        return Order::where('id', $this->order_id)->first();
+    }
+
 
 
 }

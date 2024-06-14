@@ -43,9 +43,29 @@ class CustomerDeviceAPIController extends AppBaseController
      */
     public function store(CreateCustomerDeviceAPIRequest $request): JsonResponse
     {
-        $input = $request->all();
 
-        $customerDevice = $this->customerDeviceRepository->create($input);
+        if($request->isJson()){
+            $input = $request->json()->all();
+        }else{
+            $input = $request->all();
+        }
+
+        if(!array_key_exists('customer_id', $input)){
+            return $this->sendError('customer_id is required');
+        }
+
+        if(!array_key_exists('firebase_id', $input)){
+            return $this->sendError('firebase_id is required');
+        }
+
+        $customerDevices = CustomerDevice::where(['firebase_id' => $input['firebase_id']])->get();
+
+        if(count($devices) == 0){
+            $customerDevice = $this->customerDeviceRepository->create($input);
+        }else{
+            $customerDevice = $customerDevices[0];
+            $customerDevice = $this->customerDeviceRepository->update($input, $customerDevice->id);
+        }
 
         return $this->sendResponse($customerDevice->toArray(), 'Customer Device saved successfully');
     }

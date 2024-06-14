@@ -6,11 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Models\Geographical;
 
 class Driver extends Authenticatable  implements JWTSubject
 {
 
     use SoftDeletes;
+    use Geographical;
+
+
+    protected static $kilometers = true;
+
+    const LATITUDE  = 'last_location_latitude';
+    const LONGITUDE = 'last_location_longitude';
+
     public $table = 'drivers';
 
     protected $guard = 'api-drivers';
@@ -28,6 +37,7 @@ class Driver extends Authenticatable  implements JWTSubject
         'is_active',
         'current_balance',
         'old_balance',
+        'is_available'
         'last_location_latitude',
         'last_location_longitude',
         'services',
@@ -43,6 +53,7 @@ class Driver extends Authenticatable  implements JWTSubject
         'phone' => 'string',
         'photo_url' => 'string',
         'is_active' => 'boolean',
+        'is_available' => 'boolean',
         'current_balance' => 'double',
         'old_balance' => 'double',
         'last_location_latitude' => 'double',

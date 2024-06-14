@@ -350,4 +350,44 @@ class DriverAPIController extends AppBaseController
             'user' => $driver
         ], 'Driver got successfully');
     }
+
+    public function updateAvailability(Request $request){
+
+        $input = $request->all();
+
+        $driver = auth('api-drivers')->user();
+
+        if(!array_key_exists('latitude', $input)){
+            return $this->sendError('latitude is required', 400);
+        }
+
+        if(!array_key_exists('longitude', $input)){
+            return $this->sendError('longitude is required', 400);
+        }
+
+        if(!array_key_exists('is_available', $input)){
+            return $this->sendError('is_available is required', 400);
+        }
+
+        $input_driver = [
+            'driver_id' => $driver->id,
+            'is_available' => $input['is_available'],
+            'last_location_latitude' => $input['latitude'],
+            'last_location_longitude' => $input['longitude'],
+        ];
+
+        $driver = $this->driverRepository->update($input_driver, $driver->id);
+
+        $driver = auth('api-drivers')->user();
+
+        $token = JWTAuth::fromUser($driver);
+
+        return $this->sendResponse([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => JWTAuth::factory()->getTTL(),
+            'server_time'=> now(),
+            'user' => $driver
+        ], 'Driver got successfully');
+    }
 }

@@ -32,11 +32,14 @@ class OrderInvitationAPIController extends AppBaseController
      */
     public function index(Request $request): JsonResponse
     {
-        $orderInvitations = $this->orderInvitationRepository->all(
+
+        $driver = auth('api-drivers')->user();
+
+        $orderInvitations = $this->orderInvitationRepository->allQuery(
             $request->except(['skip', 'limit']),
             $request->get('skip'),
             $request->get('limit')
-        );
+        )->where('driver_id', $driver->id)->orderBy("created_at", 'desc')->get();
 
         return $this->sendResponse($orderInvitations->toArray(), 'Order Invitations retrieved successfully');
     }
@@ -223,9 +226,6 @@ class OrderInvitationAPIController extends AppBaseController
                 'user_id' => $orderInvitation->user_id,
                 "is_waiting_acceptation" => true
             ])->get();
-
-
-
 
             return $this->sendResponse($orderInvitations->toArray(), 'Task Invitation retrieved successfully');
         }else{

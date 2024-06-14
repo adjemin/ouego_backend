@@ -24,6 +24,8 @@ Route::prefix('v1/')->group(function () {
     Route::put('customers/edit_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'update'])->middleware("auth.customer:api-customers");
     Route::get('customers/get_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'getProfil'])->middleware("auth.customer:api-customers");
 
+    Route::post('customers/devices/create', [App\Http\Controllers\API\CustomerDeviceAPIController::class, 'store'])->middleware("auth.customer:api-customers");
+
     Route::get('services/list', [App\Http\Controllers\API\ServiceAPIController::class, 'index']);
     Route::post('services/create', [App\Http\Controllers\API\ServiceAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
@@ -78,6 +80,18 @@ Route::prefix('v1/')->group(function () {
 
     Route::post('drivers/cars/create', [App\Http\Controllers\API\DriverAPIController::class, 'createCar'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/cars/{id}/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateCar'])->middleware("auth.driver:api-drivers");
+
+
+    Route::post('drivers/devices/create', [App\Http\Controllers\API\DriverDeviceAPIController::class, 'store'])->middleware("auth.driver:api-drivers");
+
+    Route::get('drivers/orders_invitations/all', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
+
+
+    Route::put('drivers/orders_invitations/{id}/accept', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'accept'])->middleware("auth.driver:api-drivers");
+    Route::put('drivers/orders_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse'])->middleware("auth.driver:api-drivers");
+
+
+    Route::put('drivers/availabilities/update', [DriverAPIController::class, 'updateAvailability']);
 
 });
 
@@ -154,4 +168,14 @@ Route::prefix('v1/')->group(function () {
 
 
 Route::resource('settings', App\Http\Controllers\API\SettingAPIController::class)
+    ->except(['create', 'edit']);
+
+
+Route::resource('driver-devices', App\Http\Controllers\API\DriverDeviceAPIController::class)
+    ->except(['create', 'edit']);
+
+Route::resource('driver-notifications', App\Http\Controllers\API\DriverNotificationsAPIController::class)
+    ->except(['create', 'edit']);
+
+Route::resource('customer-notifications', App\Http\Controllers\API\CustomerNotificationAPIController::class)
     ->except(['create', 'edit']);
