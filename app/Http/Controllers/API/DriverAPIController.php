@@ -110,6 +110,13 @@ class DriverAPIController extends AppBaseController
             unset($input['driver_license_docs']);
         }
 
+        if(array_key_exists('last_name', $input) && array_key_exists('first_name', $input)){
+
+            $input['last_name'] = ucfirst(strtolower($input['last_name']));
+            $input['first_name'] = ucfirst(strtolower($input['first_name']));
+            $input['name'] = $input['first_name']." ".$input['last_name'];
+        }
+
 
         $driver = $this->driverRepository->update($input, $id);
 
