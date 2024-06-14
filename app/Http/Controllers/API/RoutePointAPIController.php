@@ -105,4 +105,9 @@ class RoutePointAPIController extends AppBaseController
 
         return $this->sendSuccess('Route Point deleted successfully');
     }
+
+    //TODO
+    public function updateStatus(Request $request){
+
+    }
 }

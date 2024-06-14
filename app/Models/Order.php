@@ -65,7 +65,7 @@ class Order extends Model
     //cancelled_with_payment //Final status for paid cancellation
     const CANCELLED_WITH_PAYMENT = "cancelled_with_payment";
 
-    protected $appends = ['items', 'invoice', 'route_points'];
+    protected $appends = ['service_slug', 'service','items', 'invoice', 'route_points'];
 
     public $fillable = [
         'reference',
@@ -180,6 +180,26 @@ class Order extends Model
             'type' => 'destination',
             'order_id' => $this->id
         ])->get();
+    }
+
+    public function getServiceSlugAttribute()
+    {
+        $order_item = OrderItem::where('order_id', $this->id)->first();
+        if($order_item == null){
+            return null;
+        }
+
+        return $order_item->service_slug;
+    }
+
+    public function getServiceAttribute()
+    {
+        $order_item = OrderItem::where('order_id', $this->id)->first();
+        if($order_item == null){
+            return null;
+        }
+
+        return Service::where('slug', $order_item->service_slug)->first();
     }
 
 

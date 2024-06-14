@@ -65,11 +65,11 @@ Route::prefix('v1/')->group(function () {
     Route::put('order_invitations/{id}/accept', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'accept']);
     Route::put('order_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse']);
 
-    //Modifier le statut d’un ramassage ou livraison (ANNULER, DEMARRER, REUSSIR, ECHOUER ) (Livreur)
+    //TODO Modifier le statut d’un ramassage ou livraison (ANNULER, DEMARRER, REUSSIR, ECHOUER ) (Livreur)
     Route::put('route_points/{id}/update_status', [App\Http\Controllers\API\RoutePointAPIController::class, 'updateStatus']);
 
 
-    //Inscription par téléphone (Client)
+    //Inscription par téléphone Driver
     Route::post('drivers/register', [App\Http\Controllers\API\DriverAPIController::class, 'register']);
     Route::post('drivers/login', [App\Http\Controllers\API\DriverAPIController::class, 'login']);
 

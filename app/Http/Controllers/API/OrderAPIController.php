@@ -826,7 +826,11 @@ class OrderAPIController extends AppBaseController
 
         $outer_radius = 10;
 
-        $drivers = Driver::all();
+        $all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
+
+        $drivers = $all->where([
+            'is_active' => true,
+            'is_available' => true])->whereJsonContains('services', $order->service_slug)->get();
 
         foreach ($drivers as $driver){
 
