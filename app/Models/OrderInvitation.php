@@ -26,6 +26,7 @@ class OrderInvitation extends Model
     protected $casts = [
         'driver_id' => 'integer',
         'order_id' => 'integer',
+        'is_waiting_acceptation'=> 'boolean',
         'latitude' => 'double',
         'longitude' => 'double'
     ];
