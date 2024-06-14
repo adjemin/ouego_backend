@@ -39,7 +39,9 @@ class OrderInvitationAPIController extends AppBaseController
             $request->except(['skip', 'limit']),
             $request->get('skip'),
             $request->get('limit')
-        )->where('driver_id', $driver->id)->orderBy("created_at", 'desc')->get();
+        )->where('driver_id', $driver->id)
+        ->where('is_waiting_acceptation', true)
+        ->orderBy("created_at", 'desc')->get();
 
         return $this->sendResponse($orderInvitations->toArray(), 'Order Invitations retrieved successfully');
     }
