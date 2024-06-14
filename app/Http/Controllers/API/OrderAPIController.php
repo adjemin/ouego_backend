@@ -888,7 +888,7 @@ class OrderAPIController extends AppBaseController
                         'is_received' => false,
                         'meta_data' => null
                     ]);
-                    DriverNotificationUtils::notify($driverNotification);
+                    DriverNotificationsUtils::notify($driverNotification);
                 }
 
 
