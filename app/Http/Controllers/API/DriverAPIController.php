@@ -385,15 +385,8 @@ class DriverAPIController extends AppBaseController
 
         $driver = $this->driverRepository->update($input_driver, $driver->id);
 
-        $driver = auth('api-drivers')->user();
-
-        $token = JWTAuth::fromUser($driver);
 
         return $this->sendResponse([
-            'token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => JWTAuth::factory()->getTTL(),
-            'server_time'=> now(),
             'user' => $driver
         ], 'Driver got successfully');
     }
