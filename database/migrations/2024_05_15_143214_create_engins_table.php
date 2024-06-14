@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('nombre_roues')->nullable();
             $table->string('oil')->nullable();
             $table->json('usages')->nullable();
+            $table->json('car_docs')->nullable();
             $table->string('ability_tonne')->nullable();
             $table->string('ptac_tonne')->nullable();
             $table->string('poids_vide')->nullable();
