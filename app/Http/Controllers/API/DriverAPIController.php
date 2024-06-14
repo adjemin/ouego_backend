@@ -351,11 +351,15 @@ class DriverAPIController extends AppBaseController
         ], 'Driver got successfully');
     }
 
-    public function updateAvailability(Request $request){
+    public function updateAvailability($id, Request $request){
 
         $input = $request->all();
 
-        $driver = auth('api-drivers')->user();
+        $driver = Driver::where('id', $id)->first();
+
+        if (empty($driver)) {
+            return $this->sendError('Driver not found');
+        }
 
         if(!array_key_exists('latitude', $input)){
             return $this->sendError('latitude is required', 400);

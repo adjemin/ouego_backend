@@ -91,7 +91,7 @@ Route::prefix('v1/')->group(function () {
     Route::put('drivers/orders_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse'])->middleware("auth.driver:api-drivers");
 
 
-    Route::put('drivers/availabilities/update', [DriverAPIController::class, 'updateAvailability']);
+    Route::put('drivers/availabilities/{id}/update', [DriverAPIController::class, 'updateAvailability']);
 
     Route::get('drivers/notifications/list', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/notifications/{id}/update', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'update'])->middleware("auth.driver:api-drivers");
