@@ -37,7 +37,7 @@ class Driver extends Authenticatable  implements JWTSubject
         'is_active',
         'current_balance',
         'old_balance',
-        'is_available'
+        'is_available',
         'last_location_latitude',
         'last_location_longitude',
         'services',

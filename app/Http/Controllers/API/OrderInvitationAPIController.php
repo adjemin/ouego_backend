@@ -135,7 +135,7 @@ class OrderInvitationAPIController extends AppBaseController
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
         if (empty($orderInvitation)) {
-            return $this->sendError('Task Invitation not found', 400);
+            return $this->sendError('Order Invitation not found', 400);
         }
 
         if($orderInvitation->is_waiting_acceptation){
@@ -199,7 +199,7 @@ class OrderInvitationAPIController extends AppBaseController
             ])->get();
 
 
-            return $this->sendResponse($orderInvitations->toArray(), 'Task Invitation retrieved successfully', 400);
+            return $this->sendResponse($orderInvitations->toArray(), 'Order Invitation retrieved successfully', 400);
         }else{
             return $this->sendError('Affectation déjà traitée', 400);
         }
@@ -210,7 +210,7 @@ class OrderInvitationAPIController extends AppBaseController
         $orderInvitation = $this->taskInvitationRepository->find($id);
 
         if (empty($orderInvitation)) {
-            return $this->sendError('Task Invitation not found');
+            return $this->sendError('Order Invitation not found');
         }
 
         if($orderInvitation->is_waiting_acceptation){
@@ -227,7 +227,7 @@ class OrderInvitationAPIController extends AppBaseController
                 "is_waiting_acceptation" => true
             ])->get();
 
-            return $this->sendResponse($orderInvitations->toArray(), 'Task Invitation retrieved successfully');
+            return $this->sendResponse($orderInvitations->toArray(), 'Order Invitation retrieved successfully');
         }else{
             return $this->sendError('Affectation déjà traitée');
         }
