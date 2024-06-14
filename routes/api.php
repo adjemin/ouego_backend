@@ -66,7 +66,7 @@ Route::prefix('v1/')->group(function () {
     Route::put('order_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse']);
 
     //TODO Modifier le statut d’un ramassage ou livraison (ANNULER, DEMARRER, REUSSIR, ECHOUER ) (Livreur)
-    Route::put('route_points/{id}/update_status', [App\Http\Controllers\API\RoutePointAPIController::class, 'updateStatus']);
+    Route::put('route_points/{id}/update_status', [App\Http\Controllers\API\RoutePointAPIController::class, 'updateStatus'])->middleware("auth.driver:api-drivers");
 
 
     //Inscription par téléphone Driver
