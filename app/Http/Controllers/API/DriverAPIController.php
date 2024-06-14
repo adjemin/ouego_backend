@@ -365,13 +365,9 @@ class DriverAPIController extends AppBaseController
             return $this->sendError('longitude is required', 400);
         }
 
-        if(!array_key_exists('is_available', $input)){
-            return $this->sendError('is_available is required', 400);
-        }
-
         $input_driver = [
             'driver_id' => $driver->id,
-            'is_available' => $input['is_available'],
+            'is_available' => array_key_exists('is_available', $input)?$input['is_available']:null,
             'last_location_latitude' => $input['latitude'],
             'last_location_longitude' => $input['longitude'],
         ];

@@ -84,7 +84,7 @@ Route::prefix('v1/')->group(function () {
 
     Route::post('drivers/devices/create', [App\Http\Controllers\API\DriverDeviceAPIController::class, 'store'])->middleware("auth.driver:api-drivers");
 
-    Route::get('drivers/orders_invitations/all', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
+    Route::get('drivers/orders_invitations/list', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
 
 
     Route::put('drivers/orders_invitations/{id}/accept', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'accept'])->middleware("auth.driver:api-drivers");
@@ -92,6 +92,9 @@ Route::prefix('v1/')->group(function () {
 
 
     Route::put('drivers/availabilities/update', [DriverAPIController::class, 'updateAvailability']);
+
+    Route::get('drivers/notifications/list', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
+    Route::put('drivers/notifications/{id}/update', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'update'])->middleware("auth.driver:api-drivers");
 
 });
 

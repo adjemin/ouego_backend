@@ -240,6 +240,11 @@ class OrderAPIController extends AppBaseController
                     return $this->sendError('delivery_price is required', 400);
                 }
 
+                if(!array_key_exists('carrier_id',$item)){
+                    $order->forceDelete();
+                    return $this->sendError('carrier_id is required', 400);
+                }
+
                 $meta_data = $item['meta_data'];
                 if(!is_array($meta_data)){
                     $meta_data = (array) $item['meta_data'];
@@ -1030,8 +1035,6 @@ class OrderAPIController extends AppBaseController
         ];
 
 
-
-
         $result = GoogleMapsAPIUtils::getDistance([
             $source_point['latitude'],
             $source_point['longitude']
@@ -1055,7 +1058,10 @@ class OrderAPIController extends AppBaseController
         //dd($current_distance);
 
 
-        return $this->sendResponse(PricingUtils::transport($current_distance), 'Order saved successfully');
+        return $this->sendResponse([
+            'carrier_id' => $carrier->id,
+            'amount' => PricingUtils::transport($current_distance)
+        ], 'Order saved successfully');
 
 
 }
