@@ -314,6 +314,9 @@ class OrderAPIController extends AppBaseController
                     'currency' => $currency
                 ]);
 
+                $order->service_slug = $service->slug;
+                $order->save();
+
 
             }
 
