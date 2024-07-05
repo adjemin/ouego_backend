@@ -60,7 +60,7 @@ class CustomerDeviceAPIController extends AppBaseController
 
         $customerDevices = CustomerDevice::where(['firebase_id' => $input['firebase_id']])->get();
 
-        if(count($devices) == 0){
+        if(count($customerDevices) == 0){
             $customerDevice = $this->customerDeviceRepository->create($input);
         }else{
             $customerDevice = $customerDevices[0];
