@@ -8,7 +8,7 @@ use App\Models\RoutePoint;
 use App\Models\RoutePointHistory;
 use App\Models\Order;
 use App\Models\CustomerNotification;
-use App\Utilities\CustomerNotificationUtils;
+use App\Utilities\CustomerNotificationsUtils;
 use App\Repositories\RoutePointRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
