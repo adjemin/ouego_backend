@@ -1073,6 +1073,313 @@ class OrderAPIController extends AppBaseController
         ], 'Order saved successfully');
 
 
-}
+   }
+
+public function estimateDeliveryPriceGravier(Request $request){
+
+    /**
+     *
+      {
+        "service_slug":"agregats-construction",
+        "meta_data":{
+            "product_type_slug":"gravier-515-petit-grain",
+            "product_slug":"gravier",
+            "delivery_type_code":"EXPRESS"
+        },
+        "quantity":3,
+        "route_points":[
+            {
+                "address_name":"Pharmacie Sainte Monique du plateau dokui, Abidjan, Côte d'ivoire",
+                "latitude":5.3994128,
+                "longitude":-3.9999536,
+                "type":"destination",
+                "parcel_details":"",
+                "contact_fullname": "string",
+                "contact_phone":"string",
+                "contact_email":""
+            }
+        ]
+      }
+     *
+     */
+
+
+
+    if(!array_key_exists('meta_data', $request->all())){
+
+        return $this->sendError('meta_data is required', 400);
+    }
+
+    if(!array_key_exists('quantity', $request->all())){
+
+        return $this->sendError('quantity is required', 400);
+    }
+
+    if(!array_key_exists('route_points', $request->all())){
+
+        return $this->sendError('route_points is required', 400);
+    }
+
+
+    $quantity = $request->input('quantity');
+
+    $meta_data = $request->input('meta_data');
+
+    $route_points = $request->input('route_points');
+
+    if(!is_array($meta_data)){
+        $meta_data = (array) $meta_data;
+    }
+
+    if(!is_array($route_points)){
+        $route_points = (array) $route_points;
+    }
+
+    if(!array_key_exists('product_type_slug',$meta_data)){
+
+        return $this->sendError('product_type_slug is required', 400);
+    }
+
+    if(!array_key_exists('product_slug',$meta_data)){
+
+        return $this->sendError('product_slug is required', 400);
+    }
+
+    if(!array_key_exists('delivery_type_code',$meta_data)){
+
+        return $this->sendError('delivery_type_code is required', 400);
+    }
+
+    $source_list = collect([]);
+    $destination_list = collect([]);
+
+    foreach ($route_points as $route_point_item){
+        if(!is_array($route_point_item)){
+            $route_point_item = (array)$route_point_item;
+        }
+
+        $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+        if($route_point_item_type == 'source'){
+            $source_list->push($route_point_item);
+        }
+
+        if($route_point_item_type == 'destination'){
+            $destination_list->push($route_point_item);
+        }
+
+
+    }
+
+    //$carrier = Carrier::first();
+
+    $inner_radius = 0;
+
+    $outer_radius = 10;
+
+    $destination_point = $destination_list->last();
+
+    $latitude = $destination_point['latitude'];
+    $longitude = $destination_point['longitude'];
+
+    $all = Carrier::geofence($latitude, $longitude, $inner_radius, $outer_radius);
+
+    $carriers = $all->where([
+        'is_active' => true])/*->whereJsonContains('services', $order->service_slug)*/->get();
+
+    if(count($carriers)==0){
+        return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
+    }
+
+    $carrier = $carriers->first();
+
+    $source_point = [
+        "latitude" => $carrier->location_latitude,
+        "longitude" =>  $carrier->location_longitude,
+    ];
+
+
+    $result = GoogleMapsAPIUtils::getDistance([
+        $source_point['latitude'],
+        $source_point['longitude']
+    ],[
+        $destination_point['latitude'],
+        $destination_point['longitude']
+
+    ]);
+
+
+    $current_distance = 0;
+
+    if(array_key_exists('distance',$result)){
+        $result_distance = $result['distance']; //array
+        $result_distance_value = $result_distance['value']; //meters
+        $current_distance = $result_distance_value/1000; //kilometers
+        $current_distance = intval($current_distance);
+
+    }
+
+    //dd($current_distance);
+
+
+    return $this->sendResponse([
+        'carrier_id' => $carrier->id,
+        'amount' => PricingUtils::transportGravier($current_distance, $quantity)
+    ], 'Order saved successfully');
+
+
+  }
+
+  public function estimateDeliveryPriceSable(Request $request){
+
+    /**
+     *
+      {
+        "service_slug":"agregats-construction",
+        "meta_data":{
+            "product_type_slug":"gravier-515-petit-grain",
+            "product_slug":"gravier",
+            "delivery_type_code":"EXPRESS"
+        },
+        "quantity":3,
+        "route_points":[
+            {
+                "address_name":"Pharmacie Sainte Monique du plateau dokui, Abidjan, Côte d'ivoire",
+                "latitude":5.3994128,
+                "longitude":-3.9999536,
+                "type":"destination",
+                "parcel_details":"",
+                "contact_fullname": "string",
+                "contact_phone":"string",
+                "contact_email":""
+            }
+        ]
+      }
+     *
+     */
+
+
+
+    if(!array_key_exists('meta_data', $request->all())){
+
+        return $this->sendError('meta_data is required', 400);
+    }
+
+    if(!array_key_exists('quantity', $request->all())){
+
+        return $this->sendError('quantity is required', 400);
+    }
+
+    if(!array_key_exists('route_points', $request->all())){
+
+        return $this->sendError('route_points is required', 400);
+    }
+
+    $meta_data = $request->input('meta_data');
+
+    $route_points = $request->input('route_points');
+
+    if(!is_array($meta_data)){
+        $meta_data = (array) $meta_data;
+    }
+
+    if(!is_array($route_points)){
+        $route_points = (array) $route_points;
+    }
+
+    if(!array_key_exists('product_type_slug',$meta_data)){
+
+        return $this->sendError('product_type_slug is required', 400);
+    }
+
+    if(!array_key_exists('product_slug',$meta_data)){
+
+        return $this->sendError('product_slug is required', 400);
+    }
+
+    if(!array_key_exists('delivery_type_code',$meta_data)){
+
+        return $this->sendError('delivery_type_code is required', 400);
+    }
+
+    $source_list = collect([]);
+    $destination_list = collect([]);
+
+    foreach ($route_points as $route_point_item){
+        if(!is_array($route_point_item)){
+            $route_point_item = (array)$route_point_item;
+        }
+
+        $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+        if($route_point_item_type == 'source'){
+            $source_list->push($route_point_item);
+        }
+
+        if($route_point_item_type == 'destination'){
+            $destination_list->push($route_point_item);
+        }
+
+
+    }
+
+    //$carrier = Carrier::first();
+
+    $inner_radius = 0;
+
+    $outer_radius = 10;
+
+    $destination_point = $destination_list->last();
+
+    $latitude = $destination_point['latitude'];
+    $longitude = $destination_point['longitude'];
+
+    $all = Carrier::geofence($latitude, $longitude, $inner_radius, $outer_radius);
+
+    $carriers = $all->where([
+        'is_active' => true])/*->whereJsonContains('services', $order->service_slug)*/->get();
+
+    if(count($carriers)==0){
+        return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
+    }
+
+    $carrier = $carriers->first();
+
+    $source_point = [
+        "latitude" => $carrier->location_latitude,
+        "longitude" =>  $carrier->location_longitude,
+    ];
+
+
+    $result = GoogleMapsAPIUtils::getDistance([
+        $source_point['latitude'],
+        $source_point['longitude']
+    ],[
+        $destination_point['latitude'],
+        $destination_point['longitude']
+
+    ]);
+
+
+    $current_distance = 0;
+
+    if(array_key_exists('distance',$result)){
+        $result_distance = $result['distance']; //array
+        $result_distance_value = $result_distance['value']; //meters
+        $current_distance = $result_distance_value/1000; //kilometers
+        $current_distance = intval($current_distance);
+
+    }
+
+    //dd($current_distance);
+
+
+    return $this->sendResponse([
+        'carrier_id' => $carrier->id,
+        'amount' => PricingUtils::transportSable($current_distance)
+    ], 'Order saved successfully');
+
+
+  }
 
 }

@@ -7,52 +7,73 @@ use App\Models\Setting;
 class PricingUtils{
 
 
-    public static function transportGravier($distance){
+    public static function transportGravier($distance, $quantity){
 
         //DISTANCE DE BASE (KM)
-        $distance_de_base = doubleval(Setting::get('DISTANCE_DE_BASE'));
+        $distance_de_base = doubleval(Setting::get('GRAVIER_DISTANCE_DE_BASE'));
 
         //QUANTITE DE BASE (T)
-        $quantite_de_base = doubleval(Setting::get('QUANTITE_DE_BASE'));
+        $quantite_de_base = doubleval(Setting::get('GRAVIER_QUANTITE_DE_BASE'));
 
         //PRIX DE BASE (minimum)
-        $prix_de_base = doubleval(Setting::get('PRIX_DE_BASE'));
+        $prix_de_base = doubleval(Setting::get('GRAVIER_PRIX_DE_BASE'));
 
         //PRIX KILOMETRE (>45 km)
-        $prix_kilometre = doubleval(Setting::get('PRIX_KILOMETRE'));
+        $prix_kilometre = doubleval(Setting::get('GRAVIER_PRIX_KILOMETRE'));
 
         //PRIX TONNAGE (> 20 T)
-        $prix_tonnage = doubleval(Setting::get('PRIX_TONNAGE'));
+        $prix_tonnage = doubleval(Setting::get('GRAVIER_PRIX_TONNAGE'));
 
         //FRAIS_DE_ROUTE
-        $prix_tonnage = doubleval(Setting::get('FRAIS_DE_ROUTE'));
+        $frais_route = doubleval(Setting::get('GRAVIER_FRAIS_DE_ROUTE'));
 
         //COMMISSION OUEGO (à titre indicatif)
-        $commission_ouego = doubleval(Setting::get('COMMISSION_OUEGO'));
+        //$commission_ouego = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO'));
+
+        $difference_distance = $distance - $distance_de_base;
+
+        if($difference_distance <0){
+            $difference_distance = 0;
+        }
+
+        $difference_quantity = $quantity - $quantite_de_base;
+        if($difference_quantity < 0){
+            $difference_quantity = 0;
+        }
+
+        $amount = $prix_de_base  + ($difference_distance * $prix_kilometre) + ($difference_quantity * $prix_tonnage)  + $frais_route;
+
+        return self::round_up($amount, 100) ;
+
+    }
+
+    public static function transportSable($distance){
+
+        //DISTANCE DE BASE (KM)
+        $distance_de_base = doubleval(Setting::get('SABLE_DISTANCE_DE_BASE'));
 
 
+        //PRIX DE BASE (minimum)
+        $prix_de_base = doubleval(Setting::get('SABLE_PRIX_DE_BASE'));
+
+        //PRIX KILOMETRE (>45 km)
+        $prix_kilometre = doubleval(Setting::get('SABLE_PRIX_KILOMETRE'));
 
 
-        $prix_carburant = doubleval(Setting::get('PRIX_CARBURANT'));
-        $conso_litre = doubleval(Setting::get('CONSO_LITRE'));
+        //FRAIS_DE_ROUTE
+        $frais_route = doubleval(Setting::get('SABLE_FRAIS_DE_ROUTE'));
 
-        $total_conso = $conso_litre * $prix_carburant;
+        //COMMISSION OUEGO (à titre indicatif)
+       // $commission_ouego = doubleval(Setting::get('SABLE_COMMISSION_OUEGO'));
 
-        $marge_chauffeur_course_par_km = doubleval(Setting::get('MARGE_CHAUFFEUR_COURSE'));
+       $difference_distance = $distance - $distance_de_base;
 
-        $commission_course = doubleval(Setting::get('COMMISSION_COURSE'));
+       if($difference_distance <0){
+           $difference_distance = 0;
+       }
 
-        $marge_brute = $marge_chauffeur_course_par_km + $commission_course;
 
-        $prix_transport_net = ($total_conso + $marge_brute ) * $distance;
-
-        $frais_route = doubleval(Setting::get('FRAIS_ROUTE'));
-
-        $taxe = doubleval(Setting::get('TAXE'));
-
-        $taxe_amount = $prix_transport_net * $taxe;
-
-        $amount =  $prix_transport_net + $frais_route + $taxe_amount;
+        $amount =  $prix_de_base + ($difference_distance * $prix_kilometre) + $frais_route;
 
         return self::round_up($amount, 100) ;
 
