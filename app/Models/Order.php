@@ -79,6 +79,7 @@ class Order extends Model
         'is_running',
         'is_waiting',
         'is_completed',
+        'is_successful',
         'completion_time',
         'start_time',
         'acceptation_time',
@@ -108,6 +109,7 @@ class Order extends Model
         'is_running' => 'boolean',
         'is_waiting' => 'boolean',
         'is_completed' => 'boolean',
+        'is_successful' => 'boolean',
         'rating_id' => 'integer',
         'rating' => 'integer',
         'rating_note' => 'string',
@@ -192,6 +194,11 @@ class Order extends Model
     public function getServiceAttribute()
     {
         return Service::where('slug', $this->service_slug)->first();
+    }
+
+    //TODO chargeDriver()
+    public function chargeDriver(){
+
     }
 
 

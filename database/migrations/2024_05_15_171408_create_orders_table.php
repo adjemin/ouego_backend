@@ -26,6 +26,7 @@ return new class extends Migration
             $table->boolean('is_running')->nullable()->default(false);
             $table->boolean('is_waiting')->nullable()->default(false);
             $table->boolean('is_completed')->nullable()->default(false);
+            $table->boolean('is_successful')->nullable()->default(false);
             $table->timestamp('completion_time')->nullable();
             $table->timestamp('start_time')->nullable();
             $table->timestamp('acceptation_time')->nullable();
