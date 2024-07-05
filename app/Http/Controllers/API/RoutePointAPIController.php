@@ -230,6 +230,8 @@ class RoutePointAPIController extends AppBaseController
             ]);
         }
 
+        $order = Order::where(['id' => $routePoint->order_id])->first();
+
         if($routePoint->type == "source" && $input['status'] == RoutePoint::SUCCESS){
 
             $routePointsPickedListCount = RoutePoint::where([
