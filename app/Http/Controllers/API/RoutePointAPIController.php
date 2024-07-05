@@ -293,7 +293,7 @@ class RoutePointAPIController extends AppBaseController
             'is_received' => false,
             'meta_data' => null
         ]);
-        CustomerNotificationUtils::notify($userNotification);
+        CustomerNotificationsUtils::notify($userNotification);
 
         $order = Order::find($routePoint->order_id);
 
