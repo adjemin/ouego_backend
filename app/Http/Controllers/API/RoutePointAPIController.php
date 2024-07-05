@@ -230,6 +230,8 @@ class RoutePointAPIController extends AppBaseController
             ]);
         }
 
+        $routePoint = $this->routePointRepository->update($input, $id);
+
         $order = Order::where(['id' => $routePoint->order_id])->first();
 
         if($routePoint->type == "source" && $input['status'] == RoutePoint::SUCCESS){
