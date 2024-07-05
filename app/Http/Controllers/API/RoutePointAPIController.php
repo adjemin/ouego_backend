@@ -193,6 +193,7 @@ class RoutePointAPIController extends AppBaseController
                 if($order != null && !$order->is_started){
 
                     $order->update([
+                        'is_waiting' => false,
                         'is_running' => true,
                         'is_started' => true,
                         "start_time" => now(),
@@ -249,6 +250,8 @@ class RoutePointAPIController extends AppBaseController
 
             if($routePointsPickedListCount == $routePointsPickupListCount){
                 $order->status = Order::PICKUPED;
+
+
                 $order->is_started = true;
                 $order->is_running = true;
                 $order->is_completed = false;
