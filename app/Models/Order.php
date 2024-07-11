@@ -65,7 +65,7 @@ class Order extends Model
     //cancelled_with_payment //Final status for paid cancellation
     const CANCELLED_WITH_PAYMENT = "cancelled_with_payment";
 
-    protected $appends = ['customer', 'service','items', 'invoice', 'route_points'];
+    protected $appends = ['customer','driver', 'service','items', 'invoice', 'route_points'];
 
     public $fillable = [
         'reference',
