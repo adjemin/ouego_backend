@@ -1069,7 +1069,8 @@ class OrderAPIController extends AppBaseController
 
         return $this->sendResponse([
             'carrier_id' => $carrier->id,
-            'amount' => PricingUtils::transport($current_distance)
+            'amount' => PricingUtils::transport($current_distance),
+            'distance' => $current_distance
         ], 'Order saved successfully');
 
 
@@ -1224,7 +1225,8 @@ public function estimateDeliveryPriceGravier(Request $request){
 
     return $this->sendResponse([
         'carrier_id' => $carrier->id,
-        'amount' => PricingUtils::transportGravier($current_distance, $quantity)
+        'amount' => PricingUtils::transportGravier($current_distance, $quantity),
+        'distance' => $current_distance
     ], 'Order saved successfully');
 
 
@@ -1376,7 +1378,8 @@ public function estimateDeliveryPriceGravier(Request $request){
 
     return $this->sendResponse([
         'carrier_id' => $carrier->id,
-        'amount' => PricingUtils::transportSable($current_distance)
+        'amount' => PricingUtils::transportSable($current_distance),
+        'distance' => $current_distance
     ], 'Order saved successfully');
 
 
