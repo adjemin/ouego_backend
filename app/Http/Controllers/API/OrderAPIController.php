@@ -1055,12 +1055,14 @@ class OrderAPIController extends AppBaseController
 
 
         $current_distance = 0;
+        $distance = "";
 
         if(array_key_exists('distance',$result)){
             $result_distance = $result['distance']; //array
             $result_distance_value = $result_distance['value']; //meters
             $current_distance = $result_distance_value/1000; //kilometers
             $current_distance = intval($current_distance);
+            $distance = $result_distance['text'];
 
         }
 
@@ -1077,7 +1079,7 @@ class OrderAPIController extends AppBaseController
         return $this->sendResponse([
             'carrier_id' => $carrier->id,
             'amount' => PricingUtils::transport($current_distance),
-            'distance' => $current_distance
+            'distance' => $distance
         ], 'Order saved successfully');
 
 
@@ -1218,12 +1220,14 @@ class OrderAPIController extends AppBaseController
 
 
     $current_distance = 0;
+    $distance= "";
 
     if(array_key_exists('distance',$result)){
         $result_distance = $result['distance']; //array
         $result_distance_value = $result_distance['value']; //meters
         $current_distance = $result_distance_value/1000; //kilometers
         $current_distance = intval($current_distance);
+        $distance = $result_distance['text'];
 
     }
 
@@ -1240,8 +1244,8 @@ class OrderAPIController extends AppBaseController
     return $this->sendResponse([
         'carrier_id' => $carrier->id,
         'amount' => PricingUtils::transportGravier($current_distance, $quantity),
-        'distance' => $current_distance,
-        'duration' => $duration
+        'distance' => $distance,
+        'duration' => $duration,
     ], 'Order saved successfully');
 
 
@@ -1379,12 +1383,14 @@ class OrderAPIController extends AppBaseController
 
 
     $current_distance = 0;
+    $distance = "";
 
     if(array_key_exists('distance',$result)){
         $result_distance = $result['distance']; //array
         $result_distance_value = $result_distance['value']; //meters
         $current_distance = $result_distance_value/1000; //kilometers
         $current_distance = intval($current_distance);
+        $distance = $result_distance['text'];
 
     }
 
@@ -1409,7 +1415,7 @@ class OrderAPIController extends AppBaseController
     return $this->sendResponse([
         'carrier_id' => $carrier->id,
         'amount' => PricingUtils::transportSable($current_distance),
-        'distance' => $current_distance,
+        'distance' => $distance,
         'duration' => $duration
     ], 'Order saved successfully');
 
