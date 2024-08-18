@@ -1064,6 +1064,13 @@ class OrderAPIController extends AppBaseController
 
         }
 
+        $duration = "";
+
+        if(array_key_exists('duration',$result)){
+            $result_duration = $result['duration']; //array
+            $duration = $result_duration['text'];
+        }
+
         //dd($current_distance);
 
 
@@ -1076,7 +1083,7 @@ class OrderAPIController extends AppBaseController
 
    }
 
-public function estimateDeliveryPriceGravier(Request $request){
+   public function estimateDeliveryPriceGravier(Request $request){
 
     /**
      *
@@ -1220,19 +1227,27 @@ public function estimateDeliveryPriceGravier(Request $request){
 
     }
 
+    $duration = "";
+
+    if(array_key_exists('duration',$result)){
+        $result_duration = $result['duration']; //array
+        $duration = $result_duration['text'];
+    }
+
     //dd($current_distance);
 
 
     return $this->sendResponse([
         'carrier_id' => $carrier->id,
         'amount' => PricingUtils::transportGravier($current_distance, $quantity),
-        'distance' => $current_distance
+        'distance' => $current_distance,
+        'duration' => $duration
     ], 'Order saved successfully');
 
 
-  }
+   }
 
-  public function estimateDeliveryPriceSable(Request $request){
+   public function estimateDeliveryPriceSable(Request $request){
 
     /**
      *
@@ -1373,16 +1388,32 @@ public function estimateDeliveryPriceGravier(Request $request){
 
     }
 
+    if(array_key_exists('duration',$result)){
+        $result_duration = $result['duration']; //array
+        $result_duration_value = $result_duration['value']; //meters
+        $current_duration = $result_duration_value/1000; //kilometers
+        $current_distance = intval($current_distance);
+
+    }
+
     //dd($current_distance);
+
+    $duration = "";
+
+    if(array_key_exists('duration',$result)){
+        $result_duration = $result['duration']; //array
+        $duration = $result_duration['text'];
+    }
 
 
     return $this->sendResponse([
         'carrier_id' => $carrier->id,
         'amount' => PricingUtils::transportSable($current_distance),
-        'distance' => $current_distance
+        'distance' => $current_distance,
+        'duration' => $duration
     ], 'Order saved successfully');
 
 
-  }
+   }
 
 }
