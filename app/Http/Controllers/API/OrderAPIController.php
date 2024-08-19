@@ -1240,7 +1240,7 @@ class OrderAPIController extends AppBaseController
 
     //dd($current_distance);
 
-    $current_distance = 15;
+    //$current_distance = 15;
 
 
     return $this->sendResponse([
@@ -1350,7 +1350,7 @@ class OrderAPIController extends AppBaseController
 
     $inner_radius = 0;
 
-    $outer_radius = 10;
+    $outer_radius = 100;
 
     $destination_point = $destination_list->last();
 
