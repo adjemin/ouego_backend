@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TypeEngin extends Model
 {
+
+    use SoftDeletes;
+
     public $table = 'type_engins';
 
     protected $appends = ['models'];
