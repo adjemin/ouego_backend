@@ -1240,7 +1240,7 @@ class OrderAPIController extends AppBaseController
 
     //dd($current_distance);
 
-    $current_distance = 55;
+  //  $current_distance = 55;
 
 
     return $this->sendResponse([
@@ -1405,6 +1405,8 @@ class OrderAPIController extends AppBaseController
     }
 
     //dd($current_distance);
+
+    $current_distance  = 10;
 
     $duration = "";
 
