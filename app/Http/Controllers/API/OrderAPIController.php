@@ -1185,7 +1185,7 @@ class OrderAPIController extends AppBaseController
 
     $inner_radius = 0;
 
-    $outer_radius = 30;
+    $outer_radius = 50;
 
     $destination_point = $destination_list->last();
 
