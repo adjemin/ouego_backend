@@ -30,6 +30,7 @@ class PricingUtils{
         //COMMISSION OUEGO (à titre indicatif)
         //$commission_ouego = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO'));
 
+
         $difference_distance = $distance - $distance_de_base;
 
         if($difference_distance <0){
