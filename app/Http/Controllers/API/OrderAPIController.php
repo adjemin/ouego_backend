@@ -1406,7 +1406,7 @@ class OrderAPIController extends AppBaseController
 
     //dd($current_distance);
 
-    $current_distance  = 10;
+    //$current_distance  = 10;
 
     $duration = "";
 
