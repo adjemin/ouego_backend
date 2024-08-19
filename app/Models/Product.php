@@ -22,7 +22,8 @@ class Product extends Model
         'description',
         'color',
         'icon',
-        'tonne_options'
+        'tonne_options',
+        'pricings'
     ];
 
     protected $casts = [
@@ -33,7 +34,8 @@ class Product extends Model
         'description' => 'string',
         'color' => 'string',
         'icon' => 'string',
-        'tonne_options' => 'array'
+        'tonne_options' => 'array',
+        'pricings' => 'array'
     ];
 
     public static array $rules = [
