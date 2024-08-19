@@ -26,7 +26,14 @@ class TypeEnginModel extends Model
         'puissance_fiscale',
         'cylindree',
         'price',
-        'currency_code'
+        'currency_code',
+
+        'ride_base_pricing',
+        'slice_1_max_distance',
+        'slice_1_pricing',
+        'slice_2_max_distance',
+        'slice_2_pricing',
+        'manutention_pricing'
     ];
 
     protected $casts = [
@@ -48,7 +55,16 @@ class TypeEnginModel extends Model
         'puissance_fiscale' => 'string',
         'cylindree' => 'string',
         'price' => 'double',
-        'currency_code'  => 'string'
+        'currency_code'  => 'string',
+
+        'ride_base_pricing' => 'integer',
+        'slice_1_max_distance' => 'double',
+        'slice_1_pricing' => 'integer',
+        'slice_2_max_distance' => 'double',
+        'slice_2_pricing' => 'integer',
+        'slice_3_pricing' => 'integer',
+        'manutention_pricing'=> 'integer'
+
     ];
 
     public static array $rules = [
