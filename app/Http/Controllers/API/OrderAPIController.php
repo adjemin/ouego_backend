@@ -1240,6 +1240,8 @@ class OrderAPIController extends AppBaseController
 
     //dd($current_distance);
 
+    $current_distance = 15;
+
 
     return $this->sendResponse([
         'carrier_id' => $carrier->id,
