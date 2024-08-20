@@ -1238,6 +1238,8 @@ class OrderAPIController extends AppBaseController
         return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
     }
 
+    return $carriers;
+
     $carrier = $carriers->first();
 
     $source_point = [
