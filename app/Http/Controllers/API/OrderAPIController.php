@@ -764,7 +764,7 @@ class OrderAPIController extends AppBaseController
                     $duration = $result_duration['text'];
                 }
 
-                $current_distance = 418;
+                //$current_distance = 418;
 
                 $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel);
 
