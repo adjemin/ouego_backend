@@ -83,8 +83,10 @@ class PricingUtils{
     public static function transportCourse($distance, $typeEnginModel){
 
 
+        //FORMULE DEVELOPPEE 1
         //MAX(PRIX BASE;D1 x PRIX_KM1) + D2 x PRIX_KM2  + D3 x PRIX_KM3 + CHARGEMENT + FRAIS DE ROUTE
 
+        //FORMULE DETAILLEE
         //MAX (PRIX BASE ; MIN (DISTANCE_1 ; DISTANCE_TRAJET) x PRIX_KM1)) +
         //MAX (0 ; MIN (DISTANCE_2 - DISTANCE_1 ; MAX(DISTANCE_TRAJET - DISTANCE_1 ; 0))) x PRIX_KM2 +
         //MAX (0 ; DISTANCE_TRAJET - DISTANCE_2) x PRIX_KM3 +
@@ -95,32 +97,6 @@ class PricingUtils{
         $frais_route = doubleval(Setting::get('FRAIS_ROUTE'));
 
         $initial_distance = $distance;
-
-        /*$distance1 = 0;
-
-        if($distance > $typeEnginModel->slice_1_max_distance ){
-            $distance1 = $typeEnginModel->slice_1_max_distance;
-            $distance = $distance - $typeEnginModel->slice_1_max_distance;
-        }else{
-            $distance1 = $distance;
-            $distance = 0;
-        }
-
-        $distance2 = 0;
-
-        if($distance > 0 && $distance > $typeEnginModel->slice_2_max_distance ){
-            $distance2 = $typeEnginModel->slice_2_max_distance;
-            $distance = $distance - $typeEnginModel->slice_2_max_distance;
-
-        }else{
-            $distance2 = $distance;
-            $distance = 0;
-        }
-
-        $distance3 = $distance;
-
-        return $distance3;*/
-
 
 
         $t1 = max($prix_base, min($typeEnginModel->slice_1_max_distance, $initial_distance) * $typeEnginModel->slice_1_pricing);
