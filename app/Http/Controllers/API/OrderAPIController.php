@@ -303,6 +303,8 @@ class OrderAPIController extends AppBaseController
 
                 $product = Product::where(['id' => $productType->product_id])->first();
 
+                $carrier =  Carrier::where(['id' => $item['carrier_id']])->first();
+
 
                 $quantity = intval($item['quantity']);
 
@@ -349,6 +351,34 @@ class OrderAPIController extends AppBaseController
 
                 $order->service_slug = $service->slug;
                 $order->save();
+
+                //Créer une RoutePoint avec carrier_id
+                RoutePoint::create([
+                    'customer_id' => null,
+                    'order_id' => $order->id,
+                    'address_name' => $carrier->name,
+                    'latitude' => $carrier->location_latitude,
+                    'longitude' => $carrier->location_longitude,
+                    'contact_fullname' => null,
+                    'contact_phone' => null,
+                    'contact_email' => null,
+                    'parcel_details' => null,
+                    'type' => "source",
+                    'status' => RoutePoint::WAITING,
+                    'delivery_fees' => 0,
+                    'currency_code' => 'XOF',
+                    'is_waiting' => true,
+                    'is_completed' => false,
+                    'is_successful' => false,
+                    'has_cash_management' => false,
+                    'has_cash_deposited' => false,
+                    'is_driver_paid' => false,
+                    'completion_time'=> null,
+                    'expected_arrival_at' => null,
+                    'visit_order' => 1,
+                    'stage' => null,
+                    'apartment' => null
+                ]);
 
 
             }
