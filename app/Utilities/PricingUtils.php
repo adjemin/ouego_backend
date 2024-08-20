@@ -92,8 +92,7 @@ class PricingUtils{
 
         $prix_base = doubleval($typeEnginModel->ride_base_pricing);
 
-        $frais_route = 0;
-        //$frais_route = doubleval(Setting::get('FRAIS_ROUTE'));
+        $frais_route = doubleval(Setting::get('FRAIS_ROUTE'));
 
         $initial_distance = $distance;
 
