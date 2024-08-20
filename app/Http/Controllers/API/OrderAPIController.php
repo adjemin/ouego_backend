@@ -908,7 +908,7 @@ class OrderAPIController extends AppBaseController
 
         $inner_radius = 0;
 
-        $outer_radius = 10;
+        $outer_radius = 20;
 
         $route_point = RoutePoint::where([
             'order_id' => $order->id,
@@ -922,9 +922,10 @@ class OrderAPIController extends AppBaseController
 
             $all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
-            $drivers = $all/*->where([
+            $drivers = $all->where([
                 'is_active' => true,
-                'is_available' => true])->whereJsonContains('services', [$order->service_slug])*/->get();
+                'is_available' => true])
+                ->whereJsonContains('services', $order->service_slug)->get();
 
              return $drivers;
             foreach ($drivers as $driver){
