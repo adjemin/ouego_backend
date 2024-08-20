@@ -926,6 +926,7 @@ class OrderAPIController extends AppBaseController
                 'is_active' => true,
                 'is_available' => true])->whereJsonContains('services', $order->service_slug)->get();
 
+             return $drivers;
             foreach ($drivers as $driver){
 
 
