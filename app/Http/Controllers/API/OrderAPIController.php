@@ -212,7 +212,12 @@ class OrderAPIController extends AppBaseController
                         "meta_data":{
                             "product_type_slug":"gravier-515-petit-grain",
                             "product_slug":"gravier",
-                            "delivery_type_code":"EXPRESS"
+                            "delivery_type_code":"EXPRESS",
+                            "pricing":{
+                                "name": "6 roues (8m3)",
+                                "roues": 6,
+                                "price": 25000
+                            }
                         },
                         "quantity":1,
                         "route_points":[
@@ -294,11 +299,32 @@ class OrderAPIController extends AppBaseController
 
                 $productType = ProductType::where(['slug' => $meta_data['product_type_slug']])->first();
 
+                $product = Product::where(['id' => $product->product_id])->first();
+
+
                 $quantity = intval($item['quantity']);
 
-                $unit_price = doubleval($productType->price);
+                $total_amount = 0;
+                $unit_price = 0;
 
-                $total_amount = $quantity * $unit_price;
+                if($product->slug == "gravier"){
+                    $unit_price = doubleval($productType->price);
+                    $total_amount = $quantity * $unit_price;
+                }
+
+
+                if($product->slug == "sable" && array_key_exists('pricing', $meta_data)){
+                    $pricing = $meta_data['pricing'];
+
+                    if(!is_array($pricing)){
+                        $pricing = (array) $meta_data['pricing'];
+                    }
+                    $unit_price = $pricing['price'];
+                    $total_amount = $pricing['price'];
+
+                    $quantity = $pricing['roues'];
+                }
+
 
                 $currency = $productType->currency_code;
 
@@ -309,6 +335,7 @@ class OrderAPIController extends AppBaseController
                         "product_type_slug" => array_key_exists('product_type_slug', $meta_data)?$meta_data['product_type_slug']:null,
                         "product_slug" => array_key_exists('product_slug', $meta_data)?$meta_data['product_slug']:null,
                         "delivery_type_code" => array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:null,
+                        "pricing" => array_key_exists('pricing', $meta_data)?$meta_data['pricing']:null,
                     ],
                     'quantity' => $quantity,
                     'quantity_unity' => "T",
