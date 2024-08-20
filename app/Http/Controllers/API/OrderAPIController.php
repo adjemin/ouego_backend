@@ -299,7 +299,7 @@ class OrderAPIController extends AppBaseController
 
                 $productType = ProductType::where(['slug' => $meta_data['product_type_slug']])->first();
 
-                $product = Product::where(['id' => $product->product_id])->first();
+                $product = Product::where(['id' => $productType->product_id])->first();
 
 
                 $quantity = intval($item['quantity']);
