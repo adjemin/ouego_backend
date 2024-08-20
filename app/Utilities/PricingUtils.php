@@ -96,7 +96,7 @@ class PricingUtils{
 
         $initial_distance = $distance;
 
-        $distance1 = 0;
+        /*$distance1 = 0;
 
         if($distance > $typeEnginModel->slice_1_max_distance ){
             $distance1 = $typeEnginModel->slice_1_max_distance;
@@ -119,12 +119,13 @@ class PricingUtils{
 
         $distance3 = $distance;
 
-        return $distance3;
+        return $distance3;*/
 
 
-        $t1 = $distance1 * $typeEnginModel->slice_1_pricing;
-        $t2 = $distance2 * $typeEnginModel->slice_2_pricing;
-        $t3 = $distance3 * $typeEnginModel->slice_3_pricing;
+
+        $t1 = max($prix_base, min($typeEnginModel->slice_1_max_distance, $initial_distance)) * $typeEnginModel->slice_1_pricing;
+        $t2 = max(0, min($typeEnginModel->slice_2_max_distance - $typeEnginModel->slice_1_max_distance, max(0, $initial_distance - $typeEnginModel->slice_1_max_distance))) * $typeEnginModel->slice_2_pricing;
+        $t3 = max(0,$initial_distance - $typeEnginModel->slice_2_max_distance) * $typeEnginModel->slice_3_pricing;
 
         $chargement = $typeEnginModel->manutention_pricing;
 
