@@ -119,7 +119,7 @@ class PricingUtils{
 
         $distance3 = $distance;
 
-        return $distance1;
+        return $distance2;
 
 
         $t1 = $distance1 * $typeEnginModel->slice_1_pricing;
