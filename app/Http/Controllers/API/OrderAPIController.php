@@ -1215,10 +1215,7 @@ class OrderAPIController extends AppBaseController
             $destination_list->push($route_point_item);
         }
 
-
     }
-
-    //$carrier = Carrier::first();
 
     $inner_radius = 0;
 
@@ -1239,8 +1236,6 @@ class OrderAPIController extends AppBaseController
     if(count($carriers)==0){
         return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
     }
-
-   // return $carriers;
 
     $carrier = $carriers->first();
 
@@ -1400,8 +1395,10 @@ class OrderAPIController extends AppBaseController
 
     $all = Carrier::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
-    $carriers = $all->where([
-        'is_active' => true])/*->whereJsonContains('services', $order->service_slug)*/->get();
+    $carriers = $all->where(['is_active' => true])
+    ->whereJsonContains('products', $meta_data['product_slug'])
+    ->orderBy('distance', 'ASC')
+    ->get();
 
     if(count($carriers)==0){
         return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
