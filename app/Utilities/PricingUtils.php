@@ -94,8 +94,41 @@ class PricingUtils{
 
         $frais_route = doubleval(Setting::get('FRAIS_ROUTE'));
 
-        $amount = max($prix_base, min($typeEnginModel->slice_2_max_distance - $typeEnginModel->slice_1_max_distance, max($distance - $typeEnginModel->slice_1_max_distance, 0))) *
-        $typeEnginModel->slice_2_pricing + (max(0, $distance - $typeEnginModel->slice_2_max_distance) * $typeEnginModel->slice_3_pricing) + $typeEnginModel->manutention_pricing + $frais_route;
+        $initial_distance = $distance;
+
+        $distance1 = 0;
+        if($distance > $typeEnginModel->slice_1_max_distance ){
+            $distance1 = $typeEnginModel->slice_1_max_distance;
+            $distance = $distance - $typeEnginModel->slice_1_max_distance;
+        }else{
+            $distance1 = $distance;
+            $distance = 0;
+        }
+
+        $distance2 = 0;
+
+        if($distance > 0 && $distance > $typeEnginModel->slice_2_max_distance ){
+            $distance2 = $typeEnginModel->slice_1_max_distance;
+            $distance = $distance - $typeEnginModel->slice_2_max_distance;
+
+        }else{
+            $distance2 = $distance;
+            $distance = 0;
+        }
+
+        $distance3 = $distance;
+
+        $typeEnginModel->slice_2_max_distance * 0;
+        $distance3 = $typeEnginModel->slice_2_max_distance * 0;
+
+        $t1 = $distance1 * $typeEnginModel->slice_1_pricing;
+        $t2 = $distance2 * $typeEnginModel->slice_2_pricing;
+        $t3 = $distance3 * $typeEnginModel->slice_3_pricing;
+
+        $chargement = $typeEnginModel->manutention_pricing;
+
+        $amount = max($prix_base, $t1) + $t2 + $t3 + $chargement + $frais_route;
+
         return self::round_up($amount, 100) ;
 
     }
