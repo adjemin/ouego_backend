@@ -127,11 +127,10 @@ class PricingUtils{
         $t2 = max(0, min($typeEnginModel->slice_2_max_distance - $typeEnginModel->slice_1_max_distance, max(0, $initial_distance - $typeEnginModel->slice_1_max_distance))) * $typeEnginModel->slice_2_pricing;
         $t3 = max(0,$initial_distance - $typeEnginModel->slice_2_max_distance) * $typeEnginModel->slice_3_pricing;
 
-        return $t3;
 
         $chargement = $typeEnginModel->manutention_pricing;
 
-        $amount = max($prix_base, $t1) + $t2 + $t3 + $chargement + $frais_route;
+        $amount = $t1 + $t2 + $t3 + $chargement + $frais_route;
 
         return $amount;
         //return self::round_up($amount, 100) ;
