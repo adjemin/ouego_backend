@@ -925,7 +925,14 @@ class OrderAPIController extends AppBaseController
             $drivers = $all->where([
                 'is_active' => true,
                 'is_available' => true])
-                ->whereJsonContains('services', $order->service_slug)->get();
+                ->whereJsonContains('services', $order->service_slug)
+                ->orderBy('distance', 'ASC')
+                ->get();
+
+
+            $drivers = [
+                $drivers->first()
+            ];
 
 
             foreach ($drivers as $driver){
