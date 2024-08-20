@@ -1231,8 +1231,10 @@ class OrderAPIController extends AppBaseController
 
     $all = Carrier::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
-    $carriers = $all->where([
-        'is_active' => true])->whereJsonContains('products', $meta_data['product_slug'])->orderBy('distance', 'ASC')->get();
+    $carriers = $all->where(['is_active' => true])
+        ->whereJsonContains('products', $meta_data['product_slug'])
+        ->orderBy('distance', 'ASC')
+        ->get();
 
     if(count($carriers)==0){
         return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
