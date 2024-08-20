@@ -125,10 +125,9 @@ class PricingUtils{
 
         $t1 = max($prix_base, min($typeEnginModel->slice_1_max_distance, $initial_distance) * $typeEnginModel->slice_1_pricing);
         $t2 = max(0, min($typeEnginModel->slice_2_max_distance - $typeEnginModel->slice_1_max_distance, max(0, $initial_distance - $typeEnginModel->slice_1_max_distance))) * $typeEnginModel->slice_2_pricing;
-
-        return $t1;
-
         $t3 = max(0,$initial_distance - $typeEnginModel->slice_2_max_distance) * $typeEnginModel->slice_3_pricing;
+
+        return $t3;
 
         $chargement = $typeEnginModel->manutention_pricing;
 
