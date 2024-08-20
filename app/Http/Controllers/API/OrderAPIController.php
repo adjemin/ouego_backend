@@ -1222,7 +1222,7 @@ class OrderAPIController extends AppBaseController
 
     $inner_radius = 0;
 
-    $outer_radius = 10;
+    $outer_radius = 100;
 
     $destination_point = $destination_list->last();
 
@@ -1232,7 +1232,7 @@ class OrderAPIController extends AppBaseController
     $all = Carrier::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
     $carriers = $all->where([
-        'is_active' => true])->whereJsonContains('products', $meta_data['product_slug'])->get();
+        'is_active' => true])->whereJsonContains('products', $meta_data['product_slug'])->orderBy('distance', 'DESC')->get();
 
     if(count($carriers)==0){
         return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
