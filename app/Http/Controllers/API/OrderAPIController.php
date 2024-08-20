@@ -922,9 +922,9 @@ class OrderAPIController extends AppBaseController
 
             $all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
-            $drivers = $all->where([
+            $drivers = $all/*->where([
                 'is_active' => true,
-                'is_available' => true])->whereJsonContains('services', [$order->service_slug])->get();
+                'is_available' => true])->whereJsonContains('services', [$order->service_slug])*/->get();
 
              return $drivers;
             foreach ($drivers as $driver){
