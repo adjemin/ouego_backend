@@ -898,7 +898,7 @@ class OrderAPIController extends AppBaseController
         $input['order_date'] = now();
         $input['status'] = Order::PERFORMER_LOOKUP;
 
-        return $this->assign($order);
+         $this->assign($order);
 
         return $this->sendResponse($order->toArray(), 'Order updated successfully');
 
@@ -927,7 +927,7 @@ class OrderAPIController extends AppBaseController
                 'is_available' => true])
                 ->whereJsonContains('services', $order->service_slug)->get();
 
-             return $drivers;
+
             foreach ($drivers as $driver){
 
 
