@@ -220,6 +220,8 @@ class OrderAPIController extends AppBaseController
                             }
                         },
                         "quantity":1,
+                        "delivery_price":22000,
+                        "carrier_id":1,
                         "route_points":[
                             {
                                 "address_name":"Koumassi, Abidjan, Côte d'ivoire",
@@ -705,6 +707,13 @@ class OrderAPIController extends AppBaseController
                     return $this->sendError('delivery_type_code is required', 400);
                 }
 
+                $typeEnginModel = TypeEnginModel::where('slug', $meta_data['engin_model'])->first();
+
+                if(empty($typeEnginModel)){
+                    return $this->sendError('engin_model is required', 400);
+                }
+
+
                 $source_list = collect([]);
                 $destination_list = collect([]);
 
@@ -755,7 +764,7 @@ class OrderAPIController extends AppBaseController
                     $duration = $result_duration['text'];
                 }
 
-                $amount = PricingUtils::transport($current_distance);
+                $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel);
 
 
 
