@@ -97,6 +97,7 @@ class PricingUtils{
         $initial_distance = $distance;
 
         $distance1 = 0;
+
         if($distance > $typeEnginModel->slice_1_max_distance ){
             $distance1 = $typeEnginModel->slice_1_max_distance;
             $distance = $distance - $typeEnginModel->slice_1_max_distance;
@@ -108,7 +109,7 @@ class PricingUtils{
         $distance2 = 0;
 
         if($distance > 0 && $distance > $typeEnginModel->slice_2_max_distance ){
-            $distance2 = $typeEnginModel->slice_1_max_distance;
+            $distance2 = $typeEnginModel->slice_2_max_distance;
             $distance = $distance - $typeEnginModel->slice_2_max_distance;
 
         }else{
@@ -117,9 +118,6 @@ class PricingUtils{
         }
 
         $distance3 = $distance;
-
-        $typeEnginModel->slice_2_max_distance * 0;
-        $distance3 = $typeEnginModel->slice_2_max_distance * 0;
 
         $t1 = $distance1 * $typeEnginModel->slice_1_pricing;
         $t2 = $distance2 * $typeEnginModel->slice_2_pricing;
