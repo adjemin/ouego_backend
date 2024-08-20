@@ -128,7 +128,8 @@ class PricingUtils{
 
         $amount = max($prix_base, $t1) + $t2 + $t3 + $chargement + $frais_route;
 
-        return self::round_up($amount, 100) ;
+        return $amount;
+        //return self::round_up($amount, 100) ;
 
     }
 
