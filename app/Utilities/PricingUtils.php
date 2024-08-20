@@ -94,7 +94,7 @@ class PricingUtils{
 
         $frais_route = doubleval(Setting::get('FRAIS_ROUTE'));
 
-        $amount = max(0, min($typeEnginModel->slice_2_max_distance - $typeEnginModel->slice_1_max_distance, max($distance - $typeEnginModel->slice_1_max_distance, 0))) *
+        $amount = max($prix_base, min($typeEnginModel->slice_2_max_distance - $typeEnginModel->slice_1_max_distance, max($distance - $typeEnginModel->slice_1_max_distance, 0))) *
         $typeEnginModel->slice_2_pricing + (max(0, $distance - $typeEnginModel->slice_2_max_distance) * $typeEnginModel->slice_3_pricing) + $typeEnginModel->manutention_pricing + $frais_route;
         return self::round_up($amount, 100) ;
 
