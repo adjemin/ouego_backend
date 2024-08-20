@@ -898,7 +898,7 @@ class OrderAPIController extends AppBaseController
         $input['order_date'] = now();
         $input['status'] = Order::PERFORMER_LOOKUP;
 
-        $this->assign($order);
+        return $this->assign($order);
 
         return $this->sendResponse($order->toArray(), 'Order updated successfully');
 
