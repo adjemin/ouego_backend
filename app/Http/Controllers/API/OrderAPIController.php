@@ -769,7 +769,6 @@ class OrderAPIController extends AppBaseController
                 $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel);
 
 
-
                 return $this->sendResponse([
                     "distance" => $current_distance,
                     "duration" => $duration,
@@ -1233,7 +1232,7 @@ class OrderAPIController extends AppBaseController
     $all = Carrier::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
     $carriers = $all->where([
-        'is_active' => true])/*->whereJsonContains('services', $order->service_slug)*/->get();
+        'is_active' => true])->whereJsonContains('services', $meta_data['product_slug'])->get();
 
     if(count($carriers)==0){
         return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
