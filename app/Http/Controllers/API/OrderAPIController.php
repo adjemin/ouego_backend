@@ -343,7 +343,8 @@ class OrderAPIController extends AppBaseController
                     'quantity_unity' => "T",
                     'unit_price' => $unit_price,
                     'total_amount' => $total_amount,
-                    'currency' => $currency
+                    'currency' => $currency,
+                    'carrier_id' => $item['carrier_id']
                 ]);
 
                 $order->service_slug = $service->slug;

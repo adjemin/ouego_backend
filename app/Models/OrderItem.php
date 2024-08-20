@@ -24,7 +24,8 @@ class OrderItem extends Model
         'total_amount',
         'currency',
         'location_start_date',
-        'location_end_date'
+        'location_end_date',
+        'carrier_id'
     ];
 
     protected $casts = [
@@ -35,7 +36,8 @@ class OrderItem extends Model
         'quantity_unity' => 'string',
         'unit_price' => 'double',
         'total_amount' => 'double',
-        'currency' => 'string'
+        'currency' => 'string',
+        'carrier_id' => 'integer'
     ];
 
     public static array $rules = [

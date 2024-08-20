@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('currency')->nullable()->default("XOF");
             $table->date('location_start_date')->nullable();
             $table->date('location_end_date')->nullable();
+            $table->bigInteger('carrier_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
