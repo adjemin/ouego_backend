@@ -21,8 +21,12 @@ class OrderItem extends Model
         'quantity',
         'quantity_unity',
         'unit_price',
+        'order_price',
+        'delivery_price',
         'total_amount',
         'currency',
+        'service_due',
+        'driver_due',
         'location_start_date',
         'location_end_date',
         'carrier_id'
@@ -37,6 +41,8 @@ class OrderItem extends Model
         'unit_price' => 'double',
         'total_amount' => 'double',
         'currency' => 'string',
+        'service_due' => 'double',
+        'driver_due' => 'double',
         'carrier_id' => 'integer'
     ];
 

@@ -21,11 +21,15 @@ return new class extends Migration
             $table->integer('quantity')->nullable();
             $table->string('quantity_unity')->nullable();
             $table->double('unit_price')->nullable();
+            $table->double('order_price')->nullable();
+            $table->double('delivery_price')->nullable();
             $table->double('total_amount')->nullable();
             $table->string('currency')->nullable()->default("XOF");
             $table->date('location_start_date')->nullable();
             $table->date('location_end_date')->nullable();
             $table->bigInteger('carrier_id')->nullable();
+            $table->double('service_due')->nullable();
+            $table->double('driver_due')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

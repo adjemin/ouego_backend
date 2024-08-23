@@ -182,6 +182,23 @@ class OrderAPIController extends AppBaseController
 
                 $delivery_fees = $this->getDeliveryFees((array)$item['route_points']);
 
+                $commission_min = doubleval(Setting::get('COMMISSION_COURSE_MIN'));
+                $commission = doubleval(Setting::get('COMMISSION_COURSE'))/100;
+
+                $commission_min = 0;
+                $commission = 0;
+
+
+                $service_due = $total_amount * $commission;
+
+                $service_due = $total_amount * $commission;
+                if($service_due < $commission_min){
+                    $service_due = $commission_min;
+                }
+
+                $driver_due = $total_amount - $service_due;
+
+
                 $orderItem = OrderItem::create([
                     'order_id' => $order->id,
                     'service_slug' => $service->slug,
@@ -192,8 +209,12 @@ class OrderAPIController extends AppBaseController
                     ],
                     'quantity' => 1,
                     'quantity_unity' => null,
-                    'unit_price' => $delivery_fees,
+                    'unit_price' => 0,
+                    'order_price' => 0,
+                    'delivery_price' => $delivery_fees,
                     'total_amount' => $delivery_fees,
+                    'service_due' => $service_due,
+                    'driver_due' => $driver_due,
                     'currency' => "XOF"
                 ]);
 
@@ -308,12 +329,17 @@ class OrderAPIController extends AppBaseController
 
                 $quantity = intval($item['quantity']);
 
+                $order_price = 0;
+
+                $delivery_price = array_key_exists('delivery_price', $item)?$item['delivery_price']:0;
+
                 $total_amount = 0;
                 $unit_price = 0;
 
                 if($product->slug == "gravier"){
                     $unit_price = doubleval($productType->price);
-                    $total_amount = $quantity * $unit_price;
+
+                    $order_price = $quantity * $unit_price;
                 }
 
 
@@ -324,11 +350,34 @@ class OrderAPIController extends AppBaseController
                         $pricing = (array) $meta_data['pricing'];
                     }
                     $unit_price = $pricing['price'];
-                    $total_amount = $pricing['price'];
+
+                    $order_price = $pricing['price'];
 
                     $quantity = $pricing['roues'];
                 }
 
+
+                $total_amount = $order_price + $delivery_price;
+
+                $commission_min = 0;
+                $commission = 0;
+
+                if($product->slug == "gravier"){
+                   // $commission_min = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO_MIN'));
+                    $commission = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO'));
+                }
+
+                if($product->slug == "sable"){
+                    //$commission_min = doubleval(Setting::get('SABLE_COMMISSION_OUEGO_MIN'));
+                    $commission = doubleval(Setting::get('SABLE_COMMISSION_OUEGO'));
+                }
+
+                $service_due =  $commission;
+                if($service_due < $commission_min){
+                    $service_due = $commission_min;
+                }
+
+                $driver_due = $total_amount - $service_due;
 
                 $currency = $productType->currency_code;
 
@@ -344,7 +393,11 @@ class OrderAPIController extends AppBaseController
                     'quantity' => $quantity,
                     'quantity_unity' => "T",
                     'unit_price' => $unit_price,
+                    'order_price' => $order_price,
+                    'delivery_price' => $delivery_price,
                     'total_amount' => $total_amount,
+                    'service_due' => $service_due,
+                    'driver_due' => $driver_due,
                     'currency' => $currency,
                     'carrier_id' => $item['carrier_id']
                 ]);
@@ -469,9 +522,29 @@ class OrderAPIController extends AppBaseController
 
                 $unit_price = doubleval($typeEnginModel->price);
 
-                $total_amount = $quantity * $unit_price;
+                $order_price = $quantity * $unit_price;
+
+                $delivery_price = array_key_exists('delivery_price', $item)?$item['delivery_price']:0;
+
+                $total_amount = $order_price + $delivery_price;
 
                 $currency = $typeEnginModel->currency_code;
+
+                //$commission_min = doubleval(Setting::get('SABLE_COMMISSION_OUEGO_MIN'));
+                //$commission = doubleval(Setting::get('SABLE_COMMISSION_OUEGO'))/100;
+
+                $commission_min = 0;
+                $commission = 0;
+
+
+                $service_due = $total_amount * $commission;
+
+                $service_due = $total_amount * $commission;
+                if($service_due < $commission_min){
+                    $service_due = $commission_min;
+                }
+
+                $driver_due = $total_amount - $service_due;
 
 
                 $orderItem = OrderItem::create([
@@ -484,7 +557,11 @@ class OrderAPIController extends AppBaseController
                     'quantity' => $quantity,
                     'quantity_unity' => "days",
                     'unit_price' => $unit_price,
+                    'order_price' => $order_price,
+                    'delivery_price' => $delivery_price,
                     'total_amount' => $total_amount,
+                    'service_due' => $service_due,
+                    'driver_due' => $driver_due,
                     'currency' => $currency,
                     'location_start_date' => $item["location_start_date"],
                     'location_end_date' => $item["location_end_date"]
@@ -540,47 +617,70 @@ class OrderAPIController extends AppBaseController
 
         $order_items = OrderItem::where('order_id', $order->id)->get();
 
-        $order_price = $order->delivery_price;
+        $order_price = 0;
+        $delivery_price = 0;
+        $driver_due = 0;
+        $service_due = 0;
 
         foreach($order_items as $order_item){
 
-            $order_price = $order_price + $order_item->total_amount;
+            $driver_due = $driver_due + $order_item->driver_due;
+            $service_due = $service_due + $order_item->service_due;
+
+
 
             if($order_item->service_slug == Service::COURSE){
                 $order->is_ride = true;
                 $order->save();
+
+                $order_price = $order_price + $order_item->delivery_price;
+                $delivery_price = $delivery_price + $order_item->delivery_price;
             }
 
             if($order_item->service_slug == Service::AGREGATS_CONSTRUCTION){
                 $order->is_product = true;
                 $order->save();
+
+                $order_price = $order_price + $order_item->order_price;
+                $delivery_price = $delivery_price + $order_item->delivery_price;
             }
 
             if($order_item->service_slug == Service::LOCATION){
                 $order->is_location = true;
                 $order->save();
+
+                $order_price = $order_price + $order_item->order_price;
+                $delivery_price = $delivery_price + $order_item->delivery_price;
             }
 
         }
 
         $order->order_price = $order_price;
+        $order->delivery_price = $delivery_price;
         $order->save();
+
+        $subtotal = $order->order_price;
+        $tax = 0;
+        $fees_delivery = $order->delivery_price;
+        $total = $subtotal + $fees_delivery;
+        $discount = 0;
+
 
         $invoice = Invoice::create([
             'order_id' => $order->id,
             'customer_id' => $customer->id,
             'reference' => Invoice::generateID("ORDER", $order->id, $customer->id),
-            'subtotal' => $order->order_price,
-            'tax' => 0,
-            'fees_delivery' => $order->delivery_price,
-            'total' => $order->order_price,
+            'subtotal' => $subtotal,
+            'tax' => $tax,
+            'fees_delivery' => $fees_delivery,
+            'total' => $total,
             'status' => Invoice::UNPAID,
             'is_paid_by_customer' => false,
             'is_paid_by_delivery_service' => false,
             'currency_slug' => 'XOF',
-            'driver_due' => 0,
-            'service_due' => 0,
-            'discount' => null,
+            'driver_due' => $driver_due,
+            'service_due' => $service_due,
+            'discount' => $discount,
             'coupon' => null
         ]);
 
