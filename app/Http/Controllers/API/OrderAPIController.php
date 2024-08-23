@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderInvitation;
 use App\Models\OrderItem;
 use App\Models\Service;
+use App\Models\Setting;
 use App\Models\Product;
 use App\Models\ProductType;
 use App\Models\TypeEngin;
