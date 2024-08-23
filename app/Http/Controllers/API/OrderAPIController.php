@@ -1039,36 +1039,38 @@ class OrderAPIController extends AppBaseController
             foreach ($drivers as $driver){
 
 
-                $orderInvitation = OrderInvitation::where([
-                    'driver_id' => $driver->id,
-                    'order_id' => $order->id,
-                ])->first();
+                    if($driver != null){
+                        $orderInvitation = OrderInvitation::where([
+                            'driver_id' => $driver->id,
+                            'order_id' => $order->id,
+                        ])->first();
 
-                if($orderInvitation == null){
-                    $orderInvitation = OrderInvitation::create([
-                        'driver_id' => $driver->id,
-                        'order_id' => $order->id,
-                        'is_waiting_acceptation' => true,
-                        'acceptation_time' => null,
-                        'rejection_time' => null,
-                        'latitude' => null,
-                        'longitude' => null
-                    ]);
+                        if($orderInvitation == null){
+                            $orderInvitation = OrderInvitation::create([
+                                'driver_id' => $driver->id,
+                                'order_id' => $order->id,
+                                'is_waiting_acceptation' => true,
+                                'acceptation_time' => null,
+                                'rejection_time' => null,
+                                'latitude' => null,
+                                'longitude' => null
+                            ]);
 
-                    //Push Notification
-                    $driverNotification = DriverNotification::create([
-                        'driver_id' => $driver->id,
-                        'title' => 'Course #'.$order->id." vous a été affectée",
-                        'subtitle' => "Acceptez ou Refusez la course",
-                        'data_id' => $orderInvitation->id,
-                        'type' => $orderInvitation->table,
-                        'is_read' => false,
-                        'is_received' => false,
-                        'meta_data' => null
-                    ]);
-                    DriverNotificationsUtils::notify($driverNotification);
-                }
+                            //Push Notification
+                            $driverNotification = DriverNotification::create([
+                                'driver_id' => $driver->id,
+                                'title' => 'Course #'.$order->id." vous a été affectée",
+                                'subtitle' => "Acceptez ou Refusez la course",
+                                'data_id' => $orderInvitation->id,
+                                'type' => $orderInvitation->table,
+                                'is_read' => false,
+                                'is_received' => false,
+                                'meta_data' => null
+                            ]);
+                            DriverNotificationsUtils::notify($driverNotification);
+                        }
 
+                    }
 
 
             }
