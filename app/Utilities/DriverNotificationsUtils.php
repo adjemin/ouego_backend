@@ -44,7 +44,9 @@ class DriverNotificationsUtils
                 return $messages_sent;
 
             }else{
+
                 return "No Devices";
+
             }
 
 
