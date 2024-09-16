@@ -61,7 +61,7 @@ class RoutePoint extends Model
         'contact_email' => 'string',
         'parcel_details' => 'string',
         'type' => 'string', //source or destination
-        'images' => 'string',
+        'images' => 'array',
         'signatures' => 'string',
         'status' => 'string',
         'delivery_fees' => 'double',
