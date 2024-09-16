@@ -183,6 +183,8 @@ class OrderAPIController extends AppBaseController
 
                 $delivery_fees = $this->getDeliveryFees((array)$item['route_points']);
 
+                $total_amount = $delivery_fees;
+
                 $commission_min = doubleval(Setting::get('COMMISSION_COURSE_MIN'));
                 $commission = doubleval(Setting::get('COMMISSION_COURSE'))/100;
 
