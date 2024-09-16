@@ -597,6 +597,7 @@ class OrderAPIController extends AppBaseController
                         'parcel_details' => array_key_exists('parcel_details',$route_point)?$route_point['parcel_details']:null,
                         'type' => array_key_exists('type',$route_point)?$route_point['type']:null,
                         'status' => RoutePoint::WAITING,
+                        'images' =>  array_key_exists('images',$route_point)?$route_point['images']:null,
                         'delivery_fees' => 0,
                         'currency_code' => 'XOF',
                         'is_waiting' => true,
