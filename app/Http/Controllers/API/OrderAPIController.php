@@ -1028,7 +1028,7 @@ class OrderAPIController extends AppBaseController
 
             $latitude = 5.3748318;
             $longitude = -3.9296228;
-            $radius = 100; // Augmentons le rayon à 100 km pour le test
+            $radius = 20; // Augmentons le rayon à 100 km pour le test
 
             $nearbyDrivers = Driver::nearby($latitude, $longitude, $radius)
                 ->whereNotNull('last_location_latitude')
