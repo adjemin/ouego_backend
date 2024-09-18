@@ -110,17 +110,16 @@ class Driver extends Authenticatable  implements JWTSubject
 
     public function scopeNearby(Builder $query, $latitude, $longitude, $radius = 20)
     {
-        $haversine = "(6371 * acos(cos(radians($latitude))
-                     * cos(radians(last_location_latitude))
-                     * cos(radians(last_location_longitude)
-                     - radians($longitude))
-                     + sin(radians($latitude))
-                     * sin(radians(last_location_latitude))))";
+        $haversine = "(6371 * acos(least(1, cos(radians($latitude))
+        * cos(radians(last_location_latitude))
+        * cos(radians(last_location_longitude) - radians($longitude))
+        + sin(radians($latitude))
+        * sin(radians(last_location_latitude)))))";
 
         return $query
-            ->selectRaw("*, $haversine AS distance")
-            ->whereRaw("$haversine < ?", [$radius])
-            ->orderBy('distance');
+        ->selectRaw("*, $haversine AS distance")
+        ->whereRaw("$haversine < ? OR (last_location_latitude = ? AND last_location_longitude = ?)", [$radius, $latitude, $longitude])
+        ->orderBy('distance');
     }
 
 
