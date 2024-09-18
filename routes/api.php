@@ -19,7 +19,7 @@ Route::prefix('v1/')->group(function () {
 
     //OTP
     //Get OTP
-    Route::post('customers/send-otp', [App\Http\Controllers\API\CustomerAPIController::class, 'getOTP']);
+    Route::post('customers/send-otp', [App\Http\Controllers\API\CustomerAPIController::class, 'sendOTP']);
 
     Route::post('customers/verify-otp', [App\Http\Controllers\API\CustomerAPIController::class, 'verifyOTP']);
 
