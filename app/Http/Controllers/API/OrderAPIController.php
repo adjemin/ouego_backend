@@ -1033,6 +1033,10 @@ class OrderAPIController extends AppBaseController
             $nearbyDrivers = Driver::nearby($latitude, $longitude, $radius)
                 ->whereNotNull('last_location_latitude')
                 ->whereNotNull('last_location_longitude')
+                ->where([
+                    'is_active' => true,
+                    'is_available' => true])
+                    ->whereJsonContains('services', $order->service_slug)
                 ->get();
 
             foreach ($nearbyDrivers as $driver) {
