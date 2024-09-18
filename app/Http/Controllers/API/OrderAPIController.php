@@ -1025,23 +1025,23 @@ class OrderAPIController extends AppBaseController
             $latitude = $route_point->latitude;
             $longitude = $route_point->longitude;
 
-            //$all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
+            $all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
-            $point = new Point($latitude, $longitude);
+            //$point = new Point($latitude, $longitude);
 
-            $nearbyDrivers =  Driver::query()
-                ->whereDistanceSphere('last_location', $point, $radius * 1000) // Convert km to meters
-                ->get();
+            //$nearbyDrivers =  Driver::query()
+              //  ->whereDistanceSphere('last_location', $point, $radius * 1000) // Convert km to meters
+               // ->get();
 
-            dd($nearbyDrivers);
-            $drivers = $nearbyDrivers/*->where([
+            //dd($nearbyDrivers);
+            $drivers = $all->where([
                 'is_active' => true,
                 'is_available' => true])
-                ->whereJsonContains('services', $order->service_slug)*/
-                //->orderBy('distance', 'ASC')
+                ->whereJsonContains('services', $order->service_slug)
+                ->orderBy('distance', 'ASC')
                 ->get();
 
-                dd($drivers);
+                //dd($drivers);
 
 
             $drivers = [

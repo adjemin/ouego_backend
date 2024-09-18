@@ -7,20 +7,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Geographical;
-use Grimzy\LaravelMysqlSpatial\Eloquent\SpatialTrait;
-use Grimzy\LaravelMysqlSpatial\Types\Point;
+//use Grimzy\LaravelMysqlSpatial\Eloquent\SpatialTrait;
+//use Grimzy\LaravelMysqlSpatial\Types\Point;
 
 class Driver extends Authenticatable  implements JWTSubject
 {
 
     use SoftDeletes;
-    //use Geographical;
+    use Geographical;
 
-    use SpatialTrait;
+    /*use SpatialTrait;
 
     protected $spatialFields = [
         'last_location',
-    ];
+    ];*/
 
 
     protected static $kilometers = true;
