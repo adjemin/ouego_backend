@@ -1026,6 +1026,19 @@ class OrderAPIController extends AppBaseController
 
             //$all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
+            $latitude = 5.3748318;
+            $longitude = -3.9296228;
+            $radius = 100; // Augmentons le rayon à 100 km pour le test
+
+            $nearbyDrivers = Driver::nearby($latitude, $longitude, $radius)
+                ->whereNotNull('last_location_latitude')
+                ->whereNotNull('last_location_longitude')
+                ->get();
+
+            foreach ($nearbyDrivers as $driver) {
+                echo "Driver ID: {$driver->id}, Name: {$driver->name}, Distance: {$driver->distance} km\n";
+            }
+
             $nearbyDrivers = Driver::nearby($latitude, $longitude, 10);
 
             $drivers = $nearbyDrivers/*->where([
