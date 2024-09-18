@@ -1026,7 +1026,7 @@ class OrderAPIController extends AppBaseController
 
             //$all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
-            $nearbyDrivers = Driver::nearby($latitude, $longitude, 20);
+            $nearbyDrivers = Driver::nearby($latitude, $longitude, 10);
 
             $drivers = $nearbyDrivers/*->where([
                 'is_active' => true,
