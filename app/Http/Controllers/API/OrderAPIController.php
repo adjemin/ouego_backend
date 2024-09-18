@@ -1033,6 +1033,8 @@ class OrderAPIController extends AppBaseController
                 ->orderBy('distance', 'ASC')
                 ->get();
 
+                dd($drivers);
+
 
             $drivers = [
                 $drivers->first()
