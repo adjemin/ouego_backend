@@ -1032,7 +1032,7 @@ class OrderAPIController extends AppBaseController
                 'is_active' => true,
                 'is_available' => true])
                 ->whereJsonContains('services', $order->service_slug)*/
-                ->orderBy('distance', 'ASC')
+                //->orderBy('distance', 'ASC')
                 ->get();
 
                 dd($drivers);
