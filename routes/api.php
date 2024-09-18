@@ -19,9 +19,9 @@ Route::prefix('v1/')->group(function () {
 
     //OTP
     //Get OTP
-    Route::post('customers/otp/get', [App\Http\Controllers\API\CustomerAPIController::class, 'getOTP']);
+    Route::post('customers/send-otp', [App\Http\Controllers\API\CustomerAPIController::class, 'getOTP']);
 
-    Route::post('customers/otp/verify', [App\Http\Controllers\API\CustomerAPIController::class, 'verifyOTP']);
+    Route::post('customers/verify-otp', [App\Http\Controllers\API\CustomerAPIController::class, 'verifyOTP']);
 
 
     //Inscription par téléphone (Client)
@@ -193,8 +193,4 @@ Route::resource('driver-notifications', App\Http\Controllers\API\DriverNotificat
     ->except(['create', 'edit']);
 
 Route::resource('customer-notifications', App\Http\Controllers\API\CustomerNotificationAPIController::class)
-    ->except(['create', 'edit']);
-
-
-Route::resource('customer-o-t-ps', App\Http\Controllers\API\CustomerOTPAPIController::class)
     ->except(['create', 'edit']);
