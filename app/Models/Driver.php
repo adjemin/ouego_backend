@@ -13,7 +13,7 @@ class Driver extends Authenticatable  implements JWTSubject
 {
 
     use SoftDeletes;
-    use Geographical;
+   // use Geographical;
 
 
     protected static $kilometers = true;
