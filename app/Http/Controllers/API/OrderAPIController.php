@@ -26,6 +26,7 @@ use App\Http\Controllers\AppBaseController;
 use Carbon\Carbon;
 use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
+use Grimzy\LaravelMysqlSpatial\Types\Point;
 
 /**
  * Class OrderAPIController
@@ -1026,25 +1027,13 @@ class OrderAPIController extends AppBaseController
 
             //$all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
-            $latitude = 5.3748318;
-            $longitude = -3.9296228;
-            $radius = 20; // Augmentons le rayon à 100 km pour le test
+            $point = new Point($latitude, $longitude);
 
-            $nearbyDrivers = Driver::nearby($latitude, $longitude, $radius)
-                ->whereNotNull('last_location_latitude')
-                ->whereNotNull('last_location_longitude')
-                ->where([
-                    'is_active' => true,
-                    'is_available' => true])
-                    ->whereJsonContains('services', $order->service_slug)
+            $nearbyDrivers =  Driver::query()
+                ->whereDistanceSphere('last_location', $point, $radius * 1000) // Convert km to meters
                 ->get();
 
-            foreach ($nearbyDrivers as $driver) {
-                echo "Driver ID: {$driver->id}, Name: {$driver->name}, Distance: {$driver->distance} km\n";
-            }
-
-            $nearbyDrivers = Driver::nearby($latitude, $longitude, 10);
-
+            dd($nearbyDrivers);
             $drivers = $nearbyDrivers/*->where([
                 'is_active' => true,
                 'is_available' => true])

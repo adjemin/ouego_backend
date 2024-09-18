@@ -7,13 +7,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Geographical;
-use Illuminate\Database\Eloquent\Builder;
+use Grimzy\LaravelMysqlSpatial\Eloquent\SpatialTrait;
+use Grimzy\LaravelMysqlSpatial\Types\Point;
 
 class Driver extends Authenticatable  implements JWTSubject
 {
 
     use SoftDeletes;
-   // use Geographical;
+    //use Geographical;
+
+    use SpatialTrait;
+
+    protected $spatialFields = [
+        'last_location',
+    ];
 
 
     protected static $kilometers = true;
@@ -67,6 +74,11 @@ class Driver extends Authenticatable  implements JWTSubject
 
     ];
 
+    public function setLastLocationAttribute($value)
+    {
+        $this->attributes['last_location'] = new Point($this->last_location_latitude, $this->last_location_longitude);
+    }
+
             /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      *
@@ -106,20 +118,6 @@ class Driver extends Authenticatable  implements JWTSubject
         }
         $json_array =  json_decode(stripslashes($value), true);
         return $json_array ;
-    }
-
-    public function scopeNearby(Builder $query, $latitude, $longitude, $radius = 20)
-    {
-        $haversine = "(6371 * acos(least(1, cos(radians($latitude))
-        * cos(radians(last_location_latitude))
-        * cos(radians(last_location_longitude) - radians($longitude))
-        + sin(radians($latitude))
-        * sin(radians(last_location_latitude)))))";
-
-        return $query
-        ->selectRaw("*, $haversine AS distance")
-        ->whereRaw("$haversine < ? OR (last_location_latitude = ? AND last_location_longitude = ?)", [$radius, $latitude, $longitude])
-        ->orderBy('distance');
     }
 
 
