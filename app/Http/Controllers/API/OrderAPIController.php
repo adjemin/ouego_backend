@@ -1010,7 +1010,7 @@ class OrderAPIController extends AppBaseController
 
     public function assign($order){
 
-        $inner_radius = 0;
+        $inner_radius = 4;
 
         $outer_radius = 20;
 
