@@ -327,11 +327,6 @@ class CustomerAPIController extends AppBaseController
             ], 'Customer got successfully');
         }
 
-
-
-
-
-
     }
 
     public function sendSMS($client_phone, $message){
