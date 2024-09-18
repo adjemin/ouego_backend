@@ -48,6 +48,8 @@ use ReflectionObject;
 use SebastianBergmann\Exporter\Exporter;
 
 /**
+ * @no-named-arguments Parameter names are not covered by the backward compatibility promise for PHPUnit
+ *
  * @internal This class is not covered by the backward compatibility promise for PHPUnit
  */
 final class NamePrettifier
@@ -278,7 +280,7 @@ final class NamePrettifier
                 }
             }
 
-            $providedData['$' . $parameter->getName()] = $value;
+            $providedData['$' . $parameter->getName()] = str_replace('$', '\\$', $value);
         }
 
         if ($colorize) {

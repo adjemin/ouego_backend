@@ -9,7 +9,6 @@ use GuzzleHttp\ClientInterface;
 use Kreait\Firebase\Exception\RemoteConfigApiExceptionConverter;
 use Kreait\Firebase\Exception\RemoteConfigException;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\UriInterface;
 use Throwable;
 
 use function array_filter;
@@ -33,7 +32,7 @@ class ApiClient
      *
      * @throws RemoteConfigException
      */
-    public function getTemplate(VersionNumber|int|string $versionNumber = null): ResponseInterface
+    public function getTemplate(VersionNumber|int|string|null $versionNumber = null): ResponseInterface
     {
         return $this->requestApi('GET', 'remoteConfig', [
             'query' => array_filter([
@@ -118,12 +117,13 @@ class ApiClient
     }
 
     /**
-     * @param string|UriInterface $uri
+     * @param non-empty-string $method
+     * @param non-empty-string $uri
      * @param array<string, mixed>|null $options
      *
      * @throws RemoteConfigException
      */
-    private function requestApi(string $method, $uri, ?array $options = null): ResponseInterface
+    private function requestApi(string $method, string $uri, ?array $options = null): ResponseInterface
     {
         $options ??= [];
         $options['decode_content'] = 'gzip';

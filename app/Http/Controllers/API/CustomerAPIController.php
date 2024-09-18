@@ -10,6 +10,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Validator;
+use App\Models\CustomerOTP;
+use Carbon\Carbon;
+use MtnSmsCloud\MTNSMSApi;
 
 /**
  * Class CustomerAPIController
@@ -188,11 +192,11 @@ class CustomerAPIController extends AppBaseController
         }
 
         if (!array_key_exists('dialing_code', $input)) {
-            return $this->sendError('dialing_code is required');
+            return $this->sendError('dialing_code is required',400);
         }
 
         if(!array_key_exists('phone_number', $input)) {
-            return $this->sendError('phone_number is required');
+            return $this->sendError('phone_number is required',400);
         }
 
         $input['phone'] = $input['dialing_code'].''.$input['phone_number'];
@@ -252,6 +256,128 @@ class CustomerAPIController extends AppBaseController
             'server_time'=> now(),
             'user' => $customer
         ], 'Customer got successfully');
+
+
+    }
+
+    public function sendOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError(json_encode($validator->errors()),422);
+        }
+
+        // Générer un OTP à 6 chiffres
+        $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        // Créer ou mettre à jour l'entrée CustomerOTP
+        $customerOTP = CustomerOTP::updateOrCreate(
+            ['phone' => $request->phone],
+            [
+                'otp' => $otp,
+                'otp_expires_at' => Carbon::now()->addMinutes(5),
+                'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
+            ]
+        );
+
+        // Envoyer l'OTP par SMS
+        $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
+
+        return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
+    }
+
+    public function verifyOTP(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string|exists:customer_o_t_ps,phone',
+            'otp' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError(json_encode($validator->errors()),422);
+        }
+
+        $customerOTP = CustomerOTP::where('phone', $request->phone)->first();
+
+        if (!$customerOTP || $customerOTP->otp !== $request->otp || Carbon::now()->gt($customerOTP->otp_expires_at)) {
+            return $this->sendError('OTP invalide ou expiré',400);
+        }
+
+        // Réinitialiser l'OTP
+        $customerOTP->forceDelete();
+
+        // Récupérer l'utilisateur et générer le token JWT
+        $customer = Customer::where('phone', $request->phone)->first();
+        if($customer == null){
+
+            return $this->sendResponse(true, 'OTP verified successfully');
+
+        }else{
+            $token = JWTAuth::fromUser($customer);
+
+            return $this->sendResponse([
+                'token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => JWTAuth::factory()->getTTL(),
+                'server_time'=> now(),
+                'user' => $customer
+            ], 'Customer got successfully');
+        }
+
+
+
+
+
+
+    }
+
+    public function sendSMS($client_phone, $message){
+
+
+        if(strpos($client_phone, '+') !== false){
+            $client_phone = str_replace("+", "", $client_phone);
+        }
+
+        if (substr( $client_phone, 0, 3 ) === "225") {
+
+            $sender_id = 'ADJEMIN';
+            $token = "YlSf8vDE8LcYGs1oLqxqRkGDRSyuzpiJGGR";
+            $msa = new MTNSMSApi($sender_id, $token);
+
+            /**
+             * Send a new Campaign
+             *
+             * @var array $recipients {Ex: ["225xxxxxxxx", "225xxxxxxxx"]}
+             * @var string $message
+             */
+            $recipients = [$client_phone];
+
+            $result = $msa->newCampaign($recipients, $message);
+
+            $result = (array)json_decode($result,true);
+
+            $smsCount = array_key_exists('smsCount', $result)?$result['smsCount'] : 0;
+
+
+            if($smsCount>=1){
+
+                return true;
+            }else{
+                return false;
+            }
+
+
+        }else{
+
+            $BulkSmsSender = new BulkSmsSender();
+            $result = $BulkSmsSender->sendMessage([$client_phone], $message) ;
+
+            return $result;
+        }
+
 
 
     }

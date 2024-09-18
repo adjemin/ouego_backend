@@ -7,6 +7,50 @@ Please read about the future of the Firebase Admin PHP SDK on the
 
 ## [Unreleased]
 
+## [7.15.0] - 2024-09-11
+
+### Added
+
+* Added support for [rollout parameter values](https://firebase.google.com/docs/reference/remote-config/rest/v1/RemoteConfig#RolloutValue)
+  in Remote Config Templates. 
+  ([#923](https://github.com/kreait/firebase-php/pull/923)), ([#927](https://github.com/kreait/firebase-php/pull/927))
+  * Please note that it's not (yet?) possible to create rollouts programmatically via the Firebase API. This means that 
+    you have to manually create a rollout in the Firebase console to be able to reference it in the Remote Config 
+    template.  Rollout IDs are named `rollout_<number>`, and you can find the ID in the URL after clicking on a rollout in the list.
+
+## [7.14.0] - 2024-08-21
+
+### Added
+
+* Added support for PHP 8.4.
+  * Please note: While the SDK supports PHP 8.4, not all dependencies support it. If you want to use the SDK with
+    PHP 8.4, you probably will need to ignore platform requirements when working with Composer, by setting the
+    [appropriate environment variables](https://getcomposer.org/doc/03-cli.md#composer-ignore-platform-req-or-composer-ignore-platform-reqs) 
+    or [`composer` CLI options]() when running `composer install/update/require`.
+
+### Deprecated
+
+* Firebase Dynamic Links is deprecated and should not be used in new projects. The service will shut down on 
+  August 25, 2025. The component will remain in the SDK until then, but as the Firebase service is deprecated,
+  this component is also deprecated.
+  ([Dynamic Links Deprecation FAQ](https://firebase.google.com/support/dynamic-links-faq))
+
+## [7.13.1] - 2024-07-02
+
+### Fixed
+
+* Requests to the FCM APIs will not use HTTP/2 if the environment doesn't support them
+  ([#888](https://github.com/kreait/firebase-php/pull/888), [#908](https://github.com/kreait/firebase-php/pull/908))
+
+## [7.13.0] - 2024-06-23
+
+### Changed
+
+* Service Account auto-discovery was done on instantiation of the Factory, causing it to fail when credentials weren't
+  ready yet. It will now be done the first time a component is to be instantiated.
+
+## [7.12.0] - 2024-05-26
+
 ### Fixed
 
 * Fix `WebPushNotification` Shape
@@ -227,7 +271,12 @@ See **[UPGRADE-7.0](UPGRADE-7.0.md) for more details on the changes between 6.x 
 
 https://github.com/kreait/firebase-php/blob/6.9.6/CHANGELOG.md
 
-[Unreleased]: https://github.com/kreait/firebase-php/compare/7.11.0...7.x
+[Unreleased]: https://github.com/kreait/firebase-php/compare/7.15.0...7.x
+[7.15.0]: https://github.com/kreait/firebase-php/compare/7.14.0...7.15.0
+[7.14.0]: https://github.com/kreait/firebase-php/compare/7.13.1...7.14.0
+[7.13.1]: https://github.com/kreait/firebase-php/compare/7.13.0...7.13.1
+[7.13.0]: https://github.com/kreait/firebase-php/compare/7.12.0...7.13.0
+[7.12.0]: https://github.com/kreait/firebase-php/compare/7.11.0...7.12.0
 [7.11.0]: https://github.com/kreait/firebase-php/compare/7.10.0...7.11.0
 [7.10.0]: https://github.com/kreait/firebase-php/compare/7.9.1...7.10.0
 [7.9.1]: https://github.com/kreait/firebase-php/compare/7.9.0...7.9.1

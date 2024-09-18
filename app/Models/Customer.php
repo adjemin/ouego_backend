@@ -33,7 +33,9 @@ class Customer extends Authenticatable  implements JWTSubject
         'country_code',
         'is_phone_verified',
         'is_email_verified',
-        'email'
+        'email',
+        'otp',
+        'otp_expires_at'
     ];
 
     protected $casts = [
@@ -54,6 +56,7 @@ class Customer extends Authenticatable  implements JWTSubject
         'is_phone_verified' => 'boolean',
         'is_email_verified' => 'boolean',
         'email' => 'string',
+        'otp' => 'string',
     ];
 
     public static array $rules = [

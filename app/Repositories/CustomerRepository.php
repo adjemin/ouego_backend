@@ -24,7 +24,9 @@ class CustomerRepository extends BaseRepository
         'country_code',
         'is_phone_verified',
         'is_email_verified',
-        'email'
+        'email',
+        'otp',
+        'otp_expires_at'
     ];
 
     public function getFieldsSearchable(): array

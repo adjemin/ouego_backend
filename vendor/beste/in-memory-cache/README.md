@@ -10,11 +10,8 @@ A [PSR-6](https://www.php-fig.org/psr/psr-6/) In-Memory cache that can be used a
 
 ## Installation
 
-In order to use this cache implementation, you also need to install a [PSR-20](https://www.php-fig.org/psr/psr-20/) [Clock Implementation](https://packagist.org/providers/psr/clock-implementation),
-for example, the [`beste/clock`](https://packagist.org/packages/beste/clock).
-
 ```shell
-composer require beste/in-memory-cache beste/clock
+composer require beste/in-memory-cache
 ```
 
 ## Usage
