@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Geographical;
+use Illuminate\Database\Eloquent\Builder;
 
 class Driver extends Authenticatable  implements JWTSubject
 {
@@ -105,6 +106,21 @@ class Driver extends Authenticatable  implements JWTSubject
         }
         $json_array =  json_decode(stripslashes($value), true);
         return $json_array ;
+    }
+
+    public function scopeNearby(Builder $query, $latitude, $longitude, $radius = 20)
+    {
+        $haversine = "(6371 * acos(cos(radians($latitude))
+                     * cos(radians(last_location_latitude))
+                     * cos(radians(last_location_longitude)
+                     - radians($longitude))
+                     + sin(radians($latitude))
+                     * sin(radians(last_location_latitude))))";
+
+        return $query
+            ->selectRaw("*, $haversine AS distance")
+            ->whereRaw("$haversine < ?", [$radius])
+            ->orderBy('distance');
     }
 
 

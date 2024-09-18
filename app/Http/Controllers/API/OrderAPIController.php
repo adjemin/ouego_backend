@@ -1010,7 +1010,7 @@ class OrderAPIController extends AppBaseController
 
     public function assign($order){
 
-        $inner_radius = 4;
+        $inner_radius = 0;
 
         $outer_radius = 20;
 
@@ -1024,9 +1024,11 @@ class OrderAPIController extends AppBaseController
             $latitude = $route_point->latitude;
             $longitude = $route_point->longitude;
 
-            $all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
+            //$all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
-            $drivers = $all->where([
+            $nearbyDrivers = Driver::nearby($latitude, $longitude, 20);
+
+            $drivers = $nearbyDrivers->where([
                 'is_active' => true,
                 'is_available' => true])
                 ->whereJsonContains('services', $order->service_slug)
