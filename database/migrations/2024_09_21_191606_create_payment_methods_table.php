@@ -13,17 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('payment_methods', function (Blueprint $table) {
             $table->id('id');
             $table->string('name')->nullable();
-            $table->string('slug')->unique();
-            $table->string('per')->nullable();
-            $table->string('pricing_title')->nullable();
-            $table->string('description')->nullable();
-            $table->string('color')->nullable();
-            $table->string('icon')->nullable();
-            $table->json('tonne_options')->nullable();
-            $table->text('pricings')->nullable();
+            $table->string('slug')->nullable()->unique();
+            $table->string('logo')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
@@ -36,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::drop('products');
+        Schema::drop('payment_methods');
     }
 };

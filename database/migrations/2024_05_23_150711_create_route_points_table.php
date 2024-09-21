@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('contact_email')->nullable();
             $table->string('parcel_details')->nullable();
             $table->string('type')->nullable();
-            $table->string('images')->nullable();
+            $table->text('images')->nullable();
             $table->string('signatures')->nullable();
             $table->timestamp('signatures_at')->nullable();
             $table->string('status')->nullable();

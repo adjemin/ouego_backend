@@ -33,7 +33,6 @@ return new class extends Migration
             $table->string('cylindree')->nullable();
             $table->double('price')->nullable();
             $table->string('currency_code')->nullable();
-
             $table->integer('ride_base_pricing')->nullable();
             $table->double('slice_1_max_distance')->nullable();
             $table->integer('slice_1_pricing')->nullable();

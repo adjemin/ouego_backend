@@ -23,7 +23,6 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('photo_url')->nullable();
             $table->boolean('is_active')->nullable()->default(false);
-            $table->boolean('is_available')->nullable()->default(false);
             $table->double('current_balance')->nullable()->default(0);
             $table->double('old_balance')->nullable()->default(0);
             $table->double('last_location_latitude')->nullable();
