@@ -56,7 +56,7 @@ class DriverAssignmentService
      * @param int $distance mètre
      * @return Driver|null Le chauffeur assigné ou null si aucun n'est disponible
      */
-    public function assignNearestDriver($latitude, $longitude, $distance)
+    public function assignNearestDriver($latitude, $longitude, $distance = null)
     {
         $nearestDrivers = $this->findNearestDrivers($latitude, $longitude, 1, $distance);
 
