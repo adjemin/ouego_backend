@@ -1022,13 +1022,13 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Commande introuvable', 400);
         }
 
-        $route_point = RoutePoint::where([
-            'order_id' => $order->id,
-            'type' => 'source'
-        ])->first();
+        //$route_point = RoutePoint::where([
+        //    'order_id' => $order->id,
+        //    'type' => 'source'
+        //])->first();
 
-        $driver =  $this->driverAssignmentService->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 1);
-        dd($driver);
+        //$driver =  $this->driverAssignmentService->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 1);
+        //dd($driver);
 
         if($order->driver_id == null || $order->acceptation_time == null){
 
