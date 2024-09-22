@@ -1039,7 +1039,7 @@ class OrderAPIController extends AppBaseController
 
                 if(count($orderInvitations) == 0){
                    $driver =  $this->driverAssignmentService->assignNearestDriver($order);
-                   dd($driver);
+                   //dd($driver);
                 }
 
         }
