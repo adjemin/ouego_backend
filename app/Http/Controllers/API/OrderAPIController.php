@@ -27,6 +27,7 @@ use Carbon\Carbon;
 use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use Grimzy\LaravelMysqlSpatial\Types\Point;
+use App\Services\DriverAssignmentService;
 
 /**
  * Class OrderAPIController
@@ -35,9 +36,12 @@ class OrderAPIController extends AppBaseController
 {
     private OrderRepository $orderRepository;
 
-    public function __construct(OrderRepository $orderRepo)
+    private DriverAssignmentService $driverAssignmentService;
+
+    public function __construct(OrderRepository $orderRepo, DriverAssignmentService $driverAssignmentService )
     {
         $this->orderRepository = $orderRepo;
+        $this->driverAssignmentService = $driverAssignmentService;
     }
 
     /**
@@ -1025,7 +1029,10 @@ class OrderAPIController extends AppBaseController
             $latitude = $route_point->latitude;
             $longitude = $route_point->longitude;
 
-            $all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
+            //$all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
+
+            $all = $this->driverAssignmentService->assignNearestDriver($latitude, $longitude);
+            dd($all);
 
             //$point = new Point($latitude, $longitude);
 
