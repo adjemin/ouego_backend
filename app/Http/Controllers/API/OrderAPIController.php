@@ -1028,6 +1028,9 @@ class OrderAPIController extends AppBaseController
         if($route_point != null){
 
             $driver = Driver::where('id', 9)->first();
+
+            $driver->last_location  = [$driver->last_location_latitude, $driver->last_location_longitude];
+            $driver->save();
             $all = [$driver];
             //$all = Driver::all();
             //$all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude);
