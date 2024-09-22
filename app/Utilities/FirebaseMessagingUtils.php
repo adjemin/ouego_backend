@@ -35,7 +35,7 @@ class FirebaseMessagingUtils{
 
              return true;
 
-        }catch (Exception $exception){
+        }catch (Exception $e){
             // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
             Log::error('Erreur lors de la soumission de la notification de test.', [
                 'error' => $e->getMessage(),
@@ -64,7 +64,12 @@ class FirebaseMessagingUtils{
 
             return true;
 
-        }catch (Exception $exception){
+        }catch (Exception $e){
+            // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
+            Log::error('Erreur lors de la soumission de la notification de test.', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return  false;
         }
 
