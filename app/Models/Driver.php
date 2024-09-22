@@ -6,27 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use App\Models\Geographical;
-//use Grimzy\LaravelMysqlSpatial\Eloquent\SpatialTrait;
-//use Grimzy\LaravelMysqlSpatial\Types\Point;
 
 class Driver extends Authenticatable  implements JWTSubject
 {
 
     use SoftDeletes;
-    use Geographical;
-
-    /*use SpatialTrait;
-
-    protected $spatialFields = [
-        'last_location',
-    ];*/
-
-
-    protected static $kilometers = true;
-
-    const LATITUDE  = 'last_location_latitude';
-    const LONGITUDE = 'last_location_longitude';
 
     public $table = 'drivers';
 
@@ -74,12 +58,9 @@ class Driver extends Authenticatable  implements JWTSubject
 
     ];
 
-    public function setLastLocationAttribute($value)
-    {
-        $this->attributes['last_location'] = new Point($this->last_location_latitude, $this->last_location_longitude);
-    }
 
-            /**
+
+    /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      *
      * @return mixed
@@ -118,6 +99,12 @@ class Driver extends Authenticatable  implements JWTSubject
         }
         $json_array =  json_decode(stripslashes($value), true);
         return $json_array ;
+    }
+
+    public function setLastLocationAttribute($value){
+        $latitude = $value['latitude'] ?? $this->last_location_latitude;
+        $longitude = $value['longitude'] ?? $this->last_location_longitude;
+        $this->attributes['last_location'] = DB::raw("ST_SetSRID(ST_MakePoint($longitude, $latitude), 4326)::geography");
     }
 
 
