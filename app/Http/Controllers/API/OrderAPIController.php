@@ -1041,13 +1041,6 @@ class OrderAPIController extends AppBaseController
             //$all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude);
             dd($all);
 
-            //$point = new Point($latitude, $longitude);
-
-            //$nearbyDrivers =  Driver::query()
-              //  ->whereDistanceSphere('last_location', $point, $radius * 1000) // Convert km to meters
-               // ->get();
-
-            //dd($nearbyDrivers);
             $drivers = $all->where([
                 'is_active' => true,
                 'is_available' => true])
