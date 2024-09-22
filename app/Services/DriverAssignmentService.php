@@ -10,13 +10,14 @@ class DriverAssignmentService
     /**
      * Trouve les chauffeurs les plus proches d'une localisation donnée.
      *
+     * @param string $service_slug
      * @param float $latitude Latitude de la localisation de départ
      * @param float $longitude Longitude de la localisation de départ
      * @param int $limit Nombre maximum de chauffeurs à retourner
      * @param float $maxDistance Distance maximum en mètres (optionnel)
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function findNearestDrivers($latitude, $longitude, $limit = 5, $maxDistance = null)
+    public function findNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
     {
         /*// Crée un point GEOGRAPHY à partir des coordonnées
         $point = DB::raw("ST_SetSRID(ST_MakePoint($longitude, $latitude), 4326)::geography");
@@ -39,6 +40,8 @@ class DriverAssignmentService
         $query = Driver::select('drivers.*')
         ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
         ->whereRaw('is_available = true')
+        ->whereRaw('is_active = true')
+        ->whereJsonContains('services', $service_slug)
         ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
         if ($maxDistance) {

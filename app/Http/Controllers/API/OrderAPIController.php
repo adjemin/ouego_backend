@@ -1039,23 +1039,18 @@ class OrderAPIController extends AppBaseController
             //}
 
            // dd(["type"=> "source", "location" => [$route_point->latitude,$route_point->longitude] ]);
-            $distance= 20000;
-            $all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude, $distance);
-            dd($all);
+            //$distance= 20000;
+            $driver = $this->driverAssignmentService->assignNearestDriver($order->service_slug, $route_point->latitude, $route_point->longitude);
 
-            /*$drivers = $all->where([
-                'is_active' => true,
-                'is_available' => true])
-                ->whereJsonContains('services', $order->service_slug)
-                ->orderBy('distance', 'ASC')
-                ->get();*/
-
-                //dd($drivers);
+            if($driver != null){
+                $drivers = [
+                    $driver
+                ];
+            }else{
+                $drivers = [];
+            }
 
 
-            $drivers = [
-                $drivers->first()
-            ];
 
 
             foreach ($drivers as $driver){
