@@ -1029,7 +1029,14 @@ class OrderAPIController extends AppBaseController
 
             //$all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
-            dd([$route_point->latitude, $route_point->longitude]);
+            //dd([$route_point->latitude, $route_point->longitude]);
+
+            $all = Driver::all();
+
+            foreach($all as $driver){
+                $driver->last_location = ['latitude' => $driver->last_location_latitude, 'longitude' => $driver->last_location_longitude];
+                $driver->save();
+            }
 
             $all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude);
             dd($all);
