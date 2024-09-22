@@ -1038,7 +1038,7 @@ class OrderAPIController extends AppBaseController
                 $driver->save();
             }
 
-            $all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude);
+            //$all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude);
             dd($all);
 
             //$point = new Point($latitude, $longitude);
