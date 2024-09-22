@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1/')->group(function () {
 
 
+    Route::post('driver_notifications/test/send/{id}', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'submitTestNotification']);
+
     //OTP
     //Get OTP
     Route::post('customers/send-otp', [App\Http\Controllers\API\CustomerAPIController::class, 'sendOTP']);

@@ -9,6 +9,7 @@ use App\Repositories\DriverNotificationRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Utilities\DriverNotificationsUtils;
 
 /**
  * Class DriverNotificationAPIController
@@ -104,5 +105,37 @@ class DriverNotificationAPIController extends AppBaseController
         $driverNotifications->delete();
 
         return $this->sendSuccess('Driver Notifications deleted successfully');
+    }
+
+        /**
+     * Soumet une notification de test au driver.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function submitTestNotification($id, Request $request): JsonResponse
+    {
+        try {
+            // Récupérer la notification avec l'ID 100
+            $notification = DriverNotification::findOrFail($id);
+
+            // Envoyer la notification au driver
+            DriverNotificationsUtils::notify($notification);
+
+            // Retourner une réponse de succès
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification de test envoyée avec succès.',
+                'notification_id' => $notification->id
+            ], 200);
+
+        } catch (\Exception $e) {
+            // En cas d'erreur, retourner une réponse d'erreur
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'envoi de la notification de test.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
