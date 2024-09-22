@@ -1039,9 +1039,9 @@ class OrderAPIController extends AppBaseController
             }
 
            // dd(["type"=> "source", "location" => [$route_point->latitude,$route_point->longitude] ]);
-            $distance= 20000;
-            $all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude, $distance);
-            dd($all);
+            //$distance= 20000;
+            //$all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude, $distance);
+            //dd($all);
 
             /*$drivers = $all->where([
                 'is_active' => true,
