@@ -42,6 +42,7 @@ return new class extends Migration
             $table->boolean('is_location')->nullable()->default(false);
             $table->boolean('is_product')->nullable()->default(false);
             $table->boolean('is_ride')->nullable()->default(false);
+            $table->boolean('is_draft')->nullable()->default(false);
             $table->timestamps();
             $table->softDeletes();
         });
