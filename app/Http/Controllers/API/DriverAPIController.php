@@ -385,6 +385,9 @@ class DriverAPIController extends AppBaseController
 
         $driver = $this->driverRepository->update($input_driver, $driver->id);
 
+        $driver->last_location  = [$driver->last_location_latitude, $driver->last_location_longitude];
+        $driver->save();
+
 
         return $this->sendResponse([
             'user' => $driver
