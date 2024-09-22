@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->boolean('is_test_mode')->nullable()->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
