@@ -18,7 +18,7 @@ class DriverAssignmentService
      */
     public function findNearestDrivers($latitude, $longitude, $limit = 5, $maxDistance = null)
     {
-        // Crée un point GEOGRAPHY à partir des coordonnées
+        /*// Crée un point GEOGRAPHY à partir des coordonnées
         $point = DB::raw("ST_SetSRID(ST_MakePoint($longitude, $latitude), 4326)::geography");
 
         // Commence la requête
@@ -33,6 +33,18 @@ class DriverAssignmentService
         }
 
         // Exécute la requête et retourne les résultats
+        return $query->limit($limit)->get();*/
+
+        // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
+        $query = Driver::select('drivers.*')
+        ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
+        ->whereRaw('is_available = true')
+        ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
+
+        if ($maxDistance) {
+            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
+        }
+
         return $query->limit($limit)->get();
     }
 
