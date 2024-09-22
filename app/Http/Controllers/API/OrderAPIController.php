@@ -26,7 +26,6 @@ use App\Http\Controllers\AppBaseController;
 use Carbon\Carbon;
 use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
-use Grimzy\LaravelMysqlSpatial\Types\Point;
 use App\Services\DriverAssignmentService;
 
 /**
@@ -1009,7 +1008,7 @@ class OrderAPIController extends AppBaseController
 
         $order->update($input);
 
-         $this->driverAssignmentService->assignNearestDriver($order);
+        $this->driverAssignmentService->assignNearestDriver($order);
 
         return $this->sendResponse($order->toArray(), 'Order updated successfully');
 
@@ -1031,7 +1030,7 @@ class OrderAPIController extends AppBaseController
                 ])->get();
 
                 if(count($orderInvitations) == 0){
-                    $this->assign($order);
+                    $this->driverAssignmentService->assignNearestDriver($order);
                 }
 
         }
