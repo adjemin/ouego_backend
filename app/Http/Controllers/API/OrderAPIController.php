@@ -1026,12 +1026,10 @@ class OrderAPIController extends AppBaseController
 
 
         if($route_point != null){
-            $latitude = $route_point->latitude;
-            $longitude = $route_point->longitude;
 
             //$all = Driver::geofence($latitude, $longitude, $inner_radius, $outer_radius);
 
-            $all = $this->driverAssignmentService->assignNearestDriver($latitude, $longitude);
+            $all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude);
             dd($all);
 
             //$point = new Point($latitude, $longitude);
