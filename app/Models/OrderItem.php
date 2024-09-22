@@ -39,6 +39,7 @@ class OrderItem extends Model
         'quantity' => 'integer',
         'quantity_unity' => 'string',
         'unit_price' => 'double',
+        'order_price'=> 'double',
         'total_amount' => 'double',
         'currency' => 'string',
         'service_due' => 'double',
