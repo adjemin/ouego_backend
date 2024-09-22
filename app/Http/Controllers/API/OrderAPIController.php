@@ -1032,15 +1032,15 @@ class OrderAPIController extends AppBaseController
             //$driver->last_location  = [$driver->last_location_latitude, $driver->last_location_longitude];
             //$driver->save();
             //$all = [$driver];
-            $all = Driver::all();
-            foreach($all as $driver){
-                $driver->last_location  = [$driver->last_location_latitude, $driver->last_location_longitude];
-                $driver->save();
-            }
+            //$all = Driver::all();
+            //foreach($all as $driver){
+              //  $driver->last_location  = [$driver->last_location_latitude, $driver->last_location_longitude];
+                //$driver->save();
+            //}
 
            // dd(["type"=> "source", "location" => [$route_point->latitude,$route_point->longitude] ]);
-            //$distance= 20000;
-            //$all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude, $distance);
+            $distance= 20000;
+            $all = $this->driverAssignmentService->assignNearestDriver($route_point->latitude, $route_point->longitude, $distance);
             dd($all);
 
             /*$drivers = $all->where([
