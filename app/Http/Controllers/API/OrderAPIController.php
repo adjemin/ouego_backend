@@ -1007,91 +1007,11 @@ class OrderAPIController extends AppBaseController
         $input['order_date'] = now();
         $input['status'] = Order::PERFORMER_LOOKUP;
 
-         $this->assign($order);
+        $order->update($input);
+
+         $this->driverAssignmentService->assignNearestDriver($order);
 
         return $this->sendResponse($order->toArray(), 'Order updated successfully');
-
-    }
-
-    public function assign($order){
-
-        $inner_radius = 0;
-
-        $outer_radius = 20;
-
-        $route_point = RoutePoint::where([
-            'order_id' => $order->id,
-            'type' => 'source'
-        ])->first();
-
-
-        if($route_point != null){
-
-            //$driver = Driver::where('id', 4)->first();
-
-            //$driver->last_location  = [$driver->last_location_latitude, $driver->last_location_longitude];
-            //$driver->save();
-            //$all = [$driver];
-            //$all = Driver::all();
-            //foreach($all as $driver){
-              //  $driver->last_location  = [$driver->last_location_latitude, $driver->last_location_longitude];
-                //$driver->save();
-            //}
-
-           // dd(["type"=> "source", "location" => [$route_point->latitude,$route_point->longitude] ]);
-            //$distance= 20000;
-            $driver = $this->driverAssignmentService->assignNearestDriver($order->service_slug, $route_point->latitude, $route_point->longitude);
-
-            if($driver != null){
-                $drivers = [
-                    $driver
-                ];
-            }else{
-                $drivers = [];
-            }
-
-
-
-
-            foreach ($drivers as $driver){
-
-
-                    if($driver != null){
-                        $orderInvitation = OrderInvitation::where([
-                            'driver_id' => $driver->id,
-                            'order_id' => $order->id,
-                        ])->first();
-
-                        if($orderInvitation == null){
-                            $orderInvitation = OrderInvitation::create([
-                                'driver_id' => $driver->id,
-                                'order_id' => $order->id,
-                                'is_waiting_acceptation' => true,
-                                'acceptation_time' => null,
-                                'rejection_time' => null,
-                                'latitude' => null,
-                                'longitude' => null
-                            ]);
-
-                            //Push Notification
-                            $driverNotification = DriverNotification::create([
-                                'driver_id' => $driver->id,
-                                'title' => 'Course #'.$order->id." vous a été affectée",
-                                'subtitle' => "Acceptez ou Refusez la course",
-                                'data_id' => $orderInvitation->id,
-                                'type' => $orderInvitation->table,
-                                'is_read' => false,
-                                'is_received' => false,
-                                'meta_data' => null
-                            ]);
-                            DriverNotificationsUtils::notify($driverNotification);
-                        }
-
-                    }
-
-
-            }
-        }
 
     }
 
