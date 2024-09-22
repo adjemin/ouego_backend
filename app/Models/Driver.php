@@ -107,6 +107,8 @@ class Driver extends Authenticatable  implements JWTSubject
         $longitude = $value['longitude'] ?? $this->last_location_longitude;
         if ($latitude !== null && $longitude !== null) {
             $this->attributes['last_location'] = DB::raw("ST_SetSRID(ST_MakePoint($longitude, $latitude), 4326)::geography");
+        }else{
+            $this->attributes['last_location'] = null;
         }
     }
 
