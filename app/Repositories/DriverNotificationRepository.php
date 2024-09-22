@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\DriverNotifications;
+use App\Models\DriverNotification;
 use App\Repositories\BaseRepository;
 
 class DriverNotificationRepository extends BaseRepository
@@ -25,6 +25,6 @@ class DriverNotificationRepository extends BaseRepository
 
     public function model(): string
     {
-        return DriverNotifications::class;
+        return DriverNotification::class;
     }
 }
