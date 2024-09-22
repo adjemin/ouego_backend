@@ -44,9 +44,10 @@ class DriverAssignmentService
      *
 
      * @param Order $order
+     * @param int $distance mètre
      * @return Driver|null Le chauffeur assigné ou null si aucun n'est disponible
      */
-    public function assignNearestDriver($order)
+    public function assignNearestDriver($order,  $distance = null)
     {
 
         $route_point = RoutePoint::where([
