@@ -120,13 +120,14 @@ class DriverNotificationAPIController extends AppBaseController
             $notification = DriverNotification::findOrFail($id);
 
             // Envoyer la notification au driver
-            DriverNotificationsUtils::notify($notification);
+            $data = DriverNotificationsUtils::notify($notification);
 
             // Retourner une réponse de succès
             return response()->json([
                 'success' => true,
                 'message' => 'Notification de test envoyée avec succès.',
-                'notification_id' => $notification->id
+                'notification_id' => $notification->id,
+                "data" => $data
             ], 200);
 
         } catch (\Exception $e) {
