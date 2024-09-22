@@ -41,7 +41,6 @@ class DriverAssignmentService
         ->whereRaw('is_available = true')
         ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
-        $maxDistance = 20;
         if ($maxDistance) {
             $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
         }
