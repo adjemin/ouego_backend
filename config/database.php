@@ -74,9 +74,9 @@ return [
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
-            'search_path' => 'ouego_database',
+            'search_path' => env('DB_SCHEMA', 'public'),
             'sslmode' => 'prefer',
-            'schema' => env('DB_SCHEMA', 'ouego_database'),
+            'schema' => env('DB_SCHEMA', 'public'),
         ],
 
         'sqlsrv' => [
