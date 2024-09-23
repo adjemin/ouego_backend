@@ -17,7 +17,7 @@ class FirebaseMessagingUtils{
 
 
             $factory = (new Factory)
-             ->withServiceAccount( __DIR__.'/ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
+             ->withServiceAccount( '../../ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
 
             $cloudMessaging = $factory->createMessaging();
             /** @var  $messaging */
