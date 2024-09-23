@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "efc5d2190cb04ac8d25856e9069ce805",
+    "content-hash": "10b02359590270679aca81deb55c72e0",
     "packages": [
         {
             "name": "adjemin/mtnsmscloud",

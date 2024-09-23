@@ -393,8 +393,8 @@ class ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805
         ),
         'Spatie\\Ignition\\' => 
         array (
-            0 => __DIR__ . '/..' . '/spatie/ignition/src',
-            1 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/ignition',
+            0 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/ignition',
+            1 => __DIR__ . '/..' . '/spatie/ignition/src',
         ),
         'Spatie\\FlareClient\\' => 
         array (
@@ -434,8 +434,8 @@ class ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805
         ),
         'Psr\\Http\\Message\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/http-message/src',
-            1 => __DIR__ . '/..' . '/psr/http-factory/src',
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
         'Psr\\Http\\Client\\' => 
         array (
@@ -1031,6 +1031,7 @@ class ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805
         'App\\Repositories\\TransactionRepository' => __DIR__ . '/../..' . '/app/Repositories/TransactionRepository.php',
         'App\\Repositories\\TypeEnginModelRepository' => __DIR__ . '/../..' . '/app/Repositories/TypeEnginModelRepository.php',
         'App\\Repositories\\TypeEnginRepository' => __DIR__ . '/../..' . '/app/Repositories/TypeEnginRepository.php',
+        'App\\Services\\DriverAssignmentService' => __DIR__ . '/../..' . '/app/Services/DriverAssignmentService.php',
         'App\\Utilities\\CustomerNotificationsUtils' => __DIR__ . '/../..' . '/app/Utilities/CustomerNotificationsUtils.php',
         'App\\Utilities\\DriverNotificationsUtils' => __DIR__ . '/../..' . '/app/Utilities/DriverNotificationsUtils.php',
         'App\\Utilities\\FirebaseMessagingUtils' => __DIR__ . '/../..' . '/app/Utilities/FirebaseMessagingUtils.php',

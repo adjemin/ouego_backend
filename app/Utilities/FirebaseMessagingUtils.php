@@ -7,16 +7,23 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Factory;
 
 class FirebaseMessagingUtils{
 
     public static function sendNotification($title, $body, $type, $customerNotification, $firebaseId) {
 
         try {
-            /** @var  $messaging */
-            $messaging = Firebase::project('app')->messaging();
 
-            $message = CloudMessage::withTarget('token', $firebaseId)
+
+            $factory = (new Factory)
+             ->withServiceAccount( __DIR__.'/ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
+
+            $cloudMessaging = $factory->createMessaging();
+            /** @var  $messaging */
+            //$messaging = Firebase::project('app')->messaging();
+
+            $message = $cloudMessaging->withTarget('token', $firebaseId)
                // ->withNotification(Notification::create($title, $body))
                 ->withHighestPossiblePriority()
                 ->withData(array(

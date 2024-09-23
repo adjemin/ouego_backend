@@ -6,16 +6,16 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "adjemin/mtnsmscloud": "dev-master",
         "doctrine/dbal": "~2.3",
         "guzzlehttp/guzzle": "^7.2",
         "infyomlabs/adminlte-templates": "^6.0",
         "infyomlabs/laravel-generator": "^6.0",
+        "kreait/firebase-php": "^7.0",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
-        "php-open-source-saver/jwt-auth": "^2.3",
-        "kreait/laravel-firebase": "^5.8.0",
-        "adjemin/mtnsmscloud": "dev-master"
+        "php-open-source-saver/jwt-auth": "^2.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

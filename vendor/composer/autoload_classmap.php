@@ -230,6 +230,7 @@ return array(
     'App\\Repositories\\TransactionRepository' => $baseDir . '/app/Repositories/TransactionRepository.php',
     'App\\Repositories\\TypeEnginModelRepository' => $baseDir . '/app/Repositories/TypeEnginModelRepository.php',
     'App\\Repositories\\TypeEnginRepository' => $baseDir . '/app/Repositories/TypeEnginRepository.php',
+    'App\\Services\\DriverAssignmentService' => $baseDir . '/app/Services/DriverAssignmentService.php',
     'App\\Utilities\\CustomerNotificationsUtils' => $baseDir . '/app/Utilities/CustomerNotificationsUtils.php',
     'App\\Utilities\\DriverNotificationsUtils' => $baseDir . '/app/Utilities/DriverNotificationsUtils.php',
     'App\\Utilities\\FirebaseMessagingUtils' => $baseDir . '/app/Utilities/FirebaseMessagingUtils.php',
