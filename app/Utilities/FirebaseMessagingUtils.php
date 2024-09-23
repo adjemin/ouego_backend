@@ -34,7 +34,7 @@ class FirebaseMessagingUtils{
                     'notification_type' => "".$customerNotification["type"],
                     'notification_id' => "".$customerNotification["id"],
                     'meta_data_id' => "".$customerNotification["data_id"],
-                    //'notification' => json_encode($customerNotification),
+                    'notification' => json_encode($customerNotification),
                     "title" => $title,
                     "body" => $body,
                 ));
