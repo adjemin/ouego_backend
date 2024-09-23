@@ -38,6 +38,11 @@ class DriverNotificationsUtils
                 foreach($userDevices as $userDevice){
                     $deviceFirebaseId = "".$userDevice->firebase_id;
                     $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId);
+
+                    if($result == false){
+                        $userDevice->forceDelete();
+                    }
+
                     array_push($messages_sent, $result);
                 }
 
