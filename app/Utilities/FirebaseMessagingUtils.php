@@ -17,13 +17,13 @@ class FirebaseMessagingUtils{
 
 
             $factory = (new Factory)
-             ->withServiceAccount( '../../ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
+             ->withServiceAccount('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
 
-            $cloudMessaging = $factory->createMessaging();
+             $messaging = $factory->createMessaging();
             /** @var  $messaging */
             //$messaging = Firebase::project('app')->messaging();
 
-            $message = $cloudMessaging->withTarget('token', $firebaseId)
+            $message = CloudMessage::withTarget('token', $firebaseId)
                // ->withNotification(Notification::create($title, $body))
                 ->withHighestPossiblePriority()
                 ->withData(array(
