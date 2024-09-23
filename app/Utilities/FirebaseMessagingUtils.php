@@ -15,9 +15,10 @@ class FirebaseMessagingUtils{
 
         try {
 
+            $jsonPath = base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
 
             $factory = (new Factory)
-             ->withServiceAccount('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
+             ->withServiceAccount($jsonPath);
 
              $messaging = $factory->createMessaging();
             /** @var  $messaging */
