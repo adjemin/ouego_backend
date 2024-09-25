@@ -635,8 +635,6 @@ class OrderAPIController extends AppBaseController
             $driver_due = $driver_due + $order_item->driver_due;
             $service_due = $service_due + $order_item->service_due;
 
-
-
             if($order_item->service_slug == Service::COURSE){
                 $order->is_ride = true;
                 $order->save();

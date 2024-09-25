@@ -9,6 +9,7 @@ use App\Models\OrderInvitation;
 use App\Models\DriverNotification;
 use App\Models\RoutePoint;
 use App\Utilities\DriverNotificationsUtils;
+use App\Events\OrderAssigned;
 
 class DriverAssignmentService
 {
@@ -83,18 +84,11 @@ class DriverAssignmentService
                     'longitude' => null
                 ]);
 
-                //Push Notification
-                $driverNotification = DriverNotification::create([
-                    'driver_id' => $driver->id,
-                    'title' => 'Course #'.$order->id." vous a été affectée",
-                    'subtitle' => "Acceptez ou Refusez la course",
-                    'data_id' => $orderInvitation->id,
-                    'type' => $orderInvitation->table,
-                    'is_read' => false,
-                    'is_received' => false,
-                    'meta_data' => null
-                ]);
-                DriverNotificationsUtils::notify($driverNotification);
+
+
+                // Déclencher l'événement d'assignation de commande
+                event(new OrderAssigned($orderInvitation));
+
             }
 
             return $driver;

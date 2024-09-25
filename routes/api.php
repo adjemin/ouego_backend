@@ -186,15 +186,15 @@ Route::prefix('v1/')->group(function () {
 //    ->except(['create', 'edit']);
 
 
-Route::resource('settings', App\Http\Controllers\API\SettingAPIController::class)
-    ->except(['create', 'edit']);
+//Route::resource('settings', App\Http\Controllers\API\SettingAPIController::class)
+//    ->except(['create', 'edit']);
 
 
-Route::resource('driver-devices', App\Http\Controllers\API\DriverDeviceAPIController::class)
-    ->except(['create', 'edit']);
+//Route::resource('driver-devices', App\Http\Controllers\API\DriverDeviceAPIController::class)
+//    ->except(['create', 'edit']);
 
-Route::resource('driver-notifications', App\Http\Controllers\API\DriverNotificationsAPIController::class)
-    ->except(['create', 'edit']);
+//Route::resource('driver-notifications', App\Http\Controllers\API\DriverNotificationsAPIController::class)
+//    ->except(['create', 'edit']);
 
-Route::resource('customer-notifications', App\Http\Controllers\API\CustomerNotificationAPIController::class)
-    ->except(['create', 'edit']);
+//Route::resource('customer-notifications', App\Http\Controllers\API\CustomerNotificationAPIController::class)
+//    ->except(['create', 'edit']);
