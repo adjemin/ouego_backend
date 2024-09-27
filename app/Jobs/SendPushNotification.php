@@ -11,6 +11,7 @@ use App\Models\DriverNotification;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Kreait\Firebase\Factory;
+use Illuminate\Support\Facades\Log;
 
 class SendPushNotification implements ShouldQueue
 {
@@ -56,6 +57,8 @@ class SendPushNotification implements ShouldQueue
                 "body" => "".$this->notificationData->subtitle
             ));
 
-        $messaging->send($message);
+        $result = $messaging->send($message);
+
+        Log::info("Result =>> $result");
     }
 }
