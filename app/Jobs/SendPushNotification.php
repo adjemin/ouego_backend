@@ -59,6 +59,6 @@ class SendPushNotification implements ShouldQueue
 
         $result = $messaging->send($message);
 
-        Log::info("Result =>> $result");
+        Log::info("Result =>> ".json_encode($result));
     }
 }
