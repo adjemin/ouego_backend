@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\DriverNotification;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
+use Kreait\Firebase\Factory;
 
 class SendPushNotification implements ShouldQueue
 {
@@ -34,7 +35,12 @@ class SendPushNotification implements ShouldQueue
     {
         //
 
-        $messaging = app('firebase.messaging');
+        $jsonPath = base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
+
+            $factory = (new Factory)
+             ->withServiceAccount($jsonPath);
+
+        $messaging = $factory->createMessaging();
 
         $message = CloudMessage::withTarget('token', $this->fcmToken)
             ->withNotification(Notification::create($this->notificationData->title, $this->notificationData->subtitle))
