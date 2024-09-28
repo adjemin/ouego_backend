@@ -1550,4 +1550,22 @@ class OrderAPIController extends AppBaseController
 
    }
 
+   public function cancel($id, Request $request){
+
+    /** @var Order $order */
+    $order = $this->orderRepository->find($id);
+
+    if (empty($order)) {
+        return $this->sendError('Order not found');
+    }
+
+    $input['status'] = Order::CANCELLED;
+
+    $order->update($input);
+
+    return $this->sendResponse($order->toArray(), 'Order updated successfully');
+
+  }
+
+
 }

@@ -49,6 +49,9 @@ Route::prefix('v1/')->group(function () {
     //Confirmer une course (client)
     Route::put('orders/{id}/confirm', [App\Http\Controllers\API\OrderAPIController::class, 'confirm']);
 
+    Route::put('orders/{id}/cancel', [App\Http\Controllers\API\OrderAPIController::class, 'cancel']);
+
+
     //Détails d'une course par ID (client)
     Route::get('orders/{id}/info', [App\Http\Controllers\API\OrderAPIController::class, 'show']);
 
