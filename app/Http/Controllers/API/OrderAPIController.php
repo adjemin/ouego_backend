@@ -36,11 +36,13 @@ class OrderAPIController extends AppBaseController
     private OrderRepository $orderRepository;
 
     private DriverAssignmentService $driverAssignmentService;
+    private CarrierLocationService $carrierLocationService;
 
-    public function __construct(OrderRepository $orderRepo, DriverAssignmentService $driverAssignmentService )
+    public function __construct(OrderRepository $orderRepo, DriverAssignmentService $driverAssignmentService, CarrierLocationService $carrierLocationService)
     {
         $this->orderRepository = $orderRepo;
         $this->driverAssignmentService = $driverAssignmentService;
+        $this->carrierLocationService = $carrierLocationService;
     }
 
     /**
@@ -1150,10 +1152,7 @@ class OrderAPIController extends AppBaseController
         $latitude = $destination_point['latitude'];
         $longitude = $destination_point['longitude'];
 
-        $all = Carrier::geofence($latitude, $longitude, $inner_radius, $outer_radius);
-
-        $carriers = $all->where([
-            'is_active' => true])/*->whereJsonContains('services', $order->service_slug)*/->get();
+        $carriers = $this->carrierLocationService->findNearestCarriers($latitude, $longitude);
 
         if(count($carriers)==0){
             return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
@@ -1312,12 +1311,7 @@ class OrderAPIController extends AppBaseController
     $latitude = $destination_point['latitude'];
     $longitude = $destination_point['longitude'];
 
-    $all = Carrier::geofence($latitude, $longitude, $inner_radius, $outer_radius);
-
-    $carriers = $all->where(['is_active' => true])
-        ->whereJsonContains('products', $meta_data['product_slug'])
-        ->orderBy('distance', 'ASC')
-        ->get();
+    $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_slug']);
 
     if(count($carriers)==0){
         return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
