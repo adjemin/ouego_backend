@@ -35,7 +35,6 @@ class SendPushNotification implements ShouldQueue
     public function handle(): void
     {
         //
-
         $jsonPath = base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
 
             $factory = (new Factory)
