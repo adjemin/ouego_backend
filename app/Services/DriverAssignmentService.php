@@ -31,20 +31,13 @@ class DriverAssignmentService
         ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
         ->whereRaw('is_available = true')
         ->whereRaw('is_active = true')
+        ->where('updated_at', '>=', now()->subMinutes($maxUpdateTime))
         ->whereJsonContains('services', $service_slug)
         ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
         if ($maxDistance) {
             $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
         }
-
-        // Ajout de la condition sur le temps de mise à jour maximal si spécifié
-        if ($maxUpdateTime) {
-            $query->where('updated_at', '>=', now()->subMinutes($maxUpdateTime));
-        }
-
-        // Ajout d'un ordre secondaire sur updated_at pour prioriser les mises à jour récentes
-        $query->orderBy('updated_at', 'desc');
 
         return $query->limit($limit)->get();
     }
