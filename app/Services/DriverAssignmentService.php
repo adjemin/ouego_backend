@@ -25,6 +25,7 @@ class DriverAssignmentService
      */
     public function findNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
     {
+        $maxUpdateTime  = 30;
         // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
         $query = Driver::select('drivers.*')
         ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
@@ -36,6 +37,14 @@ class DriverAssignmentService
         if ($maxDistance) {
             $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
         }
+
+        // Ajout de la condition sur le temps de mise à jour maximal si spécifié
+        if ($maxUpdateTime) {
+            $query->where('updated_at', '>=', now()->subMinutes($maxUpdateTime));
+        }
+
+        // Ajout d'un ordre secondaire sur updated_at pour prioriser les mises à jour récentes
+        $query->orderBy('updated_at', 'desc');
 
         return $query->limit($limit)->get();
     }
