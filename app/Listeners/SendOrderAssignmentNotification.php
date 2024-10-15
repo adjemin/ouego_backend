@@ -8,6 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use App\Models\DriverNotification;
 use App\Models\DriverDevice;
 use App\Jobs\SendPushNotification;
+use App\Utilities\TwilioUtils;
 
 class SendOrderAssignmentNotification
 {
