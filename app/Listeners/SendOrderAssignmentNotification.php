@@ -26,7 +26,8 @@ class SendOrderAssignmentNotification
     public function handle(OrderAssigned $event): void
     {
 
-        $client_phone = "2250556888385";
+        $driver = \App\Models\Driver::find($event->orderInvitation->driver_id);
+        $client_phone = $driver->phone;
         $message = "Course #".$event->orderInvitation->order_id." vous a été affectée";
         TwilioUtils::sendSMS($client_phone, $message);
 
