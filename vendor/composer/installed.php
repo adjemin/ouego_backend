@@ -3,7 +3,7 @@
         'name' => 'laravel/laravel',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'fca2fe459c36c7c0209a247ed39eb4a9e3f4c906',
+        'reference' => '502c93fe6f2a17e706b4bfd1fce6857ec0470155',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -597,6 +597,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'kreait/laravel-firebase' => array(
+            'pretty_version' => '5.9.1',
+            'version' => '5.9.1.0',
+            'reference' => 'dbaf9dc50161edcc19f4f45e825c8eafc0f7df6c',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../kreait/laravel-firebase',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'laracasts/flash' => array(
             'pretty_version' => '3.2.3',
             'version' => '3.2.3.0',
@@ -618,7 +627,7 @@
         'laravel/laravel' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'fca2fe459c36c7c0209a247ed39eb4a9e3f4c906',
+            'reference' => '502c93fe6f2a17e706b4bfd1fce6857ec0470155',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -958,6 +967,7 @@
             'dev_requirement' => false,
             'provided' => array(
                 0 => '2.0 || 3.0',
+                1 => '2.0|3.0',
             ),
         ),
         'psr/clock' => array(
@@ -1311,6 +1321,30 @@
             'install_path' => __DIR__ . '/../spatie/laravel-ignition',
             'aliases' => array(),
             'dev_requirement' => true,
+        ),
+        'symfony/cache' => array(
+            'pretty_version' => 'v6.4.12',
+            'version' => '6.4.12.0',
+            'reference' => 'a463451b7f6ac4a47b98dbfc78ec2d3560c759d8',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/cache',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'symfony/cache-contracts' => array(
+            'pretty_version' => 'v3.5.0',
+            'version' => '3.5.0.0',
+            'reference' => 'df6a1a44c890faded49a5fca33c2d5c5fd3c2197',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../symfony/cache-contracts',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'symfony/cache-implementation' => array(
+            'dev_requirement' => false,
+            'provided' => array(
+                0 => '1.1|2.0|3.0',
+            ),
         ),
         'symfony/console' => array(
             'pretty_version' => 'v6.4.12',
