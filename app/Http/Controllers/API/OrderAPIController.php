@@ -671,7 +671,7 @@ class OrderAPIController extends AppBaseController
         $subtotal = $order->order_price;
         $tax = 0;
         $fees_delivery = $order->delivery_price;
-        if($order->service_slug != Service::COURSE){
+        if($order->service_slug == Service::COURSE){
             $total = $subtotal + $tax ;
         }else{
             $total = $subtotal + $fees_delivery+ $tax;
