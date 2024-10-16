@@ -671,10 +671,11 @@ class OrderAPIController extends AppBaseController
         $subtotal = $order->order_price;
         $tax = 0;
         $fees_delivery = $order->delivery_price;
+        $invoice_total = 0;
         if($order->service_slug == Service::COURSE){
-            $total = $subtotal + $tax ;
+            $invoice_total = $subtotal + $tax ;
         }else{
-            $total = $subtotal + $fees_delivery+ $tax;
+            $invoice_total = $subtotal + $fees_delivery+ $tax;
         }
 
         $discount = 0;
@@ -687,7 +688,7 @@ class OrderAPIController extends AppBaseController
             'subtotal' => $subtotal,
             'tax' => $tax,
             'fees_delivery' => $fees_delivery,
-            'total' => $total,
+            'total' => $invoice_total,
             'status' => Invoice::UNPAID,
             'is_paid_by_customer' => false,
             'is_paid_by_delivery_service' => false,
