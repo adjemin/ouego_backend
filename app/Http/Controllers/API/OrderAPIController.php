@@ -1556,6 +1556,10 @@ class OrderAPIController extends AppBaseController
 
     $input['status'] = Order::CANCELLED;
 
+    $order->is_completed = true;
+    $order->is_waiting = false;
+    $order->is_draft = false;
+
     $order->update($input);
 
     return $this->sendResponse($order->toArray(), 'Order updated successfully');
