@@ -31,7 +31,7 @@ class DriverAssignmentService
         ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
         ->whereRaw('is_available = true')
         ->whereRaw('is_active = true')
-        ->where('updated_at', '>=', now()->subMinutes($maxUpdateTime))
+        ->whereRaw('updated_at >= NOW() - INTERVAL ? MINUTE', [$maxUpdateTime])
         ->whereJsonContains('services', $service_slug)
         ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
