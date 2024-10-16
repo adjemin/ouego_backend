@@ -140,6 +140,20 @@ class OrderInvitationAPIController extends AppBaseController
             return $this->sendError('Order Invitation not found', 400);
         }
 
+        $order = Order::find($orderInvitation->order_id);
+        if($order != null && $order->is_completed){
+
+            if($orderInvitation->is_waiting_acceptation){
+                $orderInvitation->is_waiting_acceptation = false;
+                $orderInvitation->latitude = $request->input('latitude');
+                $orderInvitation->longitude = $request->input('longitude');
+                $orderInvitation->save();
+            }
+
+            return $this->sendError('Order already completed', 400);
+
+        }
+
         if($orderInvitation->is_waiting_acceptation){
             $orderInvitation->is_waiting_acceptation = false;
             $orderInvitation->acceptation_time = now();
