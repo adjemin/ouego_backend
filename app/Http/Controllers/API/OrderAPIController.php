@@ -617,7 +617,8 @@ class OrderAPIController extends AppBaseController
                         'expected_arrival_at' => null,
                         'visit_order' => array_key_exists('visit_order', $route_point)?$route_point['visit_order']:null,
                         'stage' => array_key_exists('stage', $route_point)?$route_point['stage']:null,
-                        'apartment' => array_key_exists('apartment', $route_point)?$route_point['apartment']:null
+                        'apartment' => array_key_exists('apartment', $route_point)?$route_point['apartment']:null,
+                        'has_handling' => array_key_exists('has_handling', $route_point)?$route_point['has_handling']:null
                     ]);
 
                 }
