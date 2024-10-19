@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
+use App\Models\CustomerNotification;
+use App\Events\CustomerNotificationCreated;
 
 /**
  * Class OrderInvitationAPIController
