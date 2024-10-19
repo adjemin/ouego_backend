@@ -48,7 +48,8 @@ class RoutePoint extends Model
         'stage',
         'apartment',
         'customer_id',
-        'order_id'
+        'order_id',
+        'has_handling'
     ];
 
     protected $casts = [
@@ -76,7 +77,8 @@ class RoutePoint extends Model
         'stage' => 'string',
         'apartment' => 'string',
         'customer_id' => 'integer',
-        'order_id' => 'integer'
+        'order_id' => 'integer',
+        'has_handling' => 'boolean'
     ];
 
     public static array $rules = [

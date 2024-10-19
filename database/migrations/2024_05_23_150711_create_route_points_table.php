@@ -43,6 +43,7 @@ return new class extends Migration
             $table->string('apartment')->nullable();
             $table->bigInteger('customer_id')->nullable();
             $table->bigInteger('order_id')->nullable();
+            $table->boolean('has_handling')->nullable()->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

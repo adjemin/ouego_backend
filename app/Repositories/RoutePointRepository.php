@@ -35,7 +35,8 @@ class RoutePointRepository extends BaseRepository
         'stage',
         'apartment',
         'customer_id',
-        'order_id'
+        'order_id',
+        'has_handling'
     ];
 
     public function getFieldsSearchable(): array
