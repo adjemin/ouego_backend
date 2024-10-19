@@ -173,6 +173,23 @@ class OrderInvitationAPIController extends AppBaseController
                         "acceptation_time" => now()
                     ]
                 );
+
+                //Send notification to customer
+                $title = "Course #".$routePoint->order_id." a été attribuée";
+                $subtitle = "Nous avons trouvé un conducteur pour la course";
+                $userNotification = CustomerNotification::create([
+                    'customer_id' => $order->customer_id,
+                    'title' => $title,
+                    'subtitle' => $subtitle,
+                    'data_id' => $routePoint->order_id,
+                    'type' => $order->table,
+                    'is_read' => false,
+                    'is_received' => false,
+                    'meta_data' => null
+                ]);
+
+                // Déclenche l'événement
+                event(new CustomerNotificationCreated($userNotification));
             }
 
             //Désactiver les autres invitations
