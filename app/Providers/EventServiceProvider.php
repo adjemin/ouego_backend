@@ -18,6 +18,9 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\OrderAssigned::class => [
             \App\Listeners\SendOrderAssignmentNotification::class,
         ],
+        \App\Events\CustomerNotificationCreated::class => [
+            \App\Listeners\SendCustomerPushNotification::class,
+        ],
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],

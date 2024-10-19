@@ -10,7 +10,7 @@ use App\Models\DriverDevice;
 use App\Jobs\SendPushNotification;
 use App\Utilities\TwilioUtils;
 
-class SendOrderAssignmentNotification
+class SendOrderAssignmentNotification implements ShouldQueue
 {
     /**
      * Create the event listener.

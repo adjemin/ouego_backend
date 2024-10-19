@@ -8,7 +8,7 @@ use App\Models\RoutePoint;
 use App\Models\RoutePointHistory;
 use App\Models\Order;
 use App\Models\CustomerNotification;
-use App\Utilities\CustomerNotificationsUtils;
+use App\Events\CustomerNotificationCreated;
 use App\Repositories\RoutePointRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -285,7 +285,7 @@ class RoutePointAPIController extends AppBaseController
         }
 
 
-        //Send Push notification to user
+        //Send Push notification to customer
         $subtitle = "Course #".$routePoint->order_id." a été mise à jour";
         $userNotification = CustomerNotification::create([
             'customer_id' => $order->customer_id,
@@ -297,7 +297,9 @@ class RoutePointAPIController extends AppBaseController
             'is_received' => false,
             'meta_data' => null
         ]);
-        CustomerNotificationsUtils::notify($userNotification);
+
+        // Déclenche l'événement
+        event(new CustomerNotificationCreated($userNotification));
 
         $order = Order::find($routePoint->order_id);
 
