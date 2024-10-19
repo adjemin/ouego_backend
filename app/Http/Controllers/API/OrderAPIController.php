@@ -188,7 +188,12 @@ class OrderAPIController extends AppBaseController
                     return $this->sendError('delivery_type_code is required', 400);
                 }
 
-                $delivery_fees = $this->getDeliveryFees((array)$item['route_points']);
+                $delivery_fees = array_key_exists('delivery_fees', $meta_data)?$meta_data['delivery_fees']:0;
+
+                if($delivery_fees == 0){
+                    $delivery_fees = $this->getDeliveryFeesForCourse((array)$item['route_points'], $meta_data['engin_model']);
+                }
+
 
                 $total_amount = $delivery_fees;
 
@@ -998,6 +1003,87 @@ class OrderAPIController extends AppBaseController
 
 
         return PricingUtils::transport($current_distance);
+
+    }
+    public function getDeliveryFeesForCourse(array $route_points, string $engin_model){
+
+        /**
+         *
+         *     {
+                "route_points":[
+                    {
+                        "address_name":"Cocody, Abidjan, Côte d'ivoire",
+                        "latitude":4,
+                        "longitude":-5,
+                        "type":"source",
+                        "parcel_details":""
+                    },
+                    {
+                        "address_name":"Koumassi, Abidjan, Côte d'ivoire",
+                        "latitude":4,
+                        "longitude":-5,
+                        "type":"destination",
+                        "parcel_details":""
+                    }
+                ]
+            }
+         *
+         */
+
+
+         $typeEnginModel = TypeEnginModel::where('slug', $engin_model)->first();
+
+         if(empty($typeEnginModel)){
+             return $this->sendError('engin_model is required', 400);
+         }
+
+
+        $source_list = collect([]);
+        $destination_list = collect([]);
+
+        foreach ($route_points as $route_point_item){
+            if(!is_array($route_point_item)){
+                $route_point_item = (array)$route_point_item;
+            }
+
+            $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+            if($route_point_item_type == 'source'){
+                $source_list->push($route_point_item);
+            }
+
+            if($route_point_item_type == 'destination'){
+                $destination_list->push($route_point_item);
+            }
+
+
+        }
+
+        $source_point = $source_list->first();
+
+        $destination_point = $destination_list->last();
+
+        $result = GoogleMapsAPIUtils::getDistance([
+            $source_point['latitude'],
+            $source_point['longitude'],
+        ],[
+            $destination_point['latitude'],
+            $destination_point['longitude'],
+        ]);
+
+
+        $current_distance = 0;
+
+        if(array_key_exists('distance',$result)){
+            $result_distance = $result['distance']; //array
+            $result_distance_value = $result_distance['value']; //meters
+            $current_distance = $result_distance_value/1000; //kilometers
+            $current_distance = intval($current_distance);
+
+        }
+
+
+        return PricingUtils::transportCourse($current_distance, $typeEnginModel);
 
     }
 
