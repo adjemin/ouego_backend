@@ -175,13 +175,13 @@ class OrderInvitationAPIController extends AppBaseController
                 );
 
                 //Send notification to customer
-                $title = "Course #".$routePoint->order_id." a été attribuée";
+                $title = "Course #".$orderInvitation->order_id." a été attribuée";
                 $subtitle = "Nous avons trouvé un conducteur pour la course";
                 $userNotification = CustomerNotification::create([
                     'customer_id' => $order->customer_id,
                     'title' => $title,
                     'subtitle' => $subtitle,
-                    'data_id' => $routePoint->order_id,
+                    'data_id' => $orderInvitation->order_id,
                     'type' => $order->table,
                     'is_read' => false,
                     'is_received' => false,
