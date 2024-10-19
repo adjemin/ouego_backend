@@ -48,7 +48,7 @@ class SendPushCustomerNotification implements ShouldQueue
         $messaging = $factory->createMessaging();
 
         $message = CloudMessage::withTarget('token', $this->firebaseId)
-            ->withNotification(Notification::create($this->customerNotification->title, $this->customerNotification->subtitle))
+            //->withNotification(Notification::create($this->customerNotification->title, $this->customerNotification->subtitle))
             ->withData(array(
                 'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                 'id' => "".$this->customerNotification->id,
