@@ -1657,6 +1657,18 @@ class OrderAPIController extends AppBaseController
 
     $order->update($input);
 
+    //Get OrderInvitations for this order and update is_waiting_acceptation to false
+    $orderInvitations = \App\Models\OrderInvitation::where([
+        'order_id' => $order->id,
+        "is_waiting_acceptation" => true
+    ])->get();
+
+    //Update each OrderInvitation
+    foreach($orderInvitations as $orderInvitation){
+        $orderInvitation->is_waiting_acceptation = false;
+        $orderInvitation->update();
+    }
+
     return $this->sendResponse($order->toArray(), 'Order updated successfully');
 
   }
