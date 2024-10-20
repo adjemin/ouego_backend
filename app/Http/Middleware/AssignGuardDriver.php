@@ -22,57 +22,51 @@ class AssignGuardDriver
     public function handle(Request $request, Closure $next, $guard = null)
     {
         if($guard != null){
-            //auth()->shouldUse($guard);
             try {
-               // $user = JWTAuth::parseToken()->authenticate();
                $user = auth('api-drivers')->userOrFail();
                 return $next($request);
             } catch (Exception $e) {
-                if ($e instanceof TokenInvalidException) {
-                    return response()->json([
-                        'code' => 401,
-                        'status' => 'UNAUTHORIZED',
-                        'success' => false,
-                        'message' => 'Token is Invalid'
-                    ],401);
-                } else if ($e instanceof TokenExpiredException) {
 
-                    // Tentative de rafraîchissement du token
-                    try {
-                        $token = JWTAuth::refresh(JWTAuth::getToken());
-                        $user = JWTAuth::setToken($token)->toUser();
-                        $request->headers->set('Authorization', 'Bearer ' . $token);
-
-                        return $next($request);
-                    } catch (JWTException $e) {
-                        return response()->json([
-                            'code' => 401,
-                            'status' => 'UNAUTHORIZED',
-                            'success' => false,
-                            'message' => 'Token has expired and cannot be refreshed'
-                        ], 401);
-                    }
-
-                } else {
-
-                    return response()->json([
-                        'code' => 401,
-                        'status' => 'UNAUTHORIZED',
-                        'success' => false,
-                        'message' =>  'Authorization Token not found'
-                    ],401);
-
-                }
+                return $this->handleAuthException($e);
             }
-        }else{
-            return response()->json([
-                'code' => 401,
-                'status' => 'UNAUTHORIZED',
-                'success' => false,
-                'message' =>  'Authorization Token not found'
-            ],401);
+        } else {
+            return $this->errorResponse('Authorization Token not found', 401);
         }
+    }
 
+    private function handleAuthException(Exception $e)
+    {
+        if ($e instanceof TokenInvalidException) {
+            return $this->errorResponse('Token is Invalid', 401);
+        } else if ($e instanceof TokenExpiredException) {
+            try {
+                $token = JWTAuth::refresh(JWTAuth::getToken());
+                $user = JWTAuth::setToken($token)->toUser();
+                $request->headers->set('Authorization', 'Bearer ' . $token);
 
+                return $next($request);
+            } catch (JWTException $e) {
+                return $this->errorResponse('Token has expired and cannot be refreshed', 401);
+            }
+        } else {
+            return $this->errorResponse('Authorization Token not found', 401);
+        }
+    }
+
+    /**
+     * Return a JSON error response.
+     *
+     * @param string $message
+     * @param int $code
+     * @return \Illuminate\Http\JsonResponse
+     */
+    private function errorResponse($message, $code)
+    {
+        return response()->json([
+            'code' => $code,
+            'status' => 'UNAUTHORIZED',
+            'success' => false,
+            'message' => $message
+        ], $code);
     }
 }
