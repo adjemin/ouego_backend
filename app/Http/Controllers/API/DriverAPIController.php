@@ -259,7 +259,7 @@ class DriverAPIController extends AppBaseController
 
     public function refresh()
     {
-        //try {
+        try {
 
             $token = auth('api-drivers')->refresh();
 
@@ -271,7 +271,7 @@ class DriverAPIController extends AppBaseController
                 'user' => auth('api-drivers')->user()
             ], 'Token refreshed successfully');
 
-        /*} catch (TokenExpiredException $e) {
+        } catch (TokenExpiredException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Token has expired and can no longer be refreshed',
@@ -283,7 +283,7 @@ class DriverAPIController extends AppBaseController
                 'message' => 'Could not refresh token',
                 'error' => 'token_invalid'
             ], 401);
-        }*/
+        }
     }
 
     public function getProfil(Request $request){
