@@ -196,8 +196,26 @@ class Order extends Model
         return Service::where('slug', $this->service_slug)->first();
     }
 
-    //TODO chargeDriver()
+    //chargeDriver()
     public function chargeDriver(){
+
+        if($this->driver_id != null){
+
+            $driver = Driver::where(['id' => $this->driver_id])->first();
+
+            if($driver != null){
+
+                if($this->getInvoiceAttribute() != null && $this->payment_method_code == 'cash'){
+                    $amount = $this->getInvoiceAttribute()->service_due;
+                    $driver->debit($amount, $this->id);
+                }else{
+                    $amount = $this->getInvoiceAttribute()->driver_due;
+                    $driver->credit($amount, $this->id);
+                }
+
+            }
+
+        }
 
     }
 
