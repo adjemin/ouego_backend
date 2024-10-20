@@ -31,8 +31,19 @@ class SendCustomerPushNotification implements ShouldQueue
             if($userDevices != null){
 
                 foreach($userDevices as $userDevice){
-                     // Dispatch le job pour envoyer la notification push
-                    SendPushCustomerNotification::dispatch($userDevice->firebase_id, $event->customerNotification);
+
+                    try {
+                        // Tentative d'envoi de la notification
+                        SendPushCustomerNotification::dispatch($userDevice->firebase_id, $event->customerNotification);
+                    } catch (Kreait\Firebase\Exception\Messaging\NotFound $e) {
+                        // Le token n'est plus valide, nous le supprimons
+                        $userDevice->delete();
+                        \Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $userDevice->customer_id);
+                    } catch (\Exception $e) {
+                        // Gestion des autres exceptions
+                        \Log::error("Erreur lors de l'envoi de la notification: " . $e->getMessage());
+                    }
+
                 }
 
             }
