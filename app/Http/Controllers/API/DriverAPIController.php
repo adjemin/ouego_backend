@@ -273,15 +273,17 @@ class DriverAPIController extends AppBaseController
 
         } catch (TokenExpiredException $e) {
             return response()->json([
+                'code' => 401,
                 'success' => false,
                 'message' => 'Token has expired and can no longer be refreshed',
-                'error' => 'token_expired'
+                'status' => 'UNAUTHORIZED',
             ], 401);
         } catch (JWTException $e) {
             return response()->json([
+                'code' => 401,
                 'success' => false,
                 'message' => 'Could not refresh token',
-                'error' => 'token_invalid'
+                'status' => 'UNAUTHORIZED',
             ], 401);
         }
     }
