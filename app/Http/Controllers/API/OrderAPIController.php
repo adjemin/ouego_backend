@@ -100,8 +100,8 @@ class OrderAPIController extends AppBaseController
             'rating_note'=> null,
             'order_price' => 0,
             'currency_code' => 'XOF',
-            'payment_method_code' => 'cash',
-            'delivery_type_code'=> $request->input('payment_method_code'),
+            'payment_method_code' => $request->input('payment_method_code'),
+            'delivery_type_code'=> null,
             'is_location' => null,
             'is_product' => null,
             'is_ride' => null
@@ -193,6 +193,9 @@ class OrderAPIController extends AppBaseController
                 if($delivery_fees == 0){
                     $delivery_fees = $this->getDeliveryFeesForCourse((array)$item['route_points'], $meta_data['engin_model']);
                 }
+
+                $order->delivery_type_code = $meta_data['delivery_type_code'];
+                $order->save();
 
 
                 $total_amount = $delivery_fees;
@@ -330,6 +333,9 @@ class OrderAPIController extends AppBaseController
                     $order->forceDelete();
                     return $this->sendError('delivery_type_code is required', 400);
                 }
+
+
+                $order->delivery_type_code = $meta_data['delivery_type_code'];
 
                 $delivery_price = intval($item['delivery_price']);
                 $order->delivery_price =  $delivery_price;
