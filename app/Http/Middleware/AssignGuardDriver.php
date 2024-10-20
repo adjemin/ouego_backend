@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Http\Request;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AssignGuardDriver
@@ -36,12 +37,21 @@ class AssignGuardDriver
                     ],401);
                 } else if ($e instanceof TokenExpiredException) {
 
+                 // Tentative de rafraîchissement du token
+                 try {
+                    $token = JWTAuth::refresh(JWTAuth::getToken());
+                    $user = JWTAuth::setToken($token)->toUser();
+                    $request->headers->set('Authorization', 'Bearer ' . $token);
+
+                    return $next($request);
+                } catch (JWTException $e) {
                     return response()->json([
                         'code' => 401,
                         'status' => 'UNAUTHORIZED',
                         'success' => false,
-                        'message' =>  'Token is Expired'
-                    ],401);
+                        'message' => 'Token has expired and cannot be refreshed'
+                    ], 401);
+                }
 
                 } else {
 
