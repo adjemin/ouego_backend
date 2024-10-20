@@ -39,29 +39,32 @@ class SendPushCustomerNotification implements ShouldQueue
      */
     public function handle(): void
     {
-        //
-        $jsonPath = base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
+        try {
+            $jsonPath = base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
+            $factory = (new Factory)->withServiceAccount($jsonPath);
+            $messaging = $factory->createMessaging();
 
-            $factory = (new Factory)
-             ->withServiceAccount($jsonPath);
+            $message = CloudMessage::withTarget('token', $this->firebaseId)
+                ->withData([
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                    'id' => (string)$this->customerNotification->id,
+                    'status' => 'done',
+                    'notification_type' => (string)$this->customerNotification->type,
+                    'notification_id' => (string)$this->customerNotification->id,
+                    'meta_data_id' => (string)$this->customerNotification->data_id,
+                    "title" => $this->customerNotification->title,
+                    "body" => $this->customerNotification->subtitle
+                ]);
 
-        $messaging = $factory->createMessaging();
-
-        $message = CloudMessage::withTarget('token', $this->firebaseId)
-            //->withNotification(Notification::create($this->customerNotification->title, $this->customerNotification->subtitle))
-            ->withData(array(
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                'id' => "".$this->customerNotification->id,
-                'status' => 'done',
-                'notification_type' => "".$this->customerNotification->type,
-                'notification_id' => "".$this->customerNotification->id,
-                'meta_data_id' => "".$this->customerNotification->data_id,
-                "title" => "".$this->customerNotification->title,
-                "body" => "".$this->customerNotification->subtitle
-            ));
-
-        $result = $messaging->send($message);
-
-        Log::info("Result =>> ".json_encode($result));
+            $result = $messaging->send($message);
+            Log::info("Notification envoyée avec succès: " . json_encode($result));
+        } catch (Kreait\Firebase\Exception\Messaging\NotFound $e) {
+            // Le token n'est plus valide
+            Log::warning("Token Firebase invalide: " . $this->firebaseId);
+            throw $e; // Relancer l'exception pour que le job échoue et soit potentiellement retryé
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'envoi de la notification: " . $e->getMessage());
+            throw $e;
+        }
     }
 }
