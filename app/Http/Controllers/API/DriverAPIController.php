@@ -257,14 +257,31 @@ class DriverAPIController extends AppBaseController
 
     public function refresh()
     {
+        try {
 
-        return $this->sendResponse([
-            'token' => auth('api-drivers')->refresh(),
-            'token_type' => 'bearer',
-            'expires_in' => JWTAuth::factory()->getTTL(),
-            'server_time'=> now(),
-            'user' => auth('api-drivers')->user()
-        ], 'Token refreshed successfully');
+            $token = auth('api-drivers')->refresh();
+
+            return $this->sendResponse([
+                'token' => auth('api-drivers')->refresh(),
+                'token_type' => 'bearer',
+                'expires_in' => JWTAuth::factory()->getTTL(),
+                'server_time'=> now(),
+                'user' => auth('api-drivers')->user()
+            ], 'Token refreshed successfully');
+
+        } catch (TokenExpiredException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token has expired and can no longer be refreshed',
+                'error' => 'token_expired'
+            ], 401);
+        } catch (JWTException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not refresh token',
+                'error' => 'token_invalid'
+            ], 401);
+        }
     }
 
     public function getProfil(Request $request){
