@@ -28,19 +28,32 @@ class CleanInvalidFirebaseTokens extends Command
      */
     public function handle()
     {
+        $this->info('Début du nettoyage des tokens Firebase...');
+
         $devices = CustomerDevice::all();
         $factory = (new \Kreait\Firebase\Factory)->withServiceAccount(base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json'));
         $messaging = $factory->createMessaging();
 
-        foreach ($devices as $device) {
+        // Regrouper les tokens par lots de 1000 (limite de Firebase)
+        $tokenChunks = $devices->chunk(1000)->map(function ($chunk) {
+            return $chunk->pluck('firebase_id')->toArray();
+        });
+
+        foreach ($tokenChunks as $tokens) {
             try {
-                $messaging->send(
-                    CloudMessage::withTarget('token', $device->firebase_id)
-                        ->withNotification(['title' => 'Test', 'body' => 'Test'])
-                );
-            } catch (\Kreait\Firebase\Exception\Messaging\NotFound $e) {
-                $this->info("Suppression du token invalide: " . $device->firebase_id);
-                $device->delete();
+                // Valider les tokens sans envoyer de notification
+                $result = $messaging->validateRegistrationTokens($tokens);
+
+                // Traiter les résultats
+                foreach ($result['invalid'] as $invalidToken) {
+                    $device = CustomerDevice::where('firebase_id', $invalidToken)->first();
+                    if ($device) {
+                        $this->info("Suppression du token invalide: " . $invalidToken);
+                        $device->forceDelete();
+                    }
+                }
+            } catch (MessagingException $e) {
+                $this->error("Erreur lors de la validation des tokens: " . $e->getMessage());
             }
         }
 
