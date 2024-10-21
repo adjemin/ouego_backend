@@ -472,7 +472,7 @@ class DriverAPIController extends AppBaseController
         $customer = Driver::where('phone', $request->phone)->first();
         if($customer == null){
 
-            return $this->sendResponse(true, 'OTP verified successfully');
+            return $this->sendError('Aucun compte retrouvé pour ce numéro de téléphone',404);
 
         }else{
             $token = JWTAuth::fromUser($customer);
