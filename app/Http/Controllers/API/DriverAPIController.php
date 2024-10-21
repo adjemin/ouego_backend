@@ -451,7 +451,7 @@ class DriverAPIController extends AppBaseController
     public function verifyOTP(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|string|exists:customer_o_t_ps,phone',
+            'phone' => 'required|string|exists:driver_otps,phone',
             'otp' => 'required|string',
         ]);
 
