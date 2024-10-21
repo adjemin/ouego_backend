@@ -122,6 +122,14 @@ Route::prefix('v1/')->group(function () {
     Route::get('drivers/notifications/list', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/notifications/{id}/update', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'update'])->middleware("auth.driver:api-drivers");
 
+    Route::get('driver/carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'driverCarriers']);
+    Route::post('driver/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'addCarrierToDriver']);
+    Route::delete('driver/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'removeCarrierFromDriver']);
+
+
+    Route::get('carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'index']);
+    Route::get('carriers/search', [App\Http\Controllers\API\CarrierAPIController::class, 'search']);
+
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -215,4 +223,7 @@ Route::prefix('v1/')->group(function () {
 
 
 Route::resource('driver-otps', App\Http\Controllers\API\DriverOtpAPIController::class)
+    ->except(['create', 'edit']);
+
+Route::resource('driver-carriers', App\Http\Controllers\API\DriverCarrierAPIController::class)
     ->except(['create', 'edit']);

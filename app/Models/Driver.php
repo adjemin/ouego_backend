@@ -81,6 +81,16 @@ class Driver extends Authenticatable  implements JWTSubject
         return [];
     }
 
+    /**
+     * Relation many-to-many avec Carrier
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function carriers()
+    {
+        return $this->belongsToMany(Carrier::class, 'driver_carriers', 'driver_id', 'carrier_id');
+    }
+
     public function getCarsAttribute(){
         return Engin::where('driver_id', $this->id)->get();
     }
@@ -147,6 +157,8 @@ class Driver extends Authenticatable  implements JWTSubject
             'order_id' => $orderId
         ]);
     }
+
+
 
 
 

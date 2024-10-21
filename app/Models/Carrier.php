@@ -69,5 +69,15 @@ class Carrier extends Model
         return null;
     }
 
+    /**
+     * Relation many-to-many avec Driver
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function drivers()
+    {
+        return $this->belongsToMany(Driver::class, 'driver_carriers', 'carrier_id', 'driver_id');
+    }
+
 
 }
