@@ -38,7 +38,7 @@ class SendCustomerPushNotification implements ShouldQueue
                     } catch (Kreait\Firebase\Exception\Messaging\NotFound $e) {
                         // Le token n'est plus valide, nous le supprimons
                         $userDevice->forceDelete();
-                        \Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $userDevice->customer_id);
+                        \Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $event->customerNotification->customer_id);
                     } catch (\Exception $e) {
                         // Gestion des autres exceptions
                         \Log::error("Erreur lors de l'envoi de la notification: " . $e->getMessage());

@@ -47,7 +47,18 @@ class SendOrderAssignmentNotification implements ShouldQueue
         $devices = DriverDevice::where('driver_id', $event->orderInvitation->driver_id)->get();
 
         foreach($devices as $device){
-            SendPushNotification::dispatch($device->firebase_id, $notification);
+
+            try {
+                // Tentative d'envoi de la notification
+                SendPushNotification::dispatch($device->firebase_id, $notification);
+            } catch (Kreait\Firebase\Exception\Messaging\NotFound $e) {
+                // Le token n'est plus valide, nous le supprimons
+                $device->forceDelete();
+                \Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $event->orderInvitation->driver_id);
+            } catch (\Exception $e) {
+                // Gestion des autres exceptions
+                \Log::error("Erreur lors de l'envoi de la notification: " . $e->getMessage());
+            }
         }
 
 
