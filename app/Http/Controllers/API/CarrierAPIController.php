@@ -11,6 +11,7 @@ use App\Repositories\CarrierRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Class CarrierAPIController
