@@ -36,6 +36,9 @@ Route::prefix('v1/')->group(function () {
 
     Route::post('customers/devices/create', [App\Http\Controllers\API\CustomerDeviceAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
+
+    Route::get('slides/list', [App\Http\Controllers\API\SlideAPIController::class, 'index']);
+
     Route::get('services/list', [App\Http\Controllers\API\ServiceAPIController::class, 'index']);
     Route::post('services/create', [App\Http\Controllers\API\ServiceAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
@@ -89,6 +92,10 @@ Route::prefix('v1/')->group(function () {
     //Inscription par téléphone Driver
     Route::post('drivers/register', [App\Http\Controllers\API\DriverAPIController::class, 'register']);
     Route::post('drivers/login', [App\Http\Controllers\API\DriverAPIController::class, 'login']);
+
+    Route::post('drivers/send-otp', [App\Http\Controllers\API\DriverAPIController::class, 'sendOTP']);
+
+    Route::post('drivers/verify-otp', [App\Http\Controllers\API\DriverAPIController::class, 'verifyOTP']);
 
     Route::post('drivers/logout', [App\Http\Controllers\API\DriverAPIController::class, 'logout'])->middleware("auth.driver:api-drivers");
     Route::post('drivers/refresh', [App\Http\Controllers\API\DriverAPIController::class, 'refresh'])->middleware("auth.driver:api-drivers");
@@ -201,3 +208,11 @@ Route::prefix('v1/')->group(function () {
 
 //Route::resource('customer-notifications', App\Http\Controllers\API\CustomerNotificationAPIController::class)
 //    ->except(['create', 'edit']);
+
+
+//Route::resource('slides', App\Http\Controllers\API\SlideAPIController::class)
+  //  ->except(['create', 'edit']);
+
+
+Route::resource('driver-otps', App\Http\Controllers\API\DriverOtpAPIController::class)
+    ->except(['create', 'edit']);
