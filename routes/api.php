@@ -122,9 +122,9 @@ Route::prefix('v1/')->group(function () {
     Route::get('drivers/notifications/list', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/notifications/{id}/update', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'update'])->middleware("auth.driver:api-drivers");
 
-    Route::get('driver/carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'driverCarriers'])->middleware("auth.driver:api-drivers");
-    Route::post('driver/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'addCarrierToDriver'])->middleware("auth.driver:api-drivers");
-    Route::delete('driver/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'removeCarrierFromDriver'])->middleware("auth.driver:api-drivers");
+    Route::get('drivers/carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'driverCarriers'])->middleware("auth.driver:api-drivers");
+    Route::post('drivers/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'addCarrierToDriver'])->middleware("auth.driver:api-drivers");
+    Route::delete('drivers/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'removeCarrierFromDriver'])->middleware("auth.driver:api-drivers");
 
 
     Route::get('carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
