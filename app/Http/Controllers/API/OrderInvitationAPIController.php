@@ -242,7 +242,7 @@ class OrderInvitationAPIController extends AppBaseController
 
     public function  refuse($id, Request $request){
         /** @var OrderInvitation $orderInvitation */
-        $orderInvitation = $this->taskInvitationRepository->find($id);
+        $orderInvitation = $this->orderInvitationRepository->find($id);
 
         if (empty($orderInvitation)) {
             return $this->sendError('Order Invitation not found');
