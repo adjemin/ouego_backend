@@ -32,7 +32,8 @@ class Carrier extends Model
         'phone' => 'string',
         'location_latitude' => 'double',
         'location_longitude' => 'double',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'products' => 'array'
     ];
 
     public static array $rules = [
