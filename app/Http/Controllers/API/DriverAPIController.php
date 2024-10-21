@@ -483,7 +483,7 @@ class DriverAPIController extends AppBaseController
                 'expires_in' => JWTAuth::factory()->getTTL(),
                 'server_time'=> now(),
                 'user' => $customer
-            ], 'Customer got successfully');
+            ], 'Driver got successfully');
         }
 
     }
