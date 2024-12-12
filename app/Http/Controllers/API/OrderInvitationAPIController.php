@@ -258,7 +258,7 @@ class OrderInvitationAPIController extends AppBaseController
             //TODO Vérifier s'il y a d'autre invitation ou relancer la recherche
 
             $orderInvitations = OrderInvitation::where([
-                'user_id' => $orderInvitation->user_id,
+                'driver_id' => $orderInvitation->driver_id,
                 "is_waiting_acceptation" => true
             ])->get();
 
