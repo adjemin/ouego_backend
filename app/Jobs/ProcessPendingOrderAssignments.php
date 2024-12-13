@@ -32,6 +32,8 @@ class ProcessPendingOrderAssignments implements ShouldQueue
 
     public function handle(DriverAssignmentService $driverAssignmentService)
     {
+
+        Log::info("ProcessPendingOrderAssignments started");
         // Récupérer toutes les commandes en attente d'assignation
         $pendingOrders = Order::where('status', Order::PERFORMER_LOOKUP)
             ->where('driver_id', null)
