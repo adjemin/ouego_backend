@@ -86,12 +86,15 @@ class DriverAssignmentService
                     'longitude' => null
                 ]);
 
+            }
 
-
+            if($orderInvitation->is_waiting_acceptation == true){
                 // Déclencher l'événement d'assignation de commande
                 event(new OrderAssigned($orderInvitation));
-
             }
+
+
+
 
             return $driver;
 
