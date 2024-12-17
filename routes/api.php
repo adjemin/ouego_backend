@@ -130,6 +130,8 @@ Route::prefix('v1/')->group(function () {
     Route::get('carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
     Route::get('carriers/search', [App\Http\Controllers\API\CarrierAPIController::class, 'search'])->middleware("auth.driver:api-drivers");
 
+    Route::post('notifications/confirm-delivery', [App\Http\Controllers\API\NotificationAPIController::class, 'confirmDelivery']);
+
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

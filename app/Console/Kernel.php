@@ -19,6 +19,7 @@ class Kernel extends ConsoleKernel
 
         // Exécuter le job toutes les 2 minutes
         $schedule->job(new ProcessPendingOrderAssignments)->everyTwoMinutes();
+        $schedule->command('notifications:check-failed')->everyFiveMinutes();
     }
 
     /**
