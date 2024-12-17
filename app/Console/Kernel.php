@@ -6,6 +6,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Jobs\ProcessPendingOrderAssignments;
 use App\Jobs\SendTestPushNotificationJob;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
