@@ -19,7 +19,16 @@ class Kernel extends ConsoleKernel
 
         // Exécuter le job toutes les 2 minutes
         $schedule->job(new ProcessPendingOrderAssignments)->everyTwoMinutes();
+
         $schedule->command('notifications:check-failed')->everyFiveMinutes();
+
+        // Planification du job toutes les 2 minutes
+        $schedule->job(new SendTestPushNotificationJob())
+                ->everyTwoMinutes()
+                ->withoutOverlapping() // Évite les chevauchements d'exécution
+                ->onFailure(function () {
+                    Log::error('Échec de l\'envoi des notifications push de test');
+                });
     }
 
     /**
