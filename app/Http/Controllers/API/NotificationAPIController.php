@@ -4,8 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Models\NotificationDeliveryStatus;
 use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
 
-class NotificationAPIController extends Controller
+class NotificationAPIController extends AppBaseController
 {
     //
 
