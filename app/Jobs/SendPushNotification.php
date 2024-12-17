@@ -81,13 +81,13 @@ class SendPushNotification implements ShouldQueue
 
            // Mise à jour du statut avec l'ID du message FCM
            $deliveryStatus->update([
-                'fcm_message_id' => $result,
+                'fcm_message_id' => $messageId,
                 'status' => 'SENT'
             ]);
 
             Log::info("FCM Notification sent successfully", [
                 'notification_id' => $this->notificationData->id,
-                'fcm_message_id' => $result
+                'fcm_message_id' => $messageId
             ]);
 
         } catch (Exception $e) {
