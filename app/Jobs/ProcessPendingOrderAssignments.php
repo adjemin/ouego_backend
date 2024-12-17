@@ -60,7 +60,7 @@ class ProcessPendingOrderAssignments implements ShouldQueue
                 $driver = $driverAssignmentService->assignNearestDriver($order);
 
                 if ($driver) {
-                    Log::info("Driver {$driver->id} assigned to order {$order->id}");
+                    //Log::info("Driver {$driver->id} assigned to order {$order->id}");
                 } else {
                     // Replanifier le job pour plus tard si aucun driver trouvé
                     ProcessPendingOrderAssignments::dispatch()->delay(now()->addMinutes(5));
