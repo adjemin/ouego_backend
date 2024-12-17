@@ -65,7 +65,7 @@ class SendTestPushNotificationJob implements ShouldQueue
             $messageId = uniqid('msg_');
 
             $message = CloudMessage::withTarget('token', $device->firebase_id)
-             ->withNotification(Notification::create($notification['title'], $notification['body']));
+             ->withNotification(Notification::fromArray($notification));
              /*->withData(array(
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                     'id' => "".$notification['id'],
