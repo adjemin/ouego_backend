@@ -39,10 +39,12 @@ class CheckAndResendFailedNotifications extends Command
             // Incrémente le compteur de tentatives
             $notification->increment('attempt_count');
 
+            $driverNotification = DriverNotification::find($notification->notification_id);
+
             // Relance la notification
             SendPushNotification::dispatch(
                 $notification->fcm_token,
-                $notification->notification
+                $driverNotification->notification
             )->delay(now()->addSeconds(30 * $notification->attempt_count));
 
             $this->info("Requeued notification {$notification->notification_id}");
