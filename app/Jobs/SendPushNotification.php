@@ -62,8 +62,18 @@ class SendPushNotification implements ShouldQueue
             // Ajout d'un messageId unique pour le suivi
             $messageId = uniqid('msg_');
 
+            $notification = [
+                'title' => $this->notificationData->title,
+                'body' => $this->notificationData->subtitle,
+                'sound' => 'default',
+                'badge' => '1',
+                'type' => $this->notificationData->type,
+                'id' => $this->notificationData->id,
+                'message_id' => $messageId
+            ];
+
             $message = CloudMessage::withTarget('token', $this->fcmToken)
-            // ->withNotification(Notification::create($this->notificationData->title, $this->notificationData->subtitle))
+               ->withNotification(Notification::fromArray($this->notificationData->title, $this->notificationData->subtitle))
                 ->withData(array(
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                     'id' => "".$this->notificationData->id,
