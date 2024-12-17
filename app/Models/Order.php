@@ -219,6 +219,12 @@ class Order extends Model
 
     }
 
+    // Ajout de la relation orderInvitations
+    public function orderInvitations(): HasMany
+    {
+        return $this->hasMany(OrderInvitation::class, 'order_id');
+    }
+
 
 
 }

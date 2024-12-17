@@ -17,6 +17,13 @@ class SendPushNotification implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    // Nombre maximum de tentatives
+    public $tries = 3;
+
+    // Délai entre les tentatives (en secondes)
+    public $backoff = [10, 60, 180];
+
+
     protected $fcmToken;
     protected $notificationData;
     /**
@@ -34,30 +41,70 @@ class SendPushNotification implements ShouldQueue
      */
     public function handle(): void
     {
-        //
-        $jsonPath = base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
+        try {
+            // Création du statut de livraison
+            $deliveryStatus = NotificationDeliveryStatus::create([
+                'notification_id' => $this->notificationData->id,
+                'fcm_token' => $this->fcmToken,
+                'attempt_count' => 1,
+                'status' => 'PENDING'
+            ]);
+            //
+            $jsonPath = base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
 
-            $factory = (new Factory)
-             ->withServiceAccount($jsonPath);
+                $factory = (new Factory)
+                ->withServiceAccount($jsonPath);
 
-        $messaging = $factory->createMessaging();
+            $messaging = $factory->createMessaging();
 
-        $message = CloudMessage::withTarget('token', $this->fcmToken)
-           // ->withNotification(Notification::create($this->notificationData->title, $this->notificationData->subtitle))
-            ->withData(array(
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                'id' => "".$this->notificationData->id,
-                'status' => 'done',
-                'notification_type' => "".$this->notificationData->type,
-                'notification_id' => "".$this->notificationData->id,
-                'meta_data_id' => "".$this->notificationData->data_id,
-                //'notification' => json_encode($customerNotification),
-                "title" => "".$this->notificationData->title,
-                "body" => "".$this->notificationData->subtitle
-            ));
+            // Ajout d'un messageId unique pour le suivi
+            $messageId = uniqid('msg_');
 
-        $result = $messaging->send($message);
+            $message = CloudMessage::withTarget('token', $this->fcmToken)
+            // ->withNotification(Notification::create($this->notificationData->title, $this->notificationData->subtitle))
+                ->withData(array(
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                    'id' => "".$this->notificationData->id,
+                    'status' => 'done',
+                    'notification_type' => "".$this->notificationData->type,
+                    'notification_id' => "".$this->notificationData->id,
+                    'meta_data_id' => "".$this->notificationData->data_id,
+                    //'notification' => json_encode($customerNotification),
+                    "title" => "".$this->notificationData->title,
+                    "body" => "".$this->notificationData->subtitle,
+                    'message_id' => $messageId
+                ));
 
-        Log::info("Result =>> ".json_encode($result));
+            $result = $messaging->send($message);
+
+           // Mise à jour du statut avec l'ID du message FCM
+           $deliveryStatus->update([
+                'fcm_message_id' => $result,
+                'status' => 'SENT'
+            ]);
+
+            Log::info("FCM Notification sent successfully", [
+                'notification_id' => $this->notificationData->id,
+                'fcm_message_id' => $result
+            ]);
+
+        } catch (Exception $e) {
+            Log::error("FCM Notification failed", [
+                'notification_id' => $this->notificationData->id,
+                'error' => $e->getMessage()
+            ]);
+
+            $deliveryStatus->update([
+                'status' => 'FAILED',
+                'error_message' => $e->getMessage()
+            ]);
+
+            // Relance le job si des tentatives sont encore disponibles
+            if ($this->attempts() < $this->tries) {
+                $this->release($this->backoff[$this->attempts() - 1]);
+            }
+
+            throw $e;
+        }
     }
 }
