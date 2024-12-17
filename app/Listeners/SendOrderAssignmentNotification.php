@@ -9,6 +9,7 @@ use App\Models\DriverNotification;
 use App\Models\DriverDevice;
 use App\Jobs\SendPushNotification;
 use App\Utilities\TwilioUtils;
+use Illuminate\Support\Facades\Log;
 
 class SendOrderAssignmentNotification implements ShouldQueue
 {
