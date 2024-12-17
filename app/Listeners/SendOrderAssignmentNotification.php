@@ -28,9 +28,10 @@ class SendOrderAssignmentNotification implements ShouldQueue
 
         $driver = \App\Models\Driver::find($event->orderInvitation->driver_id);
         $client_phone = $driver->phone;
-        $message = "Course #".$event->orderInvitation->order_id." vous a été affectée | +". $client_phone." | Acceptez ou Refusez la course";
-        TwilioUtils::sendSMS($client_phone, $message);
+        //$message = "Course #".$event->orderInvitation->order_id." vous a été affectée | +". $client_phone." | Acceptez ou Refusez la course";
+        //TwilioUtils::sendSMS($client_phone, $message);
 
+        Log::info("SendOrderAssignmentNotification started");
 
         //Push Notification
         $notification = DriverNotification::create([
