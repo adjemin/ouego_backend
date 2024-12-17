@@ -12,6 +12,7 @@ use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
+use App\Jobs\NotificationDeliveryStatus;
 
 class SendPushNotification implements ShouldQueue
 {

@@ -12,6 +12,7 @@ use App\Services\DriverAssignmentService;
 use App\Events\OrderAssigned;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use App\Jobs\NotificationDeliveryStatus;
 
 class ProcessPendingOrderAssignments implements ShouldQueue
 {
