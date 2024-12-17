@@ -5,6 +5,7 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Jobs\ProcessPendingOrderAssignments;
+use App\Jobs\SendTestPushNotificationJob;
 
 class Kernel extends ConsoleKernel
 {
