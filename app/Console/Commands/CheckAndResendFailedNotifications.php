@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Jobs\SendPushNotification;
 use App\Models\NotificationDeliveryStatus;
+use App\Models\DriverNotification;
 use Carbon\Carbon;
 
 class CheckAndResendFailedNotifications extends Command
