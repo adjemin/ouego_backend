@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Services\DriverAssignmentService;
 use App\Events\OrderAssigned;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ProcessPendingOrderAssignments implements ShouldQueue
 {
@@ -65,14 +66,14 @@ class ProcessPendingOrderAssignments implements ShouldQueue
                     ProcessPendingOrderAssignments::dispatch()->delay(now()->addMinutes(5));
                 }
 
-            } catch (\Exception $e) {
+            } catch (Throwable $e) {
                 Log::error("Error processing order {$order->id}: " . $e->getMessage());
                 $this->fail($e);
             }
         }
     }
 
-    public function failed(\Exception $exception)
+    public function failed(Throwable $exception)
     {
         Log::error('ProcessPendingOrderAssignments job failed: ' . $exception->getMessage());
     }
