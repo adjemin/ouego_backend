@@ -8,11 +8,12 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\DriverNotification;
+use App\Models\NotificationDeliveryStatus;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\NotificationDeliveryStatus;
+
 
 class SendPushNotification implements ShouldQueue
 {

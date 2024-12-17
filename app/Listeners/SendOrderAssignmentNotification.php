@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use App\Models\DriverNotification;
 use App\Models\DriverDevice;
+use App\Models\NotificationDeliveryStatus;
 use App\Jobs\SendPushNotification;
 use App\Utilities\TwilioUtils;
 use Illuminate\Support\Facades\Log;
