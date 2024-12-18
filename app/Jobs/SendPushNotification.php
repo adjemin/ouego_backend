@@ -68,13 +68,12 @@ class SendPushNotification implements ShouldQueue
                 'sound' => 'default',
                 'badge' => '1',
                 'type' => $this->notificationData->type,
-                'id' => $this->notificationData->id,
-                'message_id' => $messageId
+                'id' => $this->notificationData->id
             ];
 
             $message = CloudMessage::withTarget('token', $this->fcmToken)
-               ->withNotification(Notification::fromArray($this->notificationData->title, $this->notificationData->subtitle))
-                ->withData(array(
+               ->withNotification(Notification::fromArray($notification));
+                /*->withData(array(
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                     'id' => "".$this->notificationData->id,
                     'status' => 'done',
@@ -85,7 +84,7 @@ class SendPushNotification implements ShouldQueue
                     "title" => "".$this->notificationData->title,
                     "body" => "".$this->notificationData->subtitle,
                     'message_id' => $messageId
-                ));
+                ));*/
 
             $result = $messaging->send($message);
 
