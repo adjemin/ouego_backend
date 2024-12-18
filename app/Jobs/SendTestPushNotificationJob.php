@@ -83,7 +83,7 @@ class SendTestPushNotificationJob implements ShouldQueue
 
                 // Enregistrement du statut de livraison
                 $deliveryStatus = new NotificationDeliveryStatus([
-                    'notification_id' => $notification['id'], // Si besoin de lier à une notification
+                    'notification_id' => null, // Si besoin de lier à une notification
                     'fcm_token' => $device->firebase_id,
                     'fcm_message_id' => $messageId,
                     'attempt_count' => 1,
