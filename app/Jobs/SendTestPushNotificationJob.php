@@ -93,6 +93,11 @@ class SendTestPushNotificationJob implements ShouldQueue
                 ]);
 
                 $deliveryStatus->save();
+
+                Log::info("FCM Notification sent successfully", [
+                    'notification_id' => $notification['id'],
+                    'fcm_message_id' => $messageId
+                ]);
             }
         } catch (\Exception $e) {
             Log::error('Erreur lors de l\'envoi des notifications push de test', [
