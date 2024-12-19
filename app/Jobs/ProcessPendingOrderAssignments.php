@@ -12,6 +12,7 @@ use App\Services\DriverAssignmentService;
 use App\Events\OrderAssigned;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use Carbon\Carbon;
 
 class ProcessPendingOrderAssignments implements ShouldQueue
 {
@@ -60,7 +61,7 @@ class ProcessPendingOrderAssignments implements ShouldQueue
                 // Vérifier les tentatives d'invitation précédentes
                 $waitingInvitations = $order->orderInvitations()
                     ->where('is_waiting_acceptation', true)
-                    ->where('updated_at', '>', now()->subMinutes(5))
+                    ->where('created_at', '>', Carbon::parse($order->created_at)->subMinutes(5))
                     ->count();
 
                 if($waitingInvitations == 0){
