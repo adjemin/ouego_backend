@@ -75,6 +75,26 @@ class DriverAssignmentService
                 'order_id' => $order->id,
             ])->first();
 
+
+            if($orderInvitation != null && $orderInvitation->is_waiting_acceptation == false && $orderInvitation->rejection_time != null){
+                //Retirer le driver concerné de $nearestDrivers et retourner un autre driver
+                $nearestDrivers = $nearestDrivers->filter(function ($driver) use ($orderInvitation) {
+                    return $driver->id !== $orderInvitation->driver_id;
+                });
+
+                if ($nearestDrivers->isEmpty()) {
+                    return null;
+                }
+
+                $driver = $nearestDrivers->first();
+
+                $orderInvitation = OrderInvitation::where([
+                    'driver_id' => $driver->id,
+                    'order_id' => $order->id,
+                ])->first();
+
+            }
+
             if($orderInvitation == null){
                 $orderInvitation = OrderInvitation::create([
                     'driver_id' => $driver->id,
