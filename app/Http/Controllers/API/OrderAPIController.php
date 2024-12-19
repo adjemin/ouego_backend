@@ -1304,7 +1304,8 @@ class OrderAPIController extends AppBaseController
         return $this->sendResponse([
             'carrier_id' => $carrier->id,
             'amount' => PricingUtils::transport($current_distance, $delivery_type_code),
-            'distance' => $distance
+            'distance' => $distance,
+            'delivery_type' => $delivery_type_code
         ], 'Order saved successfully');
 
 
@@ -1469,6 +1470,7 @@ class OrderAPIController extends AppBaseController
         'amount' => PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code),
         'distance' => $distance,
         'duration' => $duration,
+        'delivery_type' => $delivery_type_code
     ], 'Order saved successfully');
 
 
@@ -1638,7 +1640,8 @@ class OrderAPIController extends AppBaseController
         'carrier_id' => $carrier->id,
         'amount' => PricingUtils::transportSable($current_distance, $delivery_type_code),
         'distance' => $distance,
-        'duration' => $duration
+        'duration' => $duration,
+        'delivery_type' => $delivery_type_code
     ], 'Order saved successfully');
 
 
