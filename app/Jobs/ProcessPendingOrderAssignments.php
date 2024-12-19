@@ -57,15 +57,25 @@ class ProcessPendingOrderAssignments implements ShouldQueue
                     continue;
                 }
 
-                // Tenter d'assigner un nouveau driver
-                $driver = $driverAssignmentService->assignNearestDriver($order);
+                // Vérifier les tentatives d'invitation précédentes
+                $waitingInvitations = $order->orderInvitations()
+                    ->where('is_waiting_acceptation', true)
+                    ->where('creation_time', '>', now()->subMinutes(5))
+                    ->count();
 
-                if ($driver) {
-                    //Log::info("Driver {$driver->id} assigned to order {$order->id}");
-                } else {
-                    // Replanifier le job pour plus tard si aucun driver trouvé
-                    ProcessPendingOrderAssignments::dispatch()->delay(now()->addMinutes(5));
+                if($waitingInvitations == 0){
+                    // Tenter d'assigner un nouveau driver
+                    $driver = $driverAssignmentService->assignNearestDriver($order);
+
+                    if ($driver) {
+                        //Log::info("Driver {$driver->id} assigned to order {$order->id}");
+                    } else {
+                        // Replanifier le job pour plus tard si aucun driver trouvé
+                        ProcessPendingOrderAssignments::dispatch()->delay(now()->addMinutes(5));
+                    }
                 }
+
+
 
             } catch (Throwable $e) {
                 Log::error("Error processing order {$order->id}: " . $e->getMessage());
