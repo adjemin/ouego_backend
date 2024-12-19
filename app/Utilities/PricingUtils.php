@@ -44,7 +44,29 @@ class PricingUtils{
 
         $amount = $prix_de_base  + ($difference_distance * $prix_kilometre) + ($difference_quantity * $prix_tonnage)  + $frais_route;
 
-        return self::round_up($amount, 100) ;
+        $amount =  self::round_up($amount, 100);
+
+        if($delivery_type == "EXPRESS"){
+            $amount = $amount;
+        }else if($delivery_type == "en-journee"){
+
+            $amount = $amount / 2;
+
+        }else if($delivery_type == "de-nuit"){
+
+            $amount = $amount + $amount * 1.5 ;
+
+        }else if($delivery_type == "en-semaine"){
+
+            $amount = $amount / 3;
+
+        }else{
+
+            $amount = $amount;
+
+        }
+
+        return self::round_up($amount, 100);
 
     }
 
@@ -76,7 +98,29 @@ class PricingUtils{
 
         $amount =  $prix_de_base + ($difference_distance * $prix_kilometre) + $frais_route;
 
-        return self::round_up($amount, 100) ;
+        $amount =  self::round_up($amount, 100);
+
+        if($delivery_type == "EXPRESS"){
+            $amount = $amount;
+        }else if($delivery_type == "en-journee"){
+
+            $amount = $amount / 2;
+
+        }else if($delivery_type == "de-nuit"){
+
+            $amount = $amount + $amount * 1.5 ;
+
+        }else if($delivery_type == "en-semaine"){
+
+            $amount = $amount / 3;
+
+        }else{
+
+            $amount = $amount;
+
+        }
+
+        return self::round_up($amount, 100);
 
     }
 
@@ -108,7 +152,29 @@ class PricingUtils{
 
         $amount = $t1 + $t2 + $t3 + $chargement + $frais_route;
 
-        return $amount;
+        $amount =  self::round_up($amount, 100);
+
+        if($delivery_type == "EXPRESS"){
+            $amount = $amount;
+        }else if($delivery_type == "en-journee"){
+
+            $amount = $amount / 2;
+
+        }else if($delivery_type == "de-nuit"){
+
+            $amount = $amount + $amount * 1.5 ;
+
+        }else if($delivery_type == "en-semaine"){
+
+            $amount = $amount / 3;
+
+        }else{
+
+            $amount = $amount;
+
+        }
+
+        return self::round_up($amount, 100);
         //return self::round_up($amount, 100) ;
 
     }
@@ -136,7 +202,29 @@ class PricingUtils{
 
         $amount =  $prix_transport_net + $frais_route + $taxe_amount;
 
-        return self::round_up($amount, 100) ;
+        $amount =  self::round_up($amount, 100);
+
+        if($delivery_type == "EXPRESS"){
+            $amount = $amount;
+        }else if($delivery_type == "en-journee"){
+
+            $amount = $amount / 2;
+
+        }else if($delivery_type == "de-nuit"){
+
+            $amount = $amount + $amount * 1.5 ;
+
+        }else if($delivery_type == "en-semaine"){
+
+            $amount = $amount / 3;
+
+        }else{
+
+            $amount = $amount;
+
+        }
+
+        return self::round_up($amount, 100);
 
     }
 
