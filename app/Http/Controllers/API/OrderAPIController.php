@@ -188,13 +188,15 @@ class OrderAPIController extends AppBaseController
                     return $this->sendError('delivery_type_code is required', 400);
                 }
 
+                $delivery_type_code = array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:'EXPRESS';
+
                 $delivery_fees = array_key_exists('delivery_fees', $meta_data)?$meta_data['delivery_fees']:0;
 
                 if($delivery_fees == 0){
-                    $delivery_fees = $this->getDeliveryFeesForCourse((array)$item['route_points'], $meta_data['engin_model']);
+                    $delivery_fees = $this->getDeliveryFeesForCourse((array)$item['route_points'], $meta_data['engin_model'], $delivery_type_code);
                 }
 
-                $order->delivery_type_code = $meta_data['delivery_type_code'];
+                $order->delivery_type_code = $delivery_type_code;
                 $order->save();
 
 
@@ -931,13 +933,14 @@ class OrderAPIController extends AppBaseController
                 return $this->sendResponse([
                     "distance" => $current_distance,
                     "duration" => $duration,
-                    "amount" => $amount
+                    "amount" => $amount,
+                    "delivery_type_code" => $delivery_type_code
                 ], 'Order saved successfully');
 
 
     }
 
-    public function getDeliveryFees(array $route_points){
+    public function getDeliveryFees(array $route_points, $delivery_type_code){
 
         /**
          *
@@ -1009,7 +1012,7 @@ class OrderAPIController extends AppBaseController
         }
 
 
-        return PricingUtils::transport($current_distance, "EXPRESS");
+        return PricingUtils::transport($current_distance, $delivery_type_code);
 
     }
     public function getDeliveryFeesForCourse(array $route_points, string $engin_model, string $delivery_type_code){
