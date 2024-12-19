@@ -20,9 +20,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('firebase:clean-tokens')->daily();
 
         // Exécuter le job toutes les 2 minutes
-        $schedule->job(new ProcessPendingOrderAssignments)->everyTwoMinutes();
+        //$schedule->job(new ProcessPendingOrderAssignments)->everyTwoMinutes();
 
-        $schedule->command('notifications:check-failed')->everyFiveMinutes();
+        //$schedule->command('notifications:check-failed')->everyFiveMinutes();
 
         // Planification du job toutes les 2 minutes
        // $schedule->job(new SendTestPushNotificationJob())
