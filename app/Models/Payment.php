@@ -17,6 +17,7 @@ class Payment extends Model
     const STATUS_SUCCESSFUL = 'successful';
     const STATUS_FAILED = 'failed';
     const STATUS_CANCELLED = 'cancelled';
+    const STATUS_EXPIRED = 'expired';
 
     public $fillable = [
         'invoice_id',
