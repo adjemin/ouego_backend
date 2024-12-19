@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Service;
 use App\Models\Setting;
 use App\Models\Product;
+use App\Models\Payment;
 use App\Models\ProductType;
 use App\Models\TypeEngin;
 use App\Models\TypeEnginModel;
