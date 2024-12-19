@@ -14,7 +14,7 @@ class Payment extends Model
 
     //status
     const STATUS_PENDING = 'pending';
-    const STATUS_SUCCEEDED = 'succeeded';
+    const STATUS_SUCCESSFUL = 'successful';
     const STATUS_FAILED = 'failed';
     const STATUS_CANCELLED = 'cancelled';
 
