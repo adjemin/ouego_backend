@@ -871,6 +871,7 @@ class OrderAPIController extends AppBaseController
                     return $this->sendError('engin_model is required', 400);
                 }
 
+                $delivery_type_code = $meta_data['delivery_type_code'];
 
                 $source_list = collect([]);
                 $destination_list = collect([]);
@@ -924,7 +925,7 @@ class OrderAPIController extends AppBaseController
 
                 //$current_distance = 418;
 
-                $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel);
+                $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
 
 
                 return $this->sendResponse([
@@ -1008,10 +1009,10 @@ class OrderAPIController extends AppBaseController
         }
 
 
-        return PricingUtils::transport($current_distance);
+        return PricingUtils::transport($current_distance, "EXPRESS");
 
     }
-    public function getDeliveryFeesForCourse(array $route_points, string $engin_model){
+    public function getDeliveryFeesForCourse(array $route_points, string $engin_model, string $delivery_type_code){
 
         /**
          *
@@ -1089,7 +1090,7 @@ class OrderAPIController extends AppBaseController
         }
 
 
-        return PricingUtils::transportCourse($current_distance, $typeEnginModel);
+        return PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
 
     }
 
@@ -1220,6 +1221,8 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('delivery_type_code is required', 400);
         }
 
+        $delivery_type_code = $meta_data['delivery_type_code'];
+
         $source_list = collect([]);
         $destination_list = collect([]);
 
@@ -1300,7 +1303,7 @@ class OrderAPIController extends AppBaseController
 
         return $this->sendResponse([
             'carrier_id' => $carrier->id,
-            'amount' => PricingUtils::transport($current_distance),
+            'amount' => PricingUtils::transport($current_distance, $delivery_type_code),
             'distance' => $distance
         ], 'Order saved successfully');
 
@@ -1382,6 +1385,8 @@ class OrderAPIController extends AppBaseController
         return $this->sendError('delivery_type_code is required', 400);
     }
 
+    $delivery_type_code = $meta_data['delivery_type_code'];
+
     $source_list = collect([]);
     $destination_list = collect([]);
 
@@ -1461,7 +1466,7 @@ class OrderAPIController extends AppBaseController
 
     return $this->sendResponse([
         'carrier_id' => $carrier->id,
-        'amount' => PricingUtils::transportGravier($current_distance, $quantity),
+        'amount' => PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code),
         'distance' => $distance,
         'duration' => $duration,
     ], 'Order saved successfully');
@@ -1540,6 +1545,8 @@ class OrderAPIController extends AppBaseController
 
         return $this->sendError('delivery_type_code is required', 400);
     }
+
+    $delivery_type_code = $meta_data['delivery_type_code'];
 
     $source_list = collect([]);
     $destination_list = collect([]);
@@ -1629,7 +1636,7 @@ class OrderAPIController extends AppBaseController
 
     return $this->sendResponse([
         'carrier_id' => $carrier->id,
-        'amount' => PricingUtils::transportSable($current_distance),
+        'amount' => PricingUtils::transportSable($current_distance, $delivery_type_code),
         'distance' => $distance,
         'duration' => $duration
     ], 'Order saved successfully');

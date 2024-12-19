@@ -7,7 +7,7 @@ use App\Models\Setting;
 class PricingUtils{
 
 
-    public static function transportGravier($distance, $quantity){
+    public static function transportGravier($distance, $quantity, $delivery_type){
 
         //DISTANCE DE BASE (KM)
         $distance_de_base = doubleval(Setting::get('GRAVIER_DISTANCE_DE_BASE'));
@@ -48,7 +48,7 @@ class PricingUtils{
 
     }
 
-    public static function transportSable($distance){
+    public static function transportSable($distance, $delivery_type){
 
         //DISTANCE DE BASE (KM)
         $distance_de_base = doubleval(Setting::get('SABLE_DISTANCE_DE_BASE'));
@@ -80,7 +80,7 @@ class PricingUtils{
 
     }
 
-    public static function transportCourse($distance, $typeEnginModel){
+    public static function transportCourse($distance, $typeEnginModel, $delivery_type){
 
 
         //FORMULE DEVELOPPEE 1
@@ -113,7 +113,7 @@ class PricingUtils{
 
     }
 
-    public static function transport($distance){
+    public static function transport($distance, $delivery_type){
 
         $prix_carburant = doubleval(Setting::get('PRIX_CARBURANT'));
         $conso_litre = doubleval(Setting::get('CONSO_LITRE'));
