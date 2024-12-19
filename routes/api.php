@@ -50,6 +50,9 @@ Route::prefix('v1/')->group(function () {
 
     Route::post('orders/create', [App\Http\Controllers\API\OrderAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
+    //Payer une commande
+    Route::put('orders/{id}/pay', [App\Http\Controllers\API\OrderAPIController::class, 'pay'])->middleware("auth.customer:api-customers");
+
     //Confirmer une course (client)
     Route::put('orders/{id}/confirm', [App\Http\Controllers\API\OrderAPIController::class, 'confirm']);
 

@@ -12,6 +12,12 @@ class Payment extends Model
 
     public $table = 'payments';
 
+    //status
+    const STATUS_PENDING = 'pending';
+    const STATUS_SUCCEEDED = 'succeeded';
+    const STATUS_FAILED = 'failed';
+    const STATUS_CANCELLED = 'cancelled';
+
     public $fillable = [
         'invoice_id',
         'payment_method_code',
@@ -60,6 +66,20 @@ class Payment extends Model
     public static array $rules = [
 
     ];
+
+    //Static methods
+
+    //Generate a payment reference
+    public static function generateReference(): string
+    {
+        $reference = substr(md5(time()), 0, 8);
+        //check if the reference already exists
+        $payment = Payment::where('payment_reference', $reference)->first();
+        if ($payment) {
+            return self::generateReference();
+        }
+        return $reference;
+    }
 
 
 }

@@ -721,6 +721,42 @@ class OrderAPIController extends AppBaseController
         return $this->sendResponse($order->toArray(), 'Order saved successfully');
     }
 
+    public function pay($id, Request $request){
+
+        /** @var Order $order */
+        $order = $this->orderRepository->find($id);
+
+        if (empty($order)) {
+            return $this->sendError('Order not found');
+        }
+
+        $invoice = Invoice::where('order_id', $order->id)->first();
+
+        if (empty($invoice)) {
+            return $this->sendError('Invoice not found');
+        }
+
+        if($invoice->status == Invoice::PAID){
+            return $this->sendError('Invoice already paid');
+        }
+
+        //Create Payment
+        $payment = Payment::create([
+            'payment_method_code' => 'online',
+            'invoice_id' => $invoice->id,
+            'user_id' => $order->customer_id,
+            'payment_reference' => Payment::generateReference(),
+            'amount' => $invoice->total,
+            'currency_code' => 'XOF',
+            'status' => Payment::STATUS_PENDING,
+            'is_waiting' => true,
+            'is_completed' => false
+        ]);
+
+        return $this->sendResponse($payment->toArray(), 'Payment saved successfully');
+
+    }
+
     /**
      * Display the specified Order.
      * GET|HEAD /orders/{id}
