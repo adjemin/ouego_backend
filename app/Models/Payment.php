@@ -13,11 +13,13 @@ class Payment extends Model
     public $table = 'payments';
 
     //status
-    const STATUS_PENDING = 'pending';
-    const STATUS_SUCCESSFUL = 'successful';
-    const STATUS_FAILED = 'failed';
-    const STATUS_CANCELLED = 'cancelled';
-    const STATUS_EXPIRED = 'expired';
+    const STATUS_INITIATED  = "INITIATED";
+    const STATUS_PENDING = "PENDING";
+    const STATUS_SUCCESSFUL = "SUCCESSFUL";
+    const STATUS_FAILED = "FAILED";
+    const STATUS_CANCELLED = "CANCELLED";
+    const STATUS_EXPIRED = "EXPIRED";
+    const STATUS_REFUSED = "REFUSED";
 
     public $fillable = [
         'invoice_id',
