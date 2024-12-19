@@ -53,6 +53,12 @@ Route::prefix('v1/')->group(function () {
     //Payer une commande
     Route::put('orders/{id}/pay', [App\Http\Controllers\API\OrderAPIController::class, 'pay'])->middleware("auth.customer:api-customers");
 
+    //Webhook
+    Route::post('payments/webhook', [App\Http\Controllers\API\OrderAPIController::class, 'webhook']);
+
+    Route::get('payments/webhook', [App\Http\Controllers\API\OrderAPIController::class, 'webhook']);
+
+
     //Confirmer une course (client)
     Route::put('orders/{id}/confirm', [App\Http\Controllers\API\OrderAPIController::class, 'confirm']);
 
