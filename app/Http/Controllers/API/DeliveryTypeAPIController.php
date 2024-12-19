@@ -28,11 +28,7 @@ class DeliveryTypeAPIController extends AppBaseController
      */
     public function index(Request $request): JsonResponse
     {
-        $deliveryTypes = $this->deliveryTypeRepository->all(
-            $request->except(['skip', 'limit']),
-            $request->get('skip'),
-            $request->get('limit')
-        );
+        $deliveryTypes = DeliveryType::where('is_active', true)->get();
 
         return $this->sendResponse($deliveryTypes->toArray(), 'Delivery Types retrieved successfully');
     }

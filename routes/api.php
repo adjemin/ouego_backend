@@ -36,6 +36,7 @@ Route::prefix('v1/')->group(function () {
 
     Route::post('customers/devices/create', [App\Http\Controllers\API\CustomerDeviceAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
+    Route::get('delivery_types/list', [App\Http\Controllers\API\DeliveryTypeAPIController::class, 'index']);
 
     Route::get('slides/list', [App\Http\Controllers\API\SlideAPIController::class, 'index']);
 
