@@ -38,6 +38,7 @@ class ProcessPendingOrderAssignments implements ShouldQueue
         // Récupérer toutes les commandes en attente d'assignation
         $pendingOrders = Order::where('status', Order::PERFORMER_LOOKUP)
             ->where('driver_id', null)
+            ->where('is_draft', false)
             ->get();
 
         foreach ($pendingOrders as $order) {
