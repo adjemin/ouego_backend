@@ -738,7 +738,7 @@ class OrderAPIController extends AppBaseController
         }
 
         if($invoice->status == Invoice::PAID){
-            return $this->sendError('Invoice already paid');
+            return $this->sendError('Invoice already paid', 400);
         }
 
         //Create Payment
