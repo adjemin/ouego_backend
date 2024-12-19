@@ -60,7 +60,7 @@ class ProcessPendingOrderAssignments implements ShouldQueue
                 // Vérifier les tentatives d'invitation précédentes
                 $waitingInvitations = $order->orderInvitations()
                     ->where('is_waiting_acceptation', true)
-                    ->where('creation_time', '>', now()->subMinutes(5))
+                    ->where('updated_at', '>', now()->subMinutes(5))
                     ->count();
 
                 if($waitingInvitations == 0){
