@@ -45,7 +45,7 @@ class ProcessPendingOrderAssignments implements ShouldQueue
             try {
                 // Vérifier les tentatives d'invitation précédentes
                 $previousInvitations = $order->orderInvitations()
-                    ->where('is_waiting_acceptation', true)
+                    ->where('is_waiting_acceptation', false)
                     ->count();
 
                 // Si trop de tentatives, marquer comme "PERFORMER_NOT_FOUND"
