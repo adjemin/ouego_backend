@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
 use App\Models\DriverOtp;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class DriverAPIController
