@@ -24,7 +24,8 @@ class Transaction extends Model
         'currency_code',
         'amount',
         'is_in',
-        'order_id'
+        'order_id',
+        'status'
     ];
 
     protected $casts = [
@@ -34,7 +35,8 @@ class Transaction extends Model
         'currency_code' => 'string',
         'amount' => 'double',
         'is_in' => 'boolean',
-        'order_id' => 'integer'
+        'order_id' => 'integer',
+        'status' => 'string'
     ];
 
     public static array $rules = [
