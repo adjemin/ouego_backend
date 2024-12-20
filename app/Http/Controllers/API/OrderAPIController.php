@@ -19,6 +19,7 @@ use App\Models\Invoice;
 use App\Models\Driver;
 use App\Models\Carrier;
 use App\Models\DriverNotification;
+use App\Models\DeliveryType;
 use App\Utilities\DriverNotificationsUtils;
 use App\Repositories\OrderRepository;
 use Illuminate\Http\JsonResponse;
