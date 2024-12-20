@@ -610,7 +610,7 @@ class DriverAPIController extends AppBaseController
             return $this->sendResponse($payment->toArray(), 'Payment created successfully');
         }catch (\Exception $e) {
             \Log::error('Deposit error: ' . $e->getMessage());
-            return $this->sendError('Une erreur est survenue', 500);
+            return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
 
 
