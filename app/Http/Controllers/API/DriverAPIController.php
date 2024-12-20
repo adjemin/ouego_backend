@@ -7,6 +7,9 @@ use App\Http\Requests\API\UpdateDriverAPIRequest;
 use App\Models\Driver;
 use App\Models\Engin;
 use App\Models\EnginPicture;
+use App\Models\Invoice;
+use App\Models\Transaction;
+use App\Models\Payment;
 use App\Repositories\DriverRepository;
 use App\Repositories\EnginRepository;
 use Illuminate\Http\JsonResponse;
@@ -533,6 +536,76 @@ class DriverAPIController extends AppBaseController
         }
 
 
+
+    }
+
+    public function depositBalance(Request $request){
+
+        if ($request->isJson()) {
+            $input = $request->json()->all();
+        } else {
+            $input = $request->all();
+        }
+
+        if (!array_key_exists('driver_id', $input)) {
+            return $this->sendError('driver_id is required');
+        }
+
+        if (!array_key_exists('amount', $input)) {
+            return $this->sendError('amount is required');
+        }
+
+        $user = Driver::where(['id' => $input['driver_id']])->first();
+        if ($user == null) {
+            return $this->sendError('Compte introuvable', 401);
+        }
+
+
+        $transaction = Transaction::create([
+            'user_id' => $user->id,
+            'status' => Transaction::CREATED,
+            'type' => Transaction::TYPE_DEPOSIT,
+            'user_source' => $user->table,
+            'currency_code' => 'XOF',
+            'amount' => intval($input['amount']),
+            'is_in' => true
+        ]);
+
+        $invoice = Invoice::create([
+            'order_id' => $transaction->id,
+            'customer_id' => $user->id,
+            'order_source' => $transaction->table,
+            'reference' => Invoice::generateID("WALLET", $transaction->id, $user->id),
+            'subtotal' => intval($input['amount']),
+            'tax' => 0,
+            'fees_delivery' => 0,
+            'total' => intval($input['amount']),
+            'status' => Invoice::UNPAID,
+            'is_paid_by_customer' => false,
+            'currency_slug' => 'XOF',
+            'driver_due' => 0,
+            'service_due' => 0,
+            'discount' => null,
+            'coupon' => null
+        ]);
+
+        $payment = Payment::create([
+            'invoice_id' => $invoice->id,
+            'payment_method_code' => 'online',
+            'payment_reference' => Payment::generateReference(),
+            'amount' => $invoice->total,
+            'currency_code' => $invoice->currency_slug,
+            'user_id' => $user->id,
+            'status' => Payment::STATUS_INITIATED,
+            'is_waiting' => true,
+            'is_completed' => false
+        ]);
+
+        $payment = Payment::where(['id' => $payment->id])->first();
+
+
+
+        return $this->sendResponse($payment->toArray(), 'Payment created successfully');
 
     }
 }

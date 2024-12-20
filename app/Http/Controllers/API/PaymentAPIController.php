@@ -7,6 +7,8 @@ use App\Http\Requests\API\UpdatePaymentAPIRequest;
 use App\Models\Payment;
 use App\Models\Order;
 use App\Models\Invoice;
+use App\Models\Driver;
+use App\Models\Transaction;
 use App\Repositories\PaymentRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -219,6 +221,25 @@ class PaymentAPIController extends AppBaseController
 
         $invoice->status = Invoice::PAID;
         $invoice->save();
+
+        if($invoice->order_source == "transactions"){
+            /** @var Transaction $transaction */
+            $transaction = Transaction::where([
+                'id' => $invoice->order_id
+                ])->first();
+
+            if(!empty($transaction)){
+
+                $transaction->status = Transaction::SUCCESSFUL;
+                $transaction->save();
+
+                $user = Driver::where([
+                    'id' => $invoice->customer_id
+                ])->first();
+
+                $user->debitBalance($transaction->amount);
+            }
+        }
 
     }
 

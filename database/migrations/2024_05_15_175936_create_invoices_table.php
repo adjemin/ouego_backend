@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id('id');
             $table->bigInteger('order_id')->nullable();
             $table->bigInteger('customer_id')->nullable();
+            $table->string('order_source')->nullable();
             $table->string('reference')->unique();
             $table->double('subtotal')->nullable()->default(0);
             $table->double('tax')->nullable()->default(0);

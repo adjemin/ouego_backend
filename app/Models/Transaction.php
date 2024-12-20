@@ -8,6 +8,15 @@ class Transaction extends Model
 {
     public $table = 'transactions';
 
+    const CREATED = "CREATED";
+    const PENDING = "PENDING";
+    const SUCCESSFUL = "SUCCESSFUL";
+    const FAILED = "FAILED";
+
+    const TYPE_DEPOSIT = "deposit";
+    const TYPE_CHARGE = "charge";
+    const TYPE_WITHDRAWAL = "withdrawal";
+
     public $fillable = [
         'user_id',
         'user_source',
@@ -29,8 +38,8 @@ class Transaction extends Model
     ];
 
     public static array $rules = [
-        
+
     ];
 
-    
+
 }

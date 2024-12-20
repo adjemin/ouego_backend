@@ -18,6 +18,7 @@ class Invoice extends Model
     public $fillable = [
         'order_id',
         'customer_id',
+        'order_source',
         'reference',
         'subtotal',
         'tax',
@@ -35,6 +36,7 @@ class Invoice extends Model
     protected $casts = [
         'order_id' => 'integer',
         'customer_id' => 'integer',
+        'order_source' => 'string',
         'reference' => 'string',
         'subtotal' => 'double',
         'tax' => 'double',
