@@ -565,7 +565,7 @@ class DriverAPIController extends AppBaseController
 
 
             $transaction = Transaction::create([
-                'user_id' => $driverDeleted->id,
+                'user_id' => $driver->id,
                 'status' => Transaction::CREATED,
                 'type' => Transaction::TYPE_DEPOSIT,
                 'user_source' => $driver->getTable(),
