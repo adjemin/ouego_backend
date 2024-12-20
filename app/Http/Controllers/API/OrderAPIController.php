@@ -964,14 +964,54 @@ class OrderAPIController extends AppBaseController
 
                 //$current_distance = 418;
 
+                $delivery_type_code = "EXPRESS";
                 $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
 
-
-                return $this->sendResponse([
+                //EXPRESS
+                $expressPricing = [
                     "distance" => $current_distance,
                     "duration" => $duration,
                     "amount" => $amount,
-                    "delivery_type_code" => $delivery_type_code
+                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+                ];
+
+
+
+                //En journée
+                $delivery_type_code = "en-journee";
+                $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+                $sameDayPricing = [
+                    "distance" => $current_distance,
+                    "duration" => $duration,
+                    "amount" => $amount,
+                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+                ];
+
+                //De nuit
+                $delivery_type_code = "de-nuit";
+                $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+                $sameNightPricing = [
+                    "distance" => $current_distance,
+                    "duration" => $duration,
+                    "amount" => $amount,
+                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+                ];
+
+                //En semaine
+                $delivery_type_code = "en-semaine";
+                $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+                $sameWeekPricing = [
+                    "distance" => $current_distance,
+                    "duration" => $duration,
+                    "amount" => $amount,
+                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+                ];
+
+                return $this->sendResponse([
+                    $expressPricing,
+                    $sameDayPricing,
+                    $sameNightPricing,
+                    $sameWeekPricing
                 ], 'Order saved successfully');
 
 
