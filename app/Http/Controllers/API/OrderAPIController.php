@@ -1547,7 +1547,7 @@ class OrderAPIController extends AppBaseController
 
 
     return $this->sendResponse([
-        'carrier_id' => $carrier->id,
+        'carrier' => $carrier,
         'amount' => PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code),
         'distance' => $distance,
         'duration' => $duration,
@@ -1718,7 +1718,7 @@ class OrderAPIController extends AppBaseController
 
 
     return $this->sendResponse([
-        'carrier_id' => $carrier->id,
+        'carrier' => $carrier,
         'amount' => PricingUtils::transportSable($current_distance, $delivery_type_code),
         'distance' => $distance,
         'duration' => $duration,
