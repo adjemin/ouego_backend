@@ -8,6 +8,7 @@ use App\Models\Payment;
 use App\Models\Order;
 use App\Models\Invoice;
 use App\Models\Driver;
+use App\Models\Customer;
 use App\Models\Transaction;
 use App\Repositories\PaymentRepository;
 use Illuminate\Http\JsonResponse;
@@ -233,9 +234,17 @@ class PaymentAPIController extends AppBaseController
                 $transaction->status = Transaction::SUCCESSFUL;
                 $transaction->save();
 
-                $user = Driver::where([
-                    'id' => $invoice->customer_id
-                ])->first();
+                if($transaction->user_source == "drivers"){
+                    $user = Driver::where([
+                        'id' => $invoice->customer_id
+                    ])->first();
+                }else{
+                    $user = Customer::where([
+                        'id' => $invoice->customer_id
+                    ])->first();
+                }
+
+
 
                 $user->debitBalance($transaction->amount);
             }
