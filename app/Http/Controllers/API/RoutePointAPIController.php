@@ -131,6 +131,7 @@ class RoutePointAPIController extends AppBaseController
 
         if(!in_array($input['status'], [
             RoutePoint::ACCEPTED,
+            RoutePoint::ARRIVED,
             RoutePoint::FAILED,
             RoutePoint::STARTED,
             RoutePoint::CANCELLED,
@@ -184,6 +185,37 @@ class RoutePointAPIController extends AppBaseController
                 'latitude' => $request->input('latitude'),
                 'longitude' => $request->input('longitude'),
                 'status' => RoutePoint::STARTED
+            ]);
+
+            if($routePoint->type == 'source'){
+
+                $order = Order::where(['id' => $routePoint->order_id])->first();
+
+                if($order != null && !$order->is_started){
+
+                    $order->update([
+                        'is_waiting' => false,
+                        'is_running' => true,
+                        'is_started' => true,
+                        "start_time" => now(),
+                        'is_completed' => false
+                    ]);
+
+                }
+
+            }
+        }
+
+        if($input['status'] == RoutePoint::ARRIVED){
+            $input['is_waiting'] = false;
+            $input['is_completed'] = false;
+            $title = $routePoint->title()." arrivé(e)";
+
+            RoutePointHistory::create([
+                'route_point_id' => $routePoint->id,
+                'latitude' => $request->input('latitude'),
+                'longitude' => $request->input('longitude'),
+                'status' => RoutePoint::ARRIVED
             ]);
 
             if($routePoint->type == 'source'){
