@@ -14,6 +14,7 @@ class RoutePoint extends Model
     const  WAITING = "waiting";
     const  ACCEPTED = "accepted";
     const  STARTED = "started";
+    const  ARRIVED = "arrived";
     const  FAILED = "failed";
     const  SUCCESS = "success";
     const  CANCELLED = "cancelled";
@@ -37,6 +38,7 @@ class RoutePoint extends Model
         'delivery_fees',
         'currency_code',
         'is_waiting',
+        'is_arrived',
         'is_completed',
         'is_successful',
         'has_cash_management',
@@ -68,6 +70,7 @@ class RoutePoint extends Model
         'delivery_fees' => 'double',
         'currency_code' => 'string',
         'is_waiting' => 'boolean',
+        'is_arrived' => 'boolean',
         'is_completed' => 'boolean',
         'is_successful' => 'boolean',
         'has_cash_management' => 'boolean',
