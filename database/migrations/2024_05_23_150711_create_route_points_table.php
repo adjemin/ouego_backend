@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string('status')->nullable();
             $table->double('delivery_fees')->nullable();
             $table->string('currency_code')->nullable()->default('XOF');
+            $table->boolean('is_arrived')->nullable()->default(true);
             $table->boolean('is_waiting')->nullable()->default(true);
             $table->boolean('is_completed')->nullable()->default(false);
             $table->boolean('is_successful')->nullable()->default(false);
