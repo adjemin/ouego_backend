@@ -178,6 +178,7 @@ class RoutePointAPIController extends AppBaseController
         if($input['status'] == RoutePoint::STARTED){
             $input['is_waiting'] = false;
             $input['is_completed'] = false;
+            $input['is_started'] = true;
             $title = $routePoint->title()." démarré(e)";
 
             RoutePointHistory::create([
@@ -209,6 +210,8 @@ class RoutePointAPIController extends AppBaseController
         if($input['status'] == RoutePoint::ARRIVED){
             $input['is_waiting'] = false;
             $input['is_completed'] = false;
+            $input['is_arrived'] = true;
+
             $title = $routePoint->title()." arrivé(e)";
 
             RoutePointHistory::create([

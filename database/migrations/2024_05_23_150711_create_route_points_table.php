@@ -33,6 +33,8 @@ return new class extends Migration
             $table->boolean('is_waiting')->nullable()->default(true);
             $table->boolean('is_completed')->nullable()->default(false);
             $table->boolean('is_successful')->nullable()->default(false);
+            $table->boolean('is_arrived')->nullable()->default(false);
+            $table->boolean('is_started')->nullable()->default(false);
             $table->boolean('has_cash_management')->nullable()->default(true);
             $table->boolean('has_cash_deposited')->nullable()->default(false);
             $table->boolean('is_driver_paid')->nullable()->default(false);
