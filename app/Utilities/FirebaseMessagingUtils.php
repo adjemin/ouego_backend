@@ -28,7 +28,7 @@ class FirebaseMessagingUtils{
                 ->withNotification(Notification::fromArray([
                     'title' => $title,
                     'body' => $body,
-                    'sound' => 'notification_sound.wav',
+                    'sound' => 'notification_sound',
                     'badge' => '1',
                     'type' => "".$customerNotification["type"],
                     'id' => "".$customerNotification["id"],

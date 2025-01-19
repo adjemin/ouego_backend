@@ -65,7 +65,7 @@ class SendPushNotification implements ShouldQueue
             $notification = [
                 'title' => $this->notificationData->title,
                 'body' => $this->notificationData->subtitle,
-                'sound' => 'notification_sound.wav',
+                'sound' => 'notification_sound',
                 'badge' => '1',
                 'type' => $this->notificationData->type,
                 'id' => $this->notificationData->id
