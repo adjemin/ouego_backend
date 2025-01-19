@@ -25,7 +25,14 @@ class FirebaseMessagingUtils{
             //$messaging = Firebase::project('app')->messaging();
 
             $message = CloudMessage::withTarget('token', $firebaseId)
-               // ->withNotification(Notification::create($title, $body))
+                ->withNotification(Notification::fromArray([
+                    'title' => $title,
+                    'body' => $body,
+                    'sound' => 'notification_sound.wav',
+                    'badge' => '1',
+                    'type' => "".$customerNotification["type"],
+                    'id' => "".$customerNotification["id"],
+                ]))
                 ->withHighestPossiblePriority()
                 ->withData(array(
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
