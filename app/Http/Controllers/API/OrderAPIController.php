@@ -431,7 +431,7 @@ class OrderAPIController extends AppBaseController
                 $order->save();
 
                 //Créer une RoutePoint avec carrier_id
-                RoutePoint::create([
+                $sourceRoutePoint = RoutePoint::create([
                     'customer_id' => null,
                     'order_id' => $order->id,
                     'address_name' => $carrier->name,
@@ -457,6 +457,8 @@ class OrderAPIController extends AppBaseController
                     'stage' => null,
                     'apartment' => null
                 ]);
+
+                dd($sourceRoutePoint);
 
 
             }
