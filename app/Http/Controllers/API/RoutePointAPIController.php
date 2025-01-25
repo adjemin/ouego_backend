@@ -234,7 +234,7 @@ class RoutePointAPIController extends AppBaseController
 
             $input_route_point['is_waiting'] = false;
             $input_route_point['is_completed'] = false;
-            $input_route_point['is_started'] = true;
+            $input_route_point['is_arrived'] = true;
 
             RoutePointHistory::create([
                 'route_point_id' => $routePoint->id,
