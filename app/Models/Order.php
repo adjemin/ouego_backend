@@ -206,12 +206,17 @@ class Order extends Model
 
             if($driver != null){
 
-                if($this->getInvoiceAttribute() != null && $this->payment_method_code == 'cash'){
-                    $amount = $this->getInvoiceAttribute()->service_due;
-                    $driver->debit($amount, $this->id);
-                }else{
-                    $amount = $this->getInvoiceAttribute()->driver_due;
-                    $driver->credit($amount, $this->id);
+
+
+                if($this->getInvoiceAttribute() != null){
+
+                    if($this->payment_method_code == 'cash'){
+                        $amount = $this->getInvoiceAttribute()->service_due;
+                        $driver->debit($amount, $this->id);
+                    }else{
+                        $amount = $this->getInvoiceAttribute()->driver_due;
+                        $driver->credit($amount, $this->id);
+                    }
                 }
 
             }
