@@ -206,8 +206,6 @@ class Order extends Model
 
             if($driver != null){
 
-
-
                 if($this->getInvoiceAttribute() != null){
 
                     if($this->payment_method_code == 'cash'){
