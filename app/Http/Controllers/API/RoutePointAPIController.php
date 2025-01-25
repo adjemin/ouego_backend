@@ -117,6 +117,9 @@ class RoutePointAPIController extends AppBaseController
     public function updateStatus($id, Request $request){
 
         $input = $request->json()->all();
+        $input_route_point = [];
+        $input_route_point['status'] = $input['status'];
+
 
         /** @var RoutePoint $routePoint */
         $routePoint = $this->routePointRepository->find($id);
@@ -149,6 +152,11 @@ class RoutePointAPIController extends AppBaseController
             $input['is_completed'] = true;
             $input['completion_time'] = now();
 
+            $input_route_point['is_waiting'] = false;
+            $input_route_point['is_successful'] = true;
+            $input_route_point['is_completed'] = true;
+            $input_route_point['completion_time'] = now();
+
             $title = $routePoint->title()." réussi(e)";
 
             RoutePointHistory::create([
@@ -165,6 +173,12 @@ class RoutePointAPIController extends AppBaseController
             $input['is_successful'] = false;
             $input['is_completed'] = true;
             $input['completion_time'] = now();
+
+            $input_route_point['is_waiting'] = false;
+            $input_route_point['is_successful'] = false;
+            $input_route_point['is_completed'] = true;
+            $input_route_point['completion_time'] = now();
+
             $title = $routePoint->title()." échoué(e)";
 
             RoutePointHistory::create([
@@ -180,6 +194,10 @@ class RoutePointAPIController extends AppBaseController
             $input['is_completed'] = false;
             $input['is_started'] = true;
             $title = $routePoint->title()." démarré(e)";
+
+            $input_route_point['is_waiting'] = false;
+            $input_route_point['is_completed'] = false;
+            $input_route_point['is_started'] = true;
 
             RoutePointHistory::create([
                 'route_point_id' => $routePoint->id,
@@ -214,6 +232,10 @@ class RoutePointAPIController extends AppBaseController
 
             $title = $routePoint->title()." arrivé(e)";
 
+            $input_route_point['is_waiting'] = false;
+            $input_route_point['is_completed'] = false;
+            $input_route_point['is_started'] = true;
+
             RoutePointHistory::create([
                 'route_point_id' => $routePoint->id,
                 'latitude' => $request->input('latitude'),
@@ -243,6 +265,11 @@ class RoutePointAPIController extends AppBaseController
         if($input['status'] == RoutePoint::ACCEPTED){
             $input['is_waiting'] = false;
             $input['is_completed'] = false;
+
+            $input_route_point['is_waiting'] = false;
+            $input_route_point['is_completed'] = false;
+
+
             RoutePointHistory::create([
                 'route_point_id' => $routePoint->id,
                 'latitude' => $request->input('latitude'),
@@ -258,6 +285,11 @@ class RoutePointAPIController extends AppBaseController
             $input['completion_time'] = now();
             $title = $routePoint->title()." annulé(e)";
 
+            $input_route_point['is_waiting'] = false;
+            $input_route_point['is_successful'] = false;
+            $input_route_point['is_completed'] = true;
+            $input_route_point['completion_time'] = now();
+
             RoutePointHistory::create([
                 'route_point_id' => $routePoint->id,
                 'latitude' => $request->input('latitude'),
@@ -266,7 +298,7 @@ class RoutePointAPIController extends AppBaseController
             ]);
         }
 
-        $routePoint = $this->routePointRepository->update($input, $id);
+        $routePoint = $this->routePointRepository->update($input_route_point, $id);
 
         $order = Order::where(['id' => $routePoint->order_id])->first();
 
