@@ -140,7 +140,7 @@ class CarrierAPIController extends AppBaseController
         $carrier->location  = [ $carrier->location_latitude,$carrier->location_longitude];
         $carrier->save();
 
-        return $this->sendResponse($carrier->toArray(), 'Carrier saved successfully');
+        return $this->sendResponse($carrier, 'Carrier saved successfully');
     }
 
     /**
