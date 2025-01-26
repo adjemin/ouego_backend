@@ -143,6 +143,7 @@ Route::prefix('v1/')->group(function () {
 
     Route::post('notifications/confirm-delivery', [App\Http\Controllers\API\NotificationAPIController::class, 'confirmDelivery']);
 
+    Route::post('carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'store']);
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -177,9 +178,6 @@ Route::prefix('v1/')->group(function () {
 //    ->except(['create', 'edit']);
 //
 //Route::resource('delivery-types', App\Http\Controllers\API\DeliveryTypeAPIController::class)
-//    ->except(['create', 'edit']);
-//
-//Route::resource('carriers', App\Http\Controllers\API\CarrierAPIController::class)
 //    ->except(['create', 'edit']);
 //
 //Route::resource('orders', App\Http\Controllers\API\OrderAPIController::class)
