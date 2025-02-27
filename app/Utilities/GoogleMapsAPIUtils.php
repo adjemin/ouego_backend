@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Http;
 class GoogleMapsAPIUtils
 {
 
-    const  GOOGLE_MAP_API_KEY = "AIzaSyCNZfIwGs9Y1hlRDCyiw3LV8dpLu1biIbM";
+    #const  GOOGLE_MAP_API_KEY = "AIzaSyCNZfIwGs9Y1hlRDCyiw3LV8dpLu1biIbM";
 
     /**
      * @param array $origins
@@ -21,7 +21,7 @@ class GoogleMapsAPIUtils
             'origins' => $origins[0].','.$origins[1],
             'language' => 'en',
             'mode' => 'driving',
-            'key'=> self::GOOGLE_MAP_API_KEY
+            'key'=> env('GOOGLE_MAP_API_KEY',"AIzaSyCNZfIwGs9Y1hlRDCyiw3LV8dpLu1biIbM")
         ]);
 
         $res = $response->json();
