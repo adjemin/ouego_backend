@@ -3,6 +3,7 @@
 namespace App\Utilities;
 
 use Illuminate\Support\Facades\Http;
+use App\Models\Zone;
 
 class GoogleMapsAPIUtils
 {
@@ -54,4 +55,42 @@ class GoogleMapsAPIUtils
 
         return [];
     }
+
+    public static function trouverZoneParPointPostGIS(float $longitude, float $latitude): ?Zone
+    {
+        $pointWKT = "POINT($longitude $latitude)";
+
+        return Zone::whereRaw(
+            "ST_Contains(geom, ST_GeomFromText(?, 4326))",
+            [$pointWKT]
+        )->first();
+    }
+
+
+
+    function trouverZoneParPointGoogleMaps(float $latitude, float $longitude): ?string
+    {
+        $apiKey = env('GOOGLE_MAPS_API_KEY'); // Stocké dans ton fichier .env
+        $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng={$latitude},{$longitude}&key={$apiKey}";
+    
+        $response = Http::get($url);
+    
+        if ($response->successful()) {
+            $results = $response->json('results');
+    
+            if (!empty($results)) {
+                // Parcours les adresses retournées pour trouver la "locality" ou "sublocality"
+                foreach ($results as $result) {
+                    foreach ($result['address_components'] as $component) {
+                        if (in_array('locality', $component['types']) || in_array('sublocality', $component['types'])) {
+                            return $component['long_name']; // Exemple: "Yopougon"
+                        }
+                    }
+                }
+            }
+        }
+    
+        return null;
+    }
+    
 }

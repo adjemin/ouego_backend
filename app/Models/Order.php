@@ -229,6 +229,8 @@ class Order extends Model
         return $this->hasMany(OrderInvitation::class, 'order_id');
     }
 
+    
+
 
 
 }

@@ -933,7 +933,6 @@ class OrderAPIController extends AppBaseController
                         $destination_list->push($route_point_item);
                     }
 
-
                 }
 
                 $source_point = $source_list->first();
@@ -947,6 +946,7 @@ class OrderAPIController extends AppBaseController
                     $destination_point['latitude'],
                     $destination_point['longitude'],
                 ]);
+
 
 
                 $current_distance = 0;

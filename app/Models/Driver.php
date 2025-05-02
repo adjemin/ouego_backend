@@ -165,6 +165,20 @@ class Driver extends Authenticatable  implements JWTSubject
         $this->save();
     }
 
+    public function hasCurrentOrders(){
+        return Order::where('driver_id', $this->id)
+            ->where('is_draft', false)
+            ->where('is_completed', false)
+            ->where('is_started', false)
+            ->where('is_cancelled', false)->count();
+    }
+
+    public function ratingNote(){
+        return Order::where('driver_id', $this->id)
+            ->where('is_completed', true)
+            ->avg('rating');
+    }
+
 
 
 
