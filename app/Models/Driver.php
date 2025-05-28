@@ -17,7 +17,7 @@ class Driver extends Authenticatable  implements JWTSubject
 
     protected $guard = 'api-drivers';
 
-    protected $appends = ['cars'];
+    protected $appends = ['cars', 'current_order_count'];
 
     public $fillable = [
         'first_name',
@@ -34,7 +34,8 @@ class Driver extends Authenticatable  implements JWTSubject
         'last_location_latitude',
         'last_location_longitude',
         'services',
-        'driver_license_docs'
+        'driver_license_docs',
+        'rate',
     ];
 
     protected $casts = [
@@ -52,7 +53,8 @@ class Driver extends Authenticatable  implements JWTSubject
         'last_location_latitude' => 'double',
         'last_location_longitude' => 'double',
         'driver_license_docs' => 'array',
-        'services' => 'array'
+        'services' => 'array',
+        'rate' => 'double',
     ];
 
     public static array $rules = [
@@ -110,6 +112,12 @@ class Driver extends Authenticatable  implements JWTSubject
         }
         $json_array =  json_decode(stripslashes($value), true);
         return $json_array ;
+    }
+    public function getCurrentOrderCountAttribute(){
+        return Order::where('driver_id', $this->id)
+            // ->where('is_draft', false)
+            ->where('is_completed', false)
+            ->count();
     }
 
     public function setLastLocationAttribute($value){
@@ -170,7 +178,7 @@ class Driver extends Authenticatable  implements JWTSubject
             ->where('is_draft', false)
             ->where('is_completed', false)
             ->where('is_started', false)
-            ->where('is_cancelled', false)->count();
+            ->count();
     }
 
     public function ratingNote(){

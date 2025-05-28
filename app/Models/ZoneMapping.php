@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class ZoneMapping extends Model
 {
     use HasFactory;
+    
+    protected $table = 'zone_mapping';
 
     protected $fillable = [
         'zone_id',

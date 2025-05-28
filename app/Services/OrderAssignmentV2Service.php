@@ -1,14 +1,18 @@
 <?php 
 
-namespace App\Utilities;
+namespace App\Services;
 
 use App\Models\Carrier;
 use App\Models\Order;
 use App\Models\ZoneMapping;
+use App\Utilities\GoogleMapsAPIUtils;
 
-class AlgoMain{
+class OrderAssignmentV2Service {
 
-    public static function findNearCarrier(float $longitude, float $latitude){
+    private $maxDistance = 5; // Distance maximale en km
+    private $maxDrivers = 10; // Nombre maximum de chauffeurs à retourner
+    
+    public function searchNearDriverByCarrier(float $longitude, float $latitude){
         
         $zone = GoogleMapsAPIUtils::trouverZoneParPointPostGIS($longitude, $latitude);
 
@@ -29,63 +33,63 @@ class AlgoMain{
             throw new \Exception("Aucune carrière trouvée");
         }
 
-
         $nearCarrier = collect([]);
 
         // Rechercher la carriere la plus proche
         foreach($carriers as $carrier){
 
             // Calculer la distance entre le chauffeur et la carriere
-            $result = GoogleMapsAPIUtils::getDistance([
+            $distance = GoogleMapsAPIUtils::distanceHaversine(
                 $longitude,
                 $latitude,
-            ],[
                 $carrier->location_latitude,
                 $carrier->location_longitude
-            ]);
+            );
+
+            $distance = ceil($distance);
 
 
-            $distance = $result['distance']['value'];
-
-            $nearCarrier = [
-                'carrier' => $carrier,
-                'distance' => $distance,
-                'duration' => $result['duration']['value'],
-            ];
+            if(($nearCarrier->isEmpty() || $nearCarrier['distance'] > $distance) ){
+                $nearCarrier = [
+                    'carrier' => $carrier,
+                    'distance' => $distance." km",
+                ];
+            }
         }
 
+        if(empty($nearCarrier)){
+            throw new \Exception("Aucune carrière trouvée");
+        }
 
-
-        return $nearCarrier;
-    }
-
-    public static function searchNearDriverByCarrier(Carrier $carrier, int $maxDistance = 5, int $maxDrivers = 10): array
-    {
-        $drivers = $carrier->drivers()->where(["is_active" => true, 'is_available', true])->get();
+        // Rechercher les chauffeurs de la carriere la plus proche
+        $drivers = $nearCarrier['carrier']->drivers()->where(["is_active" => true, 'is_available' => true])->get();
 
         if ($drivers->isEmpty()) {
             throw new \Exception("Aucun chauffeur trouvé");
         }
 
+
         // Filtrer les chauffeurs par distance
-        $drivers = $drivers->filter(function ($driver) use ($carrier, $maxDistance) {
-            $distance = GoogleMapsAPIUtils::getDistance(
-                [$carrier->location_latitude, $carrier->location_longitude],
-                [$driver->last_location_latitude, $driver->last_location_longitude]
-            )['distance']['value'];
+        $drivers = $drivers->filter(function ($driver) use ($carrier) {
+            $distance = GoogleMapsAPIUtils::distanceHaversine(
+                $carrier->location_latitude, 
+                $carrier->location_longitude,
+                $driver->last_location_latitude, 
+                $driver->last_location_longitude
+            );
 
-            $driver->distance = $distance;
+            $driver->distance = ceil($distance);
 
-            return $distance <= $maxDistance*1000; // Convertir en mètres
+            return $distance <= $this->maxDistance;
         });
 
         if ($drivers->isEmpty()) {
-            throw new \Exception("Aucun chauffeur trouvé à moins de $maxDistance Km de la carriere");
+            throw new \Exception("Aucun chauffeur trouvé à moins de $this->maxDistance Km de la carriere");
         }
 
         // Écarter les chauffeurs qui ont des courses démarrées
         $drivers = $drivers->reject(function ($driver) {
-            $orders = Order::where('driver_id', $driver->id)->where('is_completed', false)->get();
+            $orders = Order::where('driver_id', $driver->id)->where(['is_draft' => false,  'is_completed' => false])->get();
             $hasStarted = $orders->where('is_started', true)->isNotEmpty();
 
             if ($hasStarted) {
@@ -108,9 +112,15 @@ class AlgoMain{
                 ['current_orders', 'asc'],
                 ['rate', 'desc']
             ])
-            ->take($maxDrivers)
+            ->take($this->maxDrivers)
             ->values();
 
-        return $drivers->toArray();
+        $data = [
+            "carrier_info" => $nearCarrier,
+            "drivers" => $drivers->toArray()
+        ];
+
+        return $data;
     }
+
 }   

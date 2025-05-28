@@ -163,6 +163,10 @@ class Order extends Model
         return RoutePoint::where(['order_id' => $this->id])->orderBy('visit_order', 'ASC')->get();
     }
 
+    public function customer(){
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
+    }
+
     public function getCustomerAttribute()
     {
 

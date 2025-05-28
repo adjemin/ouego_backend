@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1/')->group(function () {
 
-
     Route::post('driver_notifications/test/send/{id}', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'submitTestNotification']);
 
     //OTP
@@ -144,6 +143,18 @@ Route::prefix('v1/')->group(function () {
     Route::post('notifications/confirm-delivery', [App\Http\Controllers\API\NotificationAPIController::class, 'confirmDelivery']);
 
     Route::post('carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'store']);
+
+    // TEST ROUTES
+    Route::post('testing-algorithm/drivers-by-carriers', [App\Http\Controllers\API\TestAPIController::class, 'searchNearDriverByCarrier']);
+    
+    Route::post('testing-algorithm/v1/nearest-carrier-and-drivers', [App\Http\Controllers\API\TestAPIController::class, 'getNearestCarrierAndDrivers']);
+    
+    Route::post('testing-algorithm/v1/onday-order-assignment', [App\Http\Controllers\API\TestAPIController::class, 'OndayOrderAssignment']);
+
+    
+
+    
+
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

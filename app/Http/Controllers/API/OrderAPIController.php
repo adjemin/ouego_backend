@@ -30,7 +30,10 @@ use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Services\DriverAssignmentService;
 use App\Services\CarrierLocationService;
-
+use App\Models\ZoneMapping;
+use App\Models\Zone;
+use App\Models\Customer;
+use App\Utilities\AlgoMain;
 /**
  * Class OrderAPIController
  */
@@ -1358,7 +1361,6 @@ class OrderAPIController extends AppBaseController
         ],[
             $destination_point['latitude'],
             $destination_point['longitude']
-
         ]);
 
 

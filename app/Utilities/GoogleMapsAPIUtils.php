@@ -58,12 +58,9 @@ class GoogleMapsAPIUtils
 
     public static function trouverZoneParPointPostGIS(float $longitude, float $latitude): ?Zone
     {
-        $pointWKT = "POINT($longitude $latitude)";
-
-        return Zone::whereRaw(
-            "ST_Contains(geom, ST_GeomFromText(?, 4326))",
-            [$pointWKT]
-        )->first();
+    
+        return Zone::whereRaw('ST_Contains(geom::geometry, ST_SetSRID(ST_MakePoint(?, ?)::geometry, 4326))', [$longitude, $latitude])
+        ->first();
     }
 
 
@@ -91,6 +88,25 @@ class GoogleMapsAPIUtils
         }
     
         return null;
+    }
+
+    static function distanceHaversine($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371; // km
+        $latFrom = deg2rad($lat1);
+        $lonFrom = deg2rad($lon1);
+        $latTo = deg2rad($lat2);
+        $lonTo = deg2rad($lon2);
+
+        $latDelta = $latTo - $latFrom;
+        $lonDelta = $lonTo - $lonFrom;
+
+        $a = sin($latDelta / 2) ** 2 +
+             cos($latFrom) * cos($latTo) *
+             sin($lonDelta / 2) ** 2;
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
     }
     
 }
