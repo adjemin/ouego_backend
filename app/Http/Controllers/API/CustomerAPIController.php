@@ -273,7 +273,7 @@ class CustomerAPIController extends AppBaseController
         // Vérifier si le numéro de téléphone est déjà enregistré
         $customer = Customer::where('phone', $request->phone)->first();
         if ($customer && $customer->is_blocked) {
-            return $this->sendError('Votre compte bloqué a été bloqué, veuillez contacter le support', 403);
+            return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
         }
 
         // Générer un OTP à 6 chiffres

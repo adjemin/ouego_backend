@@ -437,7 +437,7 @@ class DriverAPIController extends AppBaseController
         // Vérifier si le numéro de téléphone est déjà enregistré
         $driver = Driver::where('phone', $request->phone)->first();
         if ($driver && $driver->is_blocked) {
-            return $this->sendError('Votre compte bloqué a été bloqué, veuillez contacter le support', 403);
+            return $this->sendError('Votre compte été bloqué, veuillez contacter le support', 403);
         }
 
         // Générer un OTP à 6 chiffres
