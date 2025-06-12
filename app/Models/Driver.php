@@ -35,6 +35,7 @@ class Driver extends Authenticatable  implements JWTSubject
         'last_location_longitude',
         'services',
         'driver_license_docs'
+
     ];
 
     protected $casts = [
@@ -46,13 +47,14 @@ class Driver extends Authenticatable  implements JWTSubject
         'phone' => 'string',
         'photo_url' => 'string',
         'is_active' => 'boolean',
+        'is_blocked' => 'boolean',
         'is_available' => 'boolean',
         'current_balance' => 'double',
         'old_balance' => 'double',
         'last_location_latitude' => 'double',
         'last_location_longitude' => 'double',
         'driver_license_docs' => 'array',
-        'services' => 'array'
+        'services' => 'array',
     ];
 
     public static array $rules = [
