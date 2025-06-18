@@ -1765,5 +1765,42 @@ class OrderAPIController extends AppBaseController
 
   }
 
+  public function rating($id, Request $request){
+
+    /** @var Order $order */
+    $order = $this->orderRepository->find($id);
+
+    if (empty($order)) {
+        return $this->sendError('Order not found');
+    }
+
+    $input = $request->all();
+
+    if(!array_key_exists('rating', $input)){
+        return $this->sendError('Rating is required', 400);
+    }
+    if(!is_numeric($input['rating']) || intval($input['rating']) < 1 || intval($input['rating']) > 5){
+        return $this->sendError('Rating must be a number between 1 and 5', 400);
+    }
+
+    $order->rating = intval($input['rating']);
+    $order->rating_note = $input['note']??"";
+    $order->update();
+
+    //Update the driver rating
+    if($order->driver_id != null){
+        $driver = Driver::find($order->driver_id);
+        if($driver){
+            $driver->rate = Order::where('driver_id', $driver->id)
+                ->whereNotNull('rating')
+                ->avg('rating');
+            $driver->save();
+        }
+    }
+
+    return $this->sendResponse($order->toArray(), 'Order rating updated successfully');
+
+  }
+
 
 }

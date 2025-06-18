@@ -64,6 +64,8 @@ Route::prefix('v1/')->group(function () {
 
     Route::put('orders/{id}/cancel', [App\Http\Controllers\API\OrderAPIController::class, 'cancel']);
 
+    Route::put('orders/{id}/rating', [App\Http\Controllers\API\OrderAPIController::class, 'rating']);
+
 
     //Détails d'une course par ID (client)
     Route::get('orders/{id}/info', [App\Http\Controllers\API\OrderAPIController::class, 'show']);
