@@ -13,6 +13,7 @@ use App\Repositories\RoutePointRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Utilities\CustomerNotificationsUtils;
 
 /**
  * Class RoutePointAPIController
@@ -364,6 +365,9 @@ class RoutePointAPIController extends AppBaseController
             'is_received' => false,
             'meta_data' => null
         ]);
+
+        // Envoi de la notification
+        CustomerNotificationsUtils::notify($userNotification);
 
         // Déclenche l'événement
         event(new CustomerNotificationCreated($userNotification));
