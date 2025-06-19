@@ -46,13 +46,13 @@ class RoutePointAPIController extends AppBaseController
      public function indexByCustomer(Request $request): JsonResponse
     {
         $customer = auth('api-customers')->user();
-        $routePoints = RoutePoint::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->select([
+        $routePoints = RoutePoint::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->select(
             'id',
             'latitude',
             'longitude',
             'address_name',
             'type'
-        ])->get(); 
+        )->get(); 
 
         return $this->sendResponse($routePoints->toArray(), 'Route Points retrieved successfully');
     }
