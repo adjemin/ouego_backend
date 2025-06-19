@@ -837,7 +837,7 @@ class OrderAPIController extends AppBaseController
 
     }
 
-    public function estimateRidePrice(Request $request){
+    public function estimateRidePriceOld(Request $request){
 
                 /**
                  *
@@ -1016,6 +1016,287 @@ class OrderAPIController extends AppBaseController
                     $sameNightPricing,
                     $sameWeekPricing
                 ], 'Order saved successfully');
+
+
+    }
+
+    public function estimateRidePrice(Request $request){
+
+        /**
+         *
+         *     {
+                "service_slug":"course",
+                "meta_data":{
+                    "type_engin_slug":"camion-benne",
+                    "engin_model":"6-roues",
+                    "delivery_type_code":"EXPRESS"
+                },
+                "route_points":[
+                    {
+                        "address_name":"Cocody, Abidjan, Côte d'ivoire",
+                        "latitude":4,
+                        "longitude":-5,
+                        "type":"source",
+                        "parcel_details":""
+                    },
+                    {
+                        "address_name":"Koumassi, Abidjan, Côte d'ivoire",
+                        "latitude":4,
+                        "longitude":-5,
+                        "type":"destination",
+                        "parcel_details":""
+                    }
+                ]
+            }
+            *
+            */
+
+
+
+            if(!array_key_exists('meta_data', $request->all())){
+
+            return $this->sendError('meta_data is required', 400);
+        }
+
+        if(!array_key_exists('route_points', $request->all())){
+
+            return $this->sendError('route_points is required', 400);
+        }
+
+        $meta_data = $request->input('meta_data');
+
+        $route_points = $request->input('route_points');
+
+        if(!is_array($meta_data)){
+            $meta_data = (array) $meta_data;
+        }
+
+        if(!is_array($route_points)){
+            $route_points = (array) $route_points;
+        }
+
+        if(!array_key_exists('type_engin_slug',$meta_data)){
+
+            return $this->sendError('type_engin_slug is required', 400);
+        }
+
+        if(!array_key_exists('engin_model',$meta_data)){
+
+            return $this->sendError('engin_model is required', 400);
+        }
+
+        if(!array_key_exists('delivery_type_code',$meta_data)){
+
+            return $this->sendError('delivery_type_code is required', 400);
+        }
+
+        $typeEnginModel = TypeEnginModel::where('slug', $meta_data['engin_model'])->first();
+
+        if(empty($typeEnginModel)){
+            return $this->sendError('engin_model is required', 400);
+        }
+
+        $delivery_type_code = $meta_data['delivery_type_code'];
+
+        $source_list = collect([]);
+        $destination_list = collect([]);
+        $route_arrets = collect([]);
+
+        foreach ($route_points as $route_point_item){
+            if(!is_array($route_point_item)){
+                $route_point_item = (array)$route_point_item;
+            }
+
+            $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+            if($route_point_item_type == 'source'){
+                $source_list->push($route_point_item);
+            }
+
+            if($route_point_item_type == 'destination'){
+                $destination_list->push($route_point_item);
+            }
+
+            if($route_point_item_type == 'arret'){
+                $route_arrets->push($route_point_item);
+            }
+        }
+
+
+        // Initialize Values data
+        $amount = 0;
+        $current_distance = 0;
+        $duration = 0;
+
+        $source_point = $source_list->first();
+        $destination_point = $destination_list->last();
+
+        
+        if(!$route_arrets->count()){
+            $result = GoogleMapsAPIUtils::getDistance([
+                $source_point['latitude'],
+                $source_point['longitude'],
+            ],[
+                $destination_point['latitude'],
+                $destination_point['longitude'],
+            ]);
+
+            if(array_key_exists('distance',$result)){
+                $result_distance = $result['distance']; //array
+                $result_distance_value = $result_distance['value']; //meters
+                $distance = $result_distance_value/1000; //kilometers
+                $current_distance = $current_distance + intval($distance);
+            }
+
+            if(array_key_exists('duration',$result)){
+                $result_duration = $result['duration']; //array
+                $duration = intval($result_duration['value']);
+            }
+        }
+        
+
+        
+        if($route_arrets->count()){
+            
+            $last_arret = null;
+            if(!is_array($route_arrets) && count($route_arrets) == 1){
+
+                $arret_point = $route_arrets->first();
+                $result = GoogleMapsAPIUtils::getDistance([
+                    $source_point['latitude'],
+                    $source_point['longitude'],
+                ],[
+                    $arret_point['latitude'],
+                    $arret_point['longitude'],
+                ]);
+
+                if(array_key_exists('distance',$result)){
+                    $result_distance = $result['distance']; //array
+                    $result_distance_value = $result_distance['value']; //meters
+                    $distance = $result_distance_value/1000; //kilometers
+                    $current_distance = $current_distance + intval($distance);
+                }
+
+                if(array_key_exists('duration',$result)){
+                    $result_duration = $result['duration']; //array
+                    $duration = $duration + intval($result_duration['value']);
+                }
+
+                
+                $last_arret = $arret_point;
+
+            }elseif(!is_array($route_arrets)){
+                foreach ($route_arrets as $index => $route_arret){
+                    
+                    if($index == 0){
+                        $result = GoogleMapsAPIUtils::getDistance([
+                            $source_point['latitude'],
+                            $source_point['longitude'],
+                        ],[
+                            $route_arret['latitude'],
+                            $route_arret['longitude'],
+                        ]); 
+                        
+                    }else{
+                        $result = GoogleMapsAPIUtils::getDistance([
+                            $last_arret['latitude'],
+                            $last_arret['longitude'],
+                        ],[
+                            $route_arret['latitude'],
+                            $route_arret['longitude'],
+                        ]);
+
+                    }
+
+                    if(array_key_exists('distance',$result)){
+                        $result_distance = $result['distance']; //array
+                        $result_distance_value = $result_distance['value']; //meters
+                        $distance = $result_distance_value/1000; //kilometers
+                        $current_distance = $current_distance + intval($distance);
+                    }
+
+                    if(array_key_exists('duration',$result)){
+                        $result_duration = $result['duration']; //array
+                        $duration = $duration + intval($result_duration['value']);
+                    }
+
+                    // Update the last arret
+                    $last_arret = $route_arret;
+                }
+                
+            }
+
+            $result = GoogleMapsAPIUtils::getDistance([
+                $last_arret['latitude'],
+                $last_arret['longitude'],
+            ],[
+                $destination_point['latitude'],
+                $destination_point['longitude'],
+            ]); 
+
+            if(array_key_exists('distance',$result)){
+                $result_distance = $result['distance']; //array
+                $result_distance_value = $result_distance['value']; //meters
+                $distance = $result_distance_value/1000; //kilometers
+                $current_distance = $current_distance + intval($distance);
+            }
+
+            if(array_key_exists('duration',$result)){
+                $result_duration = $result['duration']; //array
+                $duration = $duration + intval($result_duration['value']);
+            }
+        }
+
+
+        $delivery_type_code = "EXPRESS";
+        $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+
+        //EXPRESS
+        $expressPricing = [
+            "distance" => $current_distance,
+            "duration" => $duration,
+            "amount" => $amount,
+            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+        ];
+
+
+
+        //En journée
+        $delivery_type_code = "en-journee";
+        $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+        $sameDayPricing = [
+            "distance" => $current_distance,
+            "duration" => $duration,
+            "amount" => $amount,
+            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+        ];
+
+        //De nuit
+        $delivery_type_code = "de-nuit";
+        $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+        $sameNightPricing = [
+            "distance" => $current_distance,
+            "duration" => $duration,
+            "amount" => $amount,
+            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+        ];
+
+        //En semaine
+        $delivery_type_code = "en-semaine";
+        $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+        $sameWeekPricing = [
+            "distance" => $current_distance,
+            "duration" => $duration,
+            "amount" => $amount,
+            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+        ];
+
+        return $this->sendResponse([
+            $expressPricing,
+            $sameDayPricing,
+            $sameNightPricing,
+            $sameWeekPricing
+        ], 'Order saved successfully');
 
 
     }
