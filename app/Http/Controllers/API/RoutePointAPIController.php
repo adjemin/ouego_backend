@@ -42,6 +42,21 @@ class RoutePointAPIController extends AppBaseController
         return $this->sendResponse($routePoints->toArray(), 'Route Points retrieved successfully');
     }
 
+
+     public function indexByCustomer(Request $request): JsonResponse
+    {
+        $customer = auth('api-customers')->user();
+        $routePoints = RoutePoint::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->get([
+            'id',
+            'latitude',
+            'longitude',
+            'address_name',
+            'type'
+        ]); 
+
+        return $this->sendResponse($routePoints->toArray(), 'Route Points retrieved successfully');
+    }
+
     /**
      * Store a newly created RoutePoint in storage.
      * POST /route-points
