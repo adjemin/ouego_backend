@@ -15,6 +15,7 @@ use Illuminate\Support\Collection;
 use Carbon\Carbon;
 use App\Models\CustomerNotification;
 use App\Events\CustomerNotificationCreated;
+use App\Utils\CustomerNotificationsUtils;
 
 /**
  * Class OrderInvitationAPIController
@@ -233,6 +234,8 @@ class OrderInvitationAPIController extends AppBaseController
                 "is_waiting_acceptation" => true
             ])->get();
 
+           // Envoi de la notification
+           CustomerNotificationsUtils::notify($userNotification);
 
             return $this->sendResponse($orderInvitations->toArray(), 'Order Invitation retrieved successfully', 400);
         }else{
