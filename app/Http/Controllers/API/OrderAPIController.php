@@ -837,7 +837,7 @@ class OrderAPIController extends AppBaseController
 
     }
 
-    public function estimateRidePriceOld(Request $request){
+    public function estimateRidePrice(Request $request){
 
                 /**
                  *
@@ -1020,7 +1020,7 @@ class OrderAPIController extends AppBaseController
 
     }
 
-    public function estimateRidePrice(Request $request){
+    public function estimateRidePriceNew(Request $request){
 
         /**
          *
