@@ -1247,6 +1247,8 @@ class OrderAPIController extends AppBaseController
             }
         }
 
+        $duration = strval($duration). " seconds";
+
 
         $delivery_type_code = "EXPRESS";
         $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
