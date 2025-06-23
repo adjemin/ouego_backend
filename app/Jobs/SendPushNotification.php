@@ -15,9 +15,9 @@ use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
 
 
-class SendPushNotification implements ShouldQueue
+class SendPushNotification  //implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
 
     // Nombre maximum de tentatives
     public $tries = 3;
