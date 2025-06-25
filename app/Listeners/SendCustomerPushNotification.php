@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use App\Models\CustomerDevice;
 
-class SendCustomerPushNotification implements ShouldQueue
+class SendCustomerPushNotification
 {
     /**
      * Create the event listener.

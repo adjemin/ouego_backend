@@ -13,9 +13,9 @@ use Kreait\Firebase\Messaging\Notification;
 use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
 
-class SendPushCustomerNotification implements ShouldQueue
+class SendPushCustomerNotification
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
 
     protected $customerNotification;
 

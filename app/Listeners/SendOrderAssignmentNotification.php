@@ -12,7 +12,7 @@ use App\Jobs\SendPushNotification;
 use App\Utilities\TwilioUtils;
 use Illuminate\Support\Facades\Log;
 
-class SendOrderAssignmentNotification  // implements ShouldQueue
+class SendOrderAssignmentNotification
 {
     /**
      * Create the event listener.

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 use Carbon\Carbon;
 
-class ProcessPendingOrderAssignments implements ShouldQueue
+class ProcessPendingOrderAssignments
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
