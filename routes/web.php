@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\DB;
 */
 
 Route::get('/', function () {
-    $count = DB::table('pg_stat_activity')->count();
-    dd($count);
+    #$count = DB::table('pg_stat_activity')->count();
+    # dd($count);
     return view('welcome');
 });
 
