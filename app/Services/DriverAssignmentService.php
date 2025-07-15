@@ -45,22 +45,32 @@ class DriverAssignmentService
     // Fonction ameliorée pour assigner un chauffeur le plus proche disponible
     public function findNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
     {
-        $maxUpdateTime  = 30;
-        // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
+        $maxUpdateTime = 30;
+
+        // Casts explicites en double precision pour éviter l'erreur PostgreSQL
+        $pointExpression = 'ST_SetSRID(ST_MakePoint(?::double precision, ?::double precision), 4326)';
+
         $query = Driver::select('drivers.*')
-        ->selectRaw('ST_Distance(last_location, ST_SetSRID(ST_MakePoint(?, ?), 4326)) as distance', [$longitude, $latitude])
-        ->whereRaw('is_available = true')
-        ->whereRaw('is_active = true')
-        ->whereRaw("updated_at >= NOW() - INTERVAL '{$maxUpdateTime} MINUTE'")
-        ->whereJsonContains('services', $service_slug)
-        ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)', [$longitude, $latitude]);
+            ->selectRaw(
+                "ST_Distance(last_location, $pointExpression) as distance",
+                [$longitude, $latitude]
+            )
+            ->where('is_available', true)
+            ->where('is_active', true)
+            ->whereRaw("updated_at >= NOW() - INTERVAL '{$maxUpdateTime} MINUTE'")
+            ->whereJsonContains('services', $service_slug)
+            ->orderByRaw("last_location <-> $pointExpression", [$longitude, $latitude]);
 
         if ($maxDistance) {
-            $query->whereRaw('ST_DWithin(last_location, ST_SetSRID(ST_MakePoint(?, ?), 4326), ?)', [$longitude, $latitude, $maxDistance]);
+            $query->whereRaw(
+                "ST_DWithin(last_location, $pointExpression, ?)",
+                [$longitude, $latitude, $maxDistance]
+            );
         }
 
         return $query->limit($limit)->get();
     }
+
 
     /**
      * Assigne une course au chauffeur le plus proche disponible.
