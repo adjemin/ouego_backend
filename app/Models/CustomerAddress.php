@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CustomerAddress extends Model
 {
-    public $table = 'customer_addresses';
+    public $table = 'customer_address';
 
     public $fillable = [
         'customer_id',

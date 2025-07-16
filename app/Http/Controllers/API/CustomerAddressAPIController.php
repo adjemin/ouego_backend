@@ -36,7 +36,7 @@ class CustomerAddressAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        $customerAddresses = $customerAddresses->where('customer_id', $customer->id)->orderBy('address_name', 'asc');
+        $customerAddresses = $customerAddresses->where('customer_id', $customer->id);
 
         return $this->sendResponse($customerAddresses->toArray(), 'Customer Addresses retrieved successfully');
     }
@@ -47,7 +47,9 @@ class CustomerAddressAPIController extends AppBaseController
      */
     public function store(CreateCustomerAddressAPIRequest $request): JsonResponse
     {
+        $customer = auth('api-customers')->user();
         $input = $request->all();
+        $input['customer_id'] = $customer->id;
 
         $customerAddress = $this->customerAddressRepository->create($input);
 
