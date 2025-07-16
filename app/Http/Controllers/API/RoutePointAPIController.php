@@ -411,7 +411,7 @@ class RoutePointAPIController extends AppBaseController
             ])->count();
 
             if($routePointsDeliveriesCount == $routePointsDeliveriesListCount){
-                $order->status = Order::DELIVERED;
+                $order->status = Order::DELIVERED_FINISH;
                 $order->is_running = false;
                 $order->is_completed = true;
                 $order->is_successful= true;
@@ -420,7 +420,7 @@ class RoutePointAPIController extends AppBaseController
                 $order->chargeDriver();
 
                 // Register order history
-                $order->newOrderHistory(Order::DELIVERED, $driver->table, $driver->id); 
+                $order->newOrderHistory(Order::DELIVERED_FINISH, $driver->table, $driver->id); 
 
             }
         }
