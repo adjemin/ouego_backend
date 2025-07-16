@@ -187,7 +187,7 @@ class RoutePointAPIController extends AppBaseController
 
                 $order = Order::where(['id' => $routePoint->order_id])->first();
 
-                if($order != null && !$order->is_started){
+                if($order != null ){
 
                     $order->update([
                         'status' => Order::DELIVERED_FINISH,
@@ -245,7 +245,7 @@ class RoutePointAPIController extends AppBaseController
 
                 $order = Order::where(['id' => $routePoint->order_id])->first();
 
-                if($order != null && !$order->is_started){
+                if($order != null){
 
                     $order->update([
                         'is_waiting' => false,
@@ -263,7 +263,7 @@ class RoutePointAPIController extends AppBaseController
 
                 $order = Order::where(['id' => $routePoint->order_id])->first();
 
-                if($order != null && !$order->is_started){
+                if($order != null){
 
                     $order->update([
                        'status' => Order::PICKUPED
@@ -299,7 +299,7 @@ class RoutePointAPIController extends AppBaseController
 
                 $order = Order::where(['id' => $routePoint->order_id])->first();
 
-                if($order != null && !$order->is_started){
+                if($order != null){
 
                     $order->update([
                         'status' => Order::PICKUP_ARRIVED,
@@ -319,7 +319,7 @@ class RoutePointAPIController extends AppBaseController
 
                 $order = Order::where(['id' => $routePoint->order_id])->first();
 
-                if($order != null && !$order->is_started){
+                if($order != null){
                     $order->update([
                         'status' => Order::DELIVERED
                     ]);
