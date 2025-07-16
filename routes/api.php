@@ -247,3 +247,8 @@ Route::resource('driver-otps', App\Http\Controllers\API\DriverOtpAPIController::
 
 Route::resource('driver-carriers', App\Http\Controllers\API\DriverCarrierAPIController::class)
     ->except(['create', 'edit']);
+
+
+Route::resource('customer-addresses', App\Http\Controllers\API\CustomerAddressAPIController::class)
+    ->except(['create', 'edit'])
+    ->middleware("auth.customer:api-customers");    
