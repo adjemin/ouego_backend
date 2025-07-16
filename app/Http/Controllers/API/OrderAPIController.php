@@ -109,6 +109,9 @@ class OrderAPIController extends AppBaseController
             'is_ride' => null
         ]);
 
+        // Register order history
+        $order->newOrderHistory(Order::INITIATED, $customer->table, $customer->id);
+
 
         foreach ($items as $item) {
 
@@ -1462,6 +1465,8 @@ class OrderAPIController extends AppBaseController
 
     public function confirm($id, Request $request){
 
+        $customer = auth('api-customers')->user();
+
         /** @var Order $order */
         $order = $this->orderRepository->find($id);
 
@@ -1474,6 +1479,9 @@ class OrderAPIController extends AppBaseController
         $input['status'] = Order::PERFORMER_LOOKUP;
 
         $order->update($input);
+
+        // Register order history
+        $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
 
         $this->driverAssignmentService->assignNearestDriver($order);
 
@@ -2015,6 +2023,8 @@ class OrderAPIController extends AppBaseController
 
    public function cancel($id, Request $request){
 
+    $customer = auth('api-customers')->user();
+
     /** @var Order $order */
     $order = $this->orderRepository->find($id);
 
@@ -2031,6 +2041,9 @@ class OrderAPIController extends AppBaseController
     $order->is_successful = false;
 
     $order->update($input);
+
+    // Register order history
+    $order->newOrderHistory(Order::CANCELLED, $customer->table, $customer->id);
 
     //Get OrderInvitations for this order and update is_waiting_acceptation to false
     $orderInvitations = \App\Models\OrderInvitation::where([
@@ -2084,6 +2097,21 @@ class OrderAPIController extends AppBaseController
     return $this->sendResponse($order->toArray(), 'Order rating updated successfully');
 
   }
+
+    public function getOrderHistory($id, Request $request){
+
+        /** @var Order $order */
+        $order = $this->orderRepository->find($id);
+
+        if (empty($order)) {
+            return $this->sendError('Order not found');
+        }
+
+        $orderHistories = $order->orderHistories;
+
+        return $this->sendResponse($orderHistories->toArray(), 'Order history retrieved successfully');
+
+    }   
 
 
 }

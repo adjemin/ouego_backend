@@ -131,6 +131,8 @@ class RoutePointAPIController extends AppBaseController
      */
     public function updateStatus($id, Request $request){
 
+        $driver = auth('api-drivers')->user();
+
         $input = $request->json()->all();
         $input_route_point = [];
         $input_route_point['status'] = $input['status'];
@@ -180,6 +182,24 @@ class RoutePointAPIController extends AppBaseController
                 'longitude' => $request->input('longitude'),
                 'status' => RoutePoint::SUCCESS
             ]);
+
+            if($routePoint->type == 'destination'){
+
+                $order = Order::where(['id' => $routePoint->order_id])->first();
+
+                if($order != null && !$order->is_started){
+
+                    $order->update([
+                        'status' => Order::DELIVERED_FINISH,
+                        'is_running' => false,
+                        'is_completed' => true,
+                        'is_successful' => true,
+                    ]);
+
+                    // Register order history
+                    $order->newOrderHistory(Order::DELIVERED_FINISH, $driver->table, $driver->id);
+                }
+            }
 
         }
 
@@ -238,6 +258,23 @@ class RoutePointAPIController extends AppBaseController
                 }
 
             }
+
+             if($routePoint->type == 'destination'){
+
+                $order = Order::where(['id' => $routePoint->order_id])->first();
+
+                if($order != null && !$order->is_started){
+
+                    $order->update([
+                       'status' => Order::PICKUPED
+                    ]);
+
+                    // Register order history
+                    $order->newOrderHistory(Order::PICKUPED, $driver->table, $driver->id);
+                }
+
+            }
+
         }
 
         if($input['status'] == RoutePoint::ARRIVED){
@@ -265,6 +302,7 @@ class RoutePointAPIController extends AppBaseController
                 if($order != null && !$order->is_started){
 
                     $order->update([
+                        'status' => Order::PICKUP_ARRIVED,
                         'is_waiting' => false,
                         'is_running' => true,
                         'is_started' => true,
@@ -272,8 +310,22 @@ class RoutePointAPIController extends AppBaseController
                         'is_completed' => false
                     ]);
 
+                    // Register order history
+                    $order->newOrderHistory(Order::PICKUP_ARRIVED, $driver->table, $driver->id);
                 }
+            }
 
+            if($routePoint->type == 'destination'){
+
+                $order = Order::where(['id' => $routePoint->order_id])->first();
+
+                if($order != null && !$order->is_started){
+                    $order->update([
+                        'status' => Order::DELIVERED
+                    ]);
+                    // Register order history
+                    $order->newOrderHistory(Order::DELIVERED, $driver->table, $driver->id);
+                }
             }
         }
 
@@ -291,6 +343,7 @@ class RoutePointAPIController extends AppBaseController
                 'longitude' => $request->input('longitude'),
                 'status' => RoutePoint::ACCEPTED
             ]);
+
         }
 
         if($input['status'] == RoutePoint::CANCELLED){
@@ -337,6 +390,9 @@ class RoutePointAPIController extends AppBaseController
                 $order->is_completed = false;
                 $order->save();
 
+                // Register order history
+                $order->newOrderHistory(Order::PICKUPED, $driver->table, $driver->id);
+
             }
 
         }
@@ -362,6 +418,9 @@ class RoutePointAPIController extends AppBaseController
                 $order->completion_time = now();
                 $order->save();
                 $order->chargeDriver();
+
+                // Register order history
+                $order->newOrderHistory(Order::DELIVERED, $driver->table, $driver->id); 
 
             }
         }

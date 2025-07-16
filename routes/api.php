@@ -67,6 +67,10 @@ Route::prefix('v1/')->group(function () {
     Route::put('orders/{id}/rating', [App\Http\Controllers\API\OrderAPIController::class, 'rating']);
 
 
+    // Historique des commandes
+    Route::get('orders/{id}/history', [App\Http\Controllers\API\OrderAPIController::class, 'getOrderHistory'])->middleware("auth.customer:api-customers");  
+    
+
     //Détails d'une course par ID (client)
     Route::get('orders/{id}/info', [App\Http\Controllers\API\OrderAPIController::class, 'show']);
 

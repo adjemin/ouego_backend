@@ -54,7 +54,11 @@ class ProcessPendingOrderAssignments
                     $order->update([
                         'status' => Order::PERFORMER_NOT_FOUND
                     ]);
+
                     Log::warning("Order {$order->id} failed to find driver after 10 attempts");
+
+                    // Enregistrer l'historique de la commande
+                    $order->newOrderHistory(Order::PERFORMER_NOT_FOUND, 'system', null);
                     continue;
                 }
 

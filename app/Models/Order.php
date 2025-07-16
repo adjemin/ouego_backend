@@ -229,6 +229,21 @@ class Order extends Model
         return $this->hasMany(OrderInvitation::class, 'order_id');
     }
 
+    public function orderHistories(): HasMany
+    {
+        return $this->hasMany(OrderHistory::class, 'order_id')->orderBy('created_at', 'DESC');
+    }
+    
+
+    public function newOrderHistory($status, $creator=null, $creator_id = null){
+        OrderHistory::create([
+            'order_id' => $this->id,
+            'status' => $status,
+            'creator' => $creator,
+            'created_id' => $creator_id
+        ]);
+    }
+
 
 
 }
