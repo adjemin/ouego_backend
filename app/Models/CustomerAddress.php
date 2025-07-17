@@ -9,6 +9,7 @@ class CustomerAddress extends Model
     public $table = 'customer_address';
 
     public $fillable = [
+        'label',
         'customer_id',
         'address_name',
         'latitude',
@@ -17,6 +18,7 @@ class CustomerAddress extends Model
     ];
 
     protected $casts = [
+        'label' => 'string',
         'customer_id' => 'integer',
         'address_name' => 'string',
         'latitude' => 'double',

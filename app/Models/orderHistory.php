@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class OrderHistory extends Model
 {
@@ -11,7 +12,7 @@ class OrderHistory extends Model
 
     public $table = 'order_histories';
 
-    protected $appends = ['order'];
+    protected $appends = ['creator_info'];
 
     public $fillable = [
         'order_id',
@@ -33,6 +34,14 @@ class OrderHistory extends Model
 
     public function getOrderAttribute(){
         return Order::where('id', $this->order_id)->first();
+    }
+
+    public function getCreatorInfoAttribute()
+    {
+        return DB::table($this->creator)
+            ->where('id', $this->created_id)
+            ->select('id', 'name', 'phone', 'photo_url')
+            ->first();
     }
 
 
