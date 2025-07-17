@@ -30,14 +30,8 @@ class CustomerAddressAPIController extends AppBaseController
     {
         $customer = auth('api-customers')->user();
 
-        $customerAddresses = $this->customerAddressRepository->all(
-            $request->except(['skip', 'limit']),
-            $request->get('skip'),
-            $request->get('limit')
-        );
-
-        $customerAddresses = $customerAddresses->where('customer_id', $customer->id);
-
+        $customerAddresses = CustomerAddress::where('customer_id', $customer->id)->orderBy('label', 'asc')->get();
+        
         return $this->sendResponse($customerAddresses->toArray(), 'Customer Addresses retrieved successfully');
     }
 
