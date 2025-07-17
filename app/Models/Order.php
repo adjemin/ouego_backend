@@ -96,7 +96,9 @@ class Order extends Model
         'is_location',
         'is_product',
         'is_ride',
-        'is_draft'
+        'is_draft',
+        'public_token',
+        'public_token_expires_at'
     ];
 
     protected $casts = [
@@ -122,7 +124,9 @@ class Order extends Model
         'is_location' => 'boolean',
         'is_product' => 'boolean',
         'is_ride' => 'boolean',
-        'is_draft' => 'boolean'
+        'is_draft' => 'boolean',
+        'public_token' => 'string',
+        'public_token_expires_at' => 'datetime'
     ];
 
     public static array $rules = [
