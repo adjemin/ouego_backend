@@ -133,6 +133,15 @@ class Order extends Model
 
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($order) {
+            $order->public_token = Str::random(32);
+        });
+    }
+
     // Generate unique reference
     public static function generateReference(){
 
