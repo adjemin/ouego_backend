@@ -20,8 +20,7 @@ class TestAPIController extends AppBaseController
                 return $this->sendError('Longitude and Latitude must be numeric', 400);
             }
 
-            $carrierService = new OrderAssignmentV2Service();
-            $nearDrivers = $carrierService->searchNearDriverByCarrier($longitude, $latitude);
+            $nearDrivers = OrderAssignmentV2Service::searchNearDriverByCarrier($longitude, $latitude);
     
             return $this->sendResponse($nearDrivers, 'New Carrier found successfully');
         } catch (\Exception $e) {

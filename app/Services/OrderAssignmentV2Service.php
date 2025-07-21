@@ -12,7 +12,7 @@ class OrderAssignmentV2Service {
     private $maxDistance = 5; // Distance maximale en km
     private $maxDrivers = 10; // Nombre maximum de chauffeurs à retourner
     
-    public function searchNearDriverByCarrier(float $longitude, float $latitude){
+    public static function searchNearDriverByCarrier(float $longitude, float $latitude){
         
         $zone = GoogleMapsAPIUtils::trouverZoneParPointPostGIS($longitude, $latitude);
 
@@ -80,11 +80,11 @@ class OrderAssignmentV2Service {
 
             $driver->distance = ceil($distance);
 
-            return $distance <= $this->maxDistance;
+            return $distance <= self::$maxDistance;
         });
 
         if ($drivers->isEmpty()) {
-            throw new \Exception("Aucun chauffeur trouvé à moins de $this->maxDistance Km de la carriere");
+            throw new \Exception("Aucun chauffeur trouvé à moins de ".self::$maxDistance." Km de la carriere");
         }
 
         // Écarter les chauffeurs qui ont des courses démarrées
@@ -112,7 +112,7 @@ class OrderAssignmentV2Service {
                 ['current_orders', 'asc'],
                 ['rate', 'desc']
             ])
-            ->take($this->maxDrivers)
+            ->take(self::$maxDrivers)
             ->values();
 
         $data = [

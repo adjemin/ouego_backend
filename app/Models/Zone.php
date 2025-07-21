@@ -14,14 +14,14 @@ class Zone extends Model
     protected $fillable = [
         'nom',
         'zone_base_id',
-        'geom',
+        'geometry',
     ];
 
     protected $casts = [
         'id' => 'integer',
         'nom' => 'string',
         'zone_base_id' => 'integer',
-        'geom' => 'geometry',
+        'geometry' => 'geometry',
     ];
 
     public function zoneBase()

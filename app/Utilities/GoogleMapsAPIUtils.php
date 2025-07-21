@@ -56,11 +56,19 @@ class GoogleMapsAPIUtils
         return [];
     }
 
+    /**
+     * Trouve une zone contenant un point donné en utilisant PostGIS.
+     *
+     * @param float $longitude Longitude du point
+     * @param float $latitude Latitude du point
+     * @return Zone|null Retourne la zone contenant le point, ou null si aucune zone n'est trouvée
+     */
     public static function trouverZoneParPointPostGIS(float $longitude, float $latitude): ?Zone
     {
-    
-        return Zone::whereRaw('ST_Contains(geom::geometry, ST_SetSRID(ST_MakePoint(?, ?)::geometry, 4326))', [$longitude, $latitude])
-        ->first();
+        return Zone::whereRaw(
+            'ST_Contains(geometry, ST_SetSRID(ST_MakePoint(?, ?)::geography, 4326))',
+            [$longitude, $latitude]
+        )->first();
     }
 
 
