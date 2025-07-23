@@ -64,7 +64,7 @@ class RoutePoint extends Model
         'contact_second_phone' => 'string',
         'contact_email' => 'string',
         'parcel_details' => 'string',
-        'type' => 'string', //source or destination
+        'type' => 'string', //source or destination, arret
         'images' => 'array',
         'signatures' => 'string',
         'status' => 'string',

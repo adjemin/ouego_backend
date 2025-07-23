@@ -12,7 +12,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Collection;
-use Carbon\Carbon;
 use App\Models\CustomerNotification;
 use App\Events\CustomerNotificationCreated;
 
@@ -135,6 +134,8 @@ class OrderInvitationAPIController extends AppBaseController
     }
 
     public function  accept($id, Request $request){
+
+        $cdriver = auth('api-drivers')->user();
         /** @var OrderInvitation $orderInvitation */
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
@@ -175,6 +176,9 @@ class OrderInvitationAPIController extends AppBaseController
                         "acceptation_time" => now()
                     ]
                 );
+
+                // Register order history
+                $order->newOrderHistory(Order::PERFORMER_FOUND, $cdriver->table, $cdriver->id);
 
                 //Send notification to customer
                 $title = "Course #".$orderInvitation->order_id." a été attribuée";

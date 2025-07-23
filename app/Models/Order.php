@@ -96,7 +96,9 @@ class Order extends Model
         'is_location',
         'is_product',
         'is_ride',
-        'is_draft'
+        'is_draft',
+        'public_token',
+        'public_token_expires_at'
     ];
 
     protected $casts = [
@@ -122,12 +124,23 @@ class Order extends Model
         'is_location' => 'boolean',
         'is_product' => 'boolean',
         'is_ride' => 'boolean',
-        'is_draft' => 'boolean'
+        'is_draft' => 'boolean',
+        'public_token' => 'string',
+        'public_token_expires_at' => 'datetime'
     ];
 
     public static array $rules = [
 
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($order) {
+            $order->public_token = Str::random(32);
+        });
+    }
 
     // Generate unique reference
     public static function generateReference(){
@@ -234,6 +247,21 @@ class Order extends Model
     }
 
     
+
+    public function orderHistories(): HasMany
+    {
+        return $this->hasMany(OrderHistory::class, 'order_id')->orderBy('created_at', 'DESC');
+    }
+    
+
+    public function newOrderHistory($status, $creator=null, $creator_id = null){
+        OrderHistory::create([
+            'order_id' => $this->id,
+            'status' => $status,
+            'creator' => $creator,
+            'created_id' => $creator_id
+        ]);
+    }
 
 
 

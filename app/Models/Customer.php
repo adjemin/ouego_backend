@@ -47,6 +47,7 @@ class Customer extends Authenticatable  implements JWTSubject
         'phone' => 'string',
         'photo_url' => 'string',
         'is_active' => 'boolean',
+        'is_blocked' => 'boolean',
         'current_balance' => 'double',
         'old_balance' => 'double',
         'last_location_latitude' => 'double',

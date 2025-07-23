@@ -47,6 +47,7 @@ class Driver extends Authenticatable  implements JWTSubject
         'phone' => 'string',
         'photo_url' => 'string',
         'is_active' => 'boolean',
+        'is_blocked' => 'boolean',
         'is_available' => 'boolean',
         'current_balance' => 'double',
         'old_balance' => 'double',

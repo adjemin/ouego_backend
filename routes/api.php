@@ -63,6 +63,12 @@ Route::prefix('v1/')->group(function () {
 
     Route::put('orders/{id}/cancel', [App\Http\Controllers\API\OrderAPIController::class, 'cancel']);
 
+    Route::put('orders/{id}/rating', [App\Http\Controllers\API\OrderAPIController::class, 'rating']);
+
+
+    // Historique des commandes
+    Route::get('orders/{id}/history', [App\Http\Controllers\API\OrderAPIController::class, 'getOrderHistory'])->middleware("auth.customer:api-customers");  
+    
 
     //Détails d'une course par ID (client)
     Route::get('orders/{id}/info', [App\Http\Controllers\API\OrderAPIController::class, 'show']);
@@ -96,6 +102,9 @@ Route::prefix('v1/')->group(function () {
 
     //TODO Modifier le statut d’un ramassage ou livraison (ANNULER, DEMARRER, REUSSIR, ECHOUER ) (Livreur)
     Route::put('route_points/{id}/update_status', [App\Http\Controllers\API\RoutePointAPIController::class, 'updateStatus'])->middleware("auth.driver:api-drivers");
+    
+    // Détails d'un point de ramassage ou livraison (Livreur)
+    Route::get('route_points/customer', [App\Http\Controllers\API\RoutePointAPIController::class, 'indexByCustomer'])->middleware("auth.customer:api-customers");
 
 
     //Inscription par téléphone Driver
@@ -151,10 +160,10 @@ Route::prefix('v1/')->group(function () {
     
     Route::post('testing-algorithm/v1/onday-order-assignment', [App\Http\Controllers\API\TestAPIController::class, 'OndayOrderAssignment']);
 
-    
 
-    
-
+    Route::resource('customer-addresses', App\Http\Controllers\API\CustomerAddressAPIController::class)
+    ->except(['create', 'edit'])
+    ->middleware("auth.customer:api-customers"); 
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -249,3 +258,5 @@ Route::resource('driver-otps', App\Http\Controllers\API\DriverOtpAPIController::
 
 Route::resource('driver-carriers', App\Http\Controllers\API\DriverCarrierAPIController::class)
     ->except(['create', 'edit']);
+
+   
