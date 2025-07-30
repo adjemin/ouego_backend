@@ -44,6 +44,7 @@ class RoutePointAPIController extends AppBaseController
 
      public function indexByCustomer(Request $request): JsonResponse
     {
+        $query = $request->get('q');
         $customer = auth('api-customers')->user();
         $routePoints = RoutePoint::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->select(
             'id',
@@ -52,6 +53,9 @@ class RoutePointAPIController extends AppBaseController
             'address_name',
             'type'
         )
+        ->when(!empty($query), function ($searchQuery) use ($query) {
+            $searchQuery->where('address_name', 'like', "%$query%");
+        })
         ->distinct('address_name')
         ->limit(10)
         ->get(); 

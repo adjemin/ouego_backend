@@ -23,6 +23,7 @@ class Carrier extends Model
         'location_latitude',
         'location_longitude',
         'is_active',
+        'aggregats',
         'products',
         'location'
     ];
@@ -33,6 +34,7 @@ class Carrier extends Model
         'location_latitude' => 'double',
         'location_longitude' => 'double',
         'is_active' => 'boolean',
+        'aggregats' => 'array',
         'products' => 'array'
     ];
 
