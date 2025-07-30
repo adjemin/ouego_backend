@@ -51,7 +51,10 @@ class RoutePointAPIController extends AppBaseController
             'longitude',
             'address_name',
             'type'
-        )->get(); 
+        )
+        ->distinct('address_name')
+        ->limit(10)
+        ->get(); 
 
         return $this->sendResponse($routePoints->toArray(), 'Route Points retrieved successfully');
     }
