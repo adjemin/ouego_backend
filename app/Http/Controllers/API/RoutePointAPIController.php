@@ -46,19 +46,23 @@ class RoutePointAPIController extends AppBaseController
     {
         $query = $request->get('q');
         $customer = auth('api-customers')->user();
-        $routePoints = RoutePoint::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->select(
-            'id',
-            'latitude',
-            'longitude',
-            'address_name',
-            'type'
-        )
-        ->when(!empty($query), function ($searchQuery) use ($query) {
-            $searchQuery->where('address_name', 'like', "%$query%");
-        })
-        ->distinct('address_name')
-        ->limit(10)
-        ->get(); 
+       $routePoints = RoutePoint::where('customer_id', $customer->id)
+            ->orderBy('address_name', 'desc')
+            ->orderBy('latitude', 'desc')
+            ->orderBy('longitude', 'desc')
+            ->select(
+                'id',
+                'latitude',
+                'longitude',
+                'address_name',
+                'type'
+            )
+            ->when(!empty($query), function ($searchQuery) use ($query) {
+                return $searchQuery->where('address_name', 'ilike', "%$query%");
+            })
+            ->distinct(['address_name', 'latitude', 'longitude']) // Change this line
+            ->limit(10)
+            ->get();
 
         return $this->sendResponse($routePoints->toArray(), 'Route Points retrieved successfully');
     }

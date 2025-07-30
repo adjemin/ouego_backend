@@ -123,7 +123,7 @@ class Serializer
             return $this->encodeMessageImpl($message, $messageType);
         } catch (\Exception $e) {
             throw new ValidationException(
-                "Error encoding message: " . $e->getMessage(),
+                'Error encoding message: ' . $e->getMessage(),
                 $e->getCode(),
                 $e
             );
@@ -147,7 +147,7 @@ class Serializer
             return $this->decodeMessageImpl($message, $messageType, $data);
         } catch (\Exception $e) {
             throw new ValidationException(
-                "Error decoding message: " . $e->getMessage(),
+                'Error decoding message: ' . $e->getMessage(),
                 $e->getCode(),
                 $e
             );
@@ -344,7 +344,7 @@ class Serializer
                     $arr[$this->encodeElement($keyField, $k)] = $this->encodeElement($valueField, $vv);
                 }
                 $v = $arr;
-            } elseif ($field->getLabel() === GPBLabel::REPEATED) {
+            } elseif ($this->checkFieldRepeated($field)) {
                 $arr = [];
                 foreach ($v as $k => $vv) {
                     $arr[$k] = $this->encodeElement($field, $vv);
@@ -409,7 +409,7 @@ class Serializer
             // Unknown field found
             if (!isset($fieldsByName[$fieldName])) {
                 throw new RuntimeException(sprintf(
-                    "cannot handle unknown field %s on message %s",
+                    'cannot handle unknown field %s on message %s',
                     $fieldName,
                     $messageType->getFullName()
                 ));
@@ -427,7 +427,7 @@ class Serializer
                     $arr[$this->decodeElement($keyField, $k)] = $this->decodeElement($valueField, $vv);
                 }
                 $value = $arr;
-            } elseif ($field->getLabel() === GPBLabel::REPEATED) {
+            } elseif ($this->checkFieldRepeated($field)) {
                 $arr = [];
                 foreach ($v as $k => $vv) {
                     $arr[$k] = $this->decodeElement($field, $vv);
@@ -445,6 +445,17 @@ class Serializer
             unset($value);
         }
         return $message;
+    }
+
+    /**
+     * @param FieldDescriptor $field
+     * @return bool
+     */
+    private function checkFieldRepeated(FieldDescriptor $field): bool
+    {
+        return method_exists($field, 'isRepeated')
+            ? $field->isRepeated()
+            : $field->getLabel() === GPBLabel::REPEATED;
     }
 
     /**
@@ -503,7 +514,7 @@ class Serializer
 
     private static function hasBinaryHeaderSuffix(string $key)
     {
-        return substr_compare($key, "-bin", strlen($key) - 4) === 0;
+        return substr_compare($key, '-bin', strlen($key) - 4) === 0;
     }
 
     private static function getPhpArraySerializer()
@@ -517,7 +528,7 @@ class Serializer
     public static function loadKnownMetadataTypes()
     {
         foreach (self::$metadataKnownTypes as $key => $class) {
-            new $class;
+            new $class();
         }
     }
 }

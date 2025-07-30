@@ -35,7 +35,9 @@ use function time;
 class ApiClient
 {
     private readonly ProjectAwareAuthResourceUrlBuilder|TenantAwareAuthResourceUrlBuilder $awareAuthResourceUrlBuilder;
+
     private readonly AuthResourceUrlBuilder $authResourceUrlBuilder;
+
     private readonly AuthApiExceptionConverter $errorHandler;
 
     /**
@@ -119,14 +121,24 @@ class ApiClient
     /**
      * @throws AuthException
      */
+    public function getUserByProviderUid(string $providerId, string $uid): ResponseInterface
+    {
+        $url = $this->awareAuthResourceUrlBuilder->getUrl('/accounts:lookup');
+
+        return $this->requestApi($url, ['federatedUserId' => [['providerId' => $providerId, 'rawId' => $uid]]]);
+    }
+
+    /**
+     * @throws AuthException
+     */
     public function downloadAccount(?int $batchSize = null, ?string $nextPageToken = null): ResponseInterface
     {
-        $batchSize = $batchSize ?: 1000;
+        $batchSize ??= 1000;
 
         $urlParams = array_filter([
             'maxResults' => (string) $batchSize,
             'nextPageToken' => (string) $nextPageToken,
-        ]);
+        ], fn($value): bool => $value !== '');
 
         $url = $this->awareAuthResourceUrlBuilder->getUrl('/accounts:batchGet', $urlParams);
 
@@ -304,7 +316,7 @@ class ApiClient
             $data['tenantId'] = $this->tenantId;
         }
 
-        if (!empty($data)) {
+        if (is_array($data) && $data !== []) {
             $method = 'POST';
             $options['json'] = $data;
         }

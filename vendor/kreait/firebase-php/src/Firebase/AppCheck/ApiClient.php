@@ -43,7 +43,10 @@ final class ApiClient
             ]),
         ]);
 
-        return Json::decode((string) $response->getBody(), true);
+        /** @var AppCheckTokenShape $decoded */
+        $decoded = Json::decode((string) $response->getBody(), true);
+
+        return $decoded;
     }
 
     /**

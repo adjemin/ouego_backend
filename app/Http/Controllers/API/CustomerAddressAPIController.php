@@ -29,8 +29,15 @@ class CustomerAddressAPIController extends AppBaseController
     public function index(Request $request): JsonResponse
     {
         $customer = auth('api-customers')->user();
+        $query = $request->get('q');    
 
-        $customerAddresses = CustomerAddress::where('customer_id', $customer->id)->orderBy('label', 'asc')->get();
+        $customerAddresses = CustomerAddress::where('customer_id', $customer->id)
+        ->when(!empty($query), function ($searchQuery) use ($query) {
+            return $searchQuery->where('address_name', 'ilike', "%$query%");
+        })
+        ->orderBy('address_name', 'asc')
+        ->limit(10)
+        ->get();
         
         return $this->sendResponse($customerAddresses->toArray(), 'Customer Addresses retrieved successfully');
     }
