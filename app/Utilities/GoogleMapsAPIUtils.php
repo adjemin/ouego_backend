@@ -75,7 +75,7 @@ class GoogleMapsAPIUtils
 
     function trouverZoneParPointGoogleMaps(float $latitude, float $longitude): ?string
     {
-        $apiKey = env('GOOGLE_MAPS_API_KEY'); // Stocké dans ton fichier .env
+        $apiKey = env('GOOGLE_MAPS_API_KEY', 'AIzaSyAP8YmQymC20lzQgLrTWfLznDw4p3tnn-g');
         $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng={$latitude},{$longitude}&key={$apiKey}";
     
         $response = Http::get($url);
