@@ -33,7 +33,9 @@ class CustomerAddressAPIController extends AppBaseController
 
         $customerAddresses = CustomerAddress::where('customer_id', $customer->id)
         ->when(!empty($query), function ($searchQuery) use ($query) {
-            return $searchQuery->where('address_name', 'ilike', "%$query%");
+            return $searchQuery->where('address_name', 'ilike', "%$query%")
+                ->orWhere('label', 'ilike', "%$query%")
+                ->orWhere('details', 'ilike', "%$query%");
         })
         ->orderBy('address_name', 'asc')
         ->limit(10)
