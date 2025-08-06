@@ -1717,137 +1717,139 @@ class OrderAPIController extends AppBaseController
 
 
 
-    if(!array_key_exists('meta_data', $request->all())){
+    try{
+        if(!array_key_exists('meta_data', $request->all())){
 
-        return $this->sendError('meta_data is required', 400);
-    }
-
-    if(!array_key_exists('quantity', $request->all())){
-
-        return $this->sendError('quantity is required', 400);
-    }
-
-    if(!array_key_exists('route_points', $request->all())){
-
-        return $this->sendError('route_points is required', 400);
-    }
-
-
-    $quantity = $request->input('quantity');
-
-    $meta_data = $request->input('meta_data');
-
-    $route_points = $request->input('route_points');
-
-    if(!is_array($meta_data)){
-        $meta_data = (array) $meta_data;
-    }
-
-    if(!is_array($route_points)){
-        $route_points = (array) $route_points;
-    }
-
-    if(!array_key_exists('product_type_slug',$meta_data)){
-
-        return $this->sendError('product_type_slug is required', 400);
-    }
-
-    if(!array_key_exists('product_slug',$meta_data)){
-
-        return $this->sendError('product_slug is required', 400);
-    }
-
-    if(!array_key_exists('delivery_type_code',$meta_data)){
-
-        return $this->sendError('delivery_type_code is required', 400);
-    }
-
-    $delivery_type_code = $meta_data['delivery_type_code'];
-
-    $source_list = collect([]);
-    $destination_list = collect([]);
-
-    foreach ($route_points as $route_point_item){
-        if(!is_array($route_point_item)){
-            $route_point_item = (array)$route_point_item;
+            return $this->sendError('meta_data is required', 400);
         }
 
-        $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+        if(!array_key_exists('quantity', $request->all())){
 
-        if($route_point_item_type == 'source'){
-            $source_list->push($route_point_item);
+            return $this->sendError('quantity is required', 400);
         }
 
-        if($route_point_item_type == 'destination'){
-            $destination_list->push($route_point_item);
+        if(!array_key_exists('route_points', $request->all())){
+
+            return $this->sendError('route_points is required', 400);
         }
 
+
+        $quantity = $request->input('quantity');
+
+        $meta_data = $request->input('meta_data');
+
+        $route_points = $request->input('route_points');
+
+        if(!is_array($meta_data)){
+            $meta_data = (array) $meta_data;
+        }
+
+        if(!is_array($route_points)){
+            $route_points = (array) $route_points;
+        }
+
+        if(!array_key_exists('product_type_slug',$meta_data)){
+
+            return $this->sendError('product_type_slug is required', 400);
+        }
+
+        if(!array_key_exists('product_slug',$meta_data)){
+
+            return $this->sendError('product_slug is required', 400);
+        }
+
+        if(!array_key_exists('delivery_type_code',$meta_data)){
+
+            return $this->sendError('delivery_type_code is required', 400);
+        }
+
+        $delivery_type_code = $meta_data['delivery_type_code'];
+
+        $source_list = collect([]);
+        $destination_list = collect([]);
+
+        foreach ($route_points as $route_point_item){
+            if(!is_array($route_point_item)){
+                $route_point_item = (array)$route_point_item;
+            }
+
+            $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+            if($route_point_item_type == 'source'){
+                $source_list->push($route_point_item);
+            }
+
+            if($route_point_item_type == 'destination'){
+                $destination_list->push($route_point_item);
+            }
+
+        }
+
+        $inner_radius = 0;
+
+        $outer_radius = 100;
+
+        $destination_point = $destination_list->last();
+
+        $latitude = $destination_point['latitude'];
+        $longitude = $destination_point['longitude'];
+
+        $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
+
+        if(count($carriers)==0){
+            return $this->sendError('Désolé, aucune carrière à proximité trouvé', 400);
+        }
+
+        $carrier = $carriers->first();
+
+        $source_point = [
+            "latitude" => $carrier->location_latitude,
+            "longitude" =>  $carrier->location_longitude,
+        ];
+
+
+        $result = GoogleMapsAPIUtils::getDistance([
+            $source_point['latitude'],
+            $source_point['longitude']
+        ],[
+            $destination_point['latitude'],
+            $destination_point['longitude']
+
+        ]);
+
+
+        $current_distance = 0;
+        $distance= "";
+
+        if(array_key_exists('distance',$result)){
+            $result_distance = $result['distance']; //array
+            $result_distance_value = $result_distance['value']; //meters
+            $current_distance = $result_distance_value/1000; //kilometers
+            $current_distance = intval($current_distance);
+            $distance = $result_distance['text'];
+
+        }
+
+        $duration = "";
+
+        if(array_key_exists('duration',$result)){
+            $result_duration = $result['duration']; //array
+            $duration = $result_duration['text'];
+        }
+
+
+
+        return $this->sendResponse([
+            'carrier' => $carrier,
+            'amount' => PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code),
+            'distance' => $distance,
+            'duration' => $duration,
+            'delivery_type' => $delivery_type_code
+        ], 'Order saved successfully');
+
+    }catch (\Exception $e){
+        return $this->sendError($e->getMessage(), 400);
     }
-
-    $inner_radius = 0;
-
-    $outer_radius = 100;
-
-    $destination_point = $destination_list->last();
-
-    $latitude = $destination_point['latitude'];
-    $longitude = $destination_point['longitude'];
-
-    $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
-
-    if(count($carriers)==0){
-        return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
-    }
-
-    $carrier = $carriers->first();
-
-    $source_point = [
-        "latitude" => $carrier->location_latitude,
-        "longitude" =>  $carrier->location_longitude,
-    ];
-
-
-    $result = GoogleMapsAPIUtils::getDistance([
-        $source_point['latitude'],
-        $source_point['longitude']
-    ],[
-        $destination_point['latitude'],
-        $destination_point['longitude']
-
-    ]);
-
-
-    $current_distance = 0;
-    $distance= "";
-
-    if(array_key_exists('distance',$result)){
-        $result_distance = $result['distance']; //array
-        $result_distance_value = $result_distance['value']; //meters
-        $current_distance = $result_distance_value/1000; //kilometers
-        $current_distance = intval($current_distance);
-        $distance = $result_distance['text'];
-
-    }
-
-    $duration = "";
-
-    if(array_key_exists('duration',$result)){
-        $result_duration = $result['duration']; //array
-        $duration = $result_duration['text'];
-    }
-
-    //dd($current_distance);
-
-  //  $current_distance = 55;
-
-
-    return $this->sendResponse([
-        'carrier' => $carrier,
-        'amount' => PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code),
-        'distance' => $distance,
-        'duration' => $duration,
-        'delivery_type' => $delivery_type_code
-    ], 'Order saved successfully');
 
 
    }
@@ -1881,144 +1883,149 @@ class OrderAPIController extends AppBaseController
      */
 
 
+    try {
+    
+        if(!array_key_exists('meta_data', $request->all())){
 
-    if(!array_key_exists('meta_data', $request->all())){
-
-        return $this->sendError('meta_data is required', 400);
-    }
-
-    if(!array_key_exists('quantity', $request->all())){
-
-        return $this->sendError('quantity is required', 400);
-    }
-
-    if(!array_key_exists('route_points', $request->all())){
-
-        return $this->sendError('route_points is required', 400);
-    }
-
-    $meta_data = $request->input('meta_data');
-
-    $route_points = $request->input('route_points');
-
-    if(!is_array($meta_data)){
-        $meta_data = (array) $meta_data;
-    }
-
-    if(!is_array($route_points)){
-        $route_points = (array) $route_points;
-    }
-
-    if(!array_key_exists('product_type_slug',$meta_data)){
-
-        return $this->sendError('product_type_slug is required', 400);
-    }
-
-    if(!array_key_exists('product_slug',$meta_data)){
-
-        return $this->sendError('product_slug is required', 400);
-    }
-
-    if(!array_key_exists('delivery_type_code',$meta_data)){
-
-        return $this->sendError('delivery_type_code is required', 400);
-    }
-
-    $delivery_type_code = $meta_data['delivery_type_code'];
-
-    $source_list = collect([]);
-    $destination_list = collect([]);
-
-    foreach ($route_points as $route_point_item){
-        if(!is_array($route_point_item)){
-            $route_point_item = (array)$route_point_item;
+            return $this->sendError('meta_data is required', 400);
         }
 
-        $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+        if(!array_key_exists('quantity', $request->all())){
 
-        if($route_point_item_type == 'source'){
-            $source_list->push($route_point_item);
+            return $this->sendError('quantity is required', 400);
         }
 
-        if($route_point_item_type == 'destination'){
-            $destination_list->push($route_point_item);
+        if(!array_key_exists('route_points', $request->all())){
+
+            return $this->sendError('route_points is required', 400);
+        }
+
+        $meta_data = $request->input('meta_data');
+
+        $route_points = $request->input('route_points');
+
+        if(!is_array($meta_data)){
+            $meta_data = (array) $meta_data;
+        }
+
+        if(!is_array($route_points)){
+            $route_points = (array) $route_points;
+        }
+
+        if(!array_key_exists('product_type_slug',$meta_data)){
+
+            return $this->sendError('product_type_slug is required', 400);
+        }
+
+        if(!array_key_exists('product_slug',$meta_data)){
+
+            return $this->sendError('product_slug is required', 400);
+        }
+
+        if(!array_key_exists('delivery_type_code',$meta_data)){
+
+            return $this->sendError('delivery_type_code is required', 400);
+        }
+
+        $delivery_type_code = $meta_data['delivery_type_code'];
+
+        $source_list = collect([]);
+        $destination_list = collect([]);
+
+        foreach ($route_points as $route_point_item){
+            if(!is_array($route_point_item)){
+                $route_point_item = (array)$route_point_item;
+            }
+
+            $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+            if($route_point_item_type == 'source'){
+                $source_list->push($route_point_item);
+            }
+
+            if($route_point_item_type == 'destination'){
+                $destination_list->push($route_point_item);
+            }
+
+
+        }
+
+        $inner_radius = 0;
+
+        $outer_radius = 100;
+
+        $destination_point = $destination_list->last();
+
+        $latitude = $destination_point['latitude'];
+        $longitude = $destination_point['longitude'];
+
+        $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
+
+        if(count($carriers)==0){
+            return $this->sendError('Désolé, aucune carrière à proximité trouvé', 400);
+        }
+
+        $carrier = $carriers->first();
+
+        $source_point = [
+            "latitude" => $carrier->location_latitude,
+            "longitude" =>  $carrier->location_longitude,
+        ];
+
+
+        $result = GoogleMapsAPIUtils::getDistance([
+            $source_point['latitude'],
+            $source_point['longitude']
+        ],[
+            $destination_point['latitude'],
+            $destination_point['longitude']
+
+        ]);
+
+
+        $current_distance = 0;
+        $distance = "";
+
+        if(array_key_exists('distance',$result)){
+            $result_distance = $result['distance']; //array
+            $result_distance_value = $result_distance['value']; //meters
+            $current_distance = $result_distance_value/1000; //kilometers
+            $current_distance = intval($current_distance);
+            $distance = $result_distance['text'];
+
+        }
+
+        if(array_key_exists('duration',$result)){
+            $result_duration = $result['duration']; //array
+            $result_duration_value = $result_duration['value']; //meters
+            $current_duration = $result_duration_value/1000; //kilometers
+            $current_distance = intval($current_distance);
+
+        }
+
+        //dd($current_distance);
+
+        //$current_distance  = 10;
+
+        $duration = "";
+
+        if(array_key_exists('duration',$result)){
+            $result_duration = $result['duration']; //array
+            $duration = $result_duration['text'];
         }
 
 
+        return $this->sendResponse([
+            'carrier' => $carrier,
+            'amount' => PricingUtils::transportSable($current_distance, $delivery_type_code),
+            'distance' => $distance,
+            'duration' => $duration,
+            'delivery_type' => $delivery_type_code
+        ], 'Order saved successfully');
+
+    } catch (\Throwable $th) {
+        return $this->sendError($th->getMessage(), 400);
     }
-
-    $inner_radius = 0;
-
-    $outer_radius = 100;
-
-    $destination_point = $destination_list->last();
-
-    $latitude = $destination_point['latitude'];
-    $longitude = $destination_point['longitude'];
-
-    $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
-
-    if(count($carriers)==0){
-        return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
-    }
-
-    $carrier = $carriers->first();
-
-    $source_point = [
-        "latitude" => $carrier->location_latitude,
-        "longitude" =>  $carrier->location_longitude,
-    ];
-
-
-    $result = GoogleMapsAPIUtils::getDistance([
-        $source_point['latitude'],
-        $source_point['longitude']
-    ],[
-        $destination_point['latitude'],
-        $destination_point['longitude']
-
-    ]);
-
-
-    $current_distance = 0;
-    $distance = "";
-
-    if(array_key_exists('distance',$result)){
-        $result_distance = $result['distance']; //array
-        $result_distance_value = $result_distance['value']; //meters
-        $current_distance = $result_distance_value/1000; //kilometers
-        $current_distance = intval($current_distance);
-        $distance = $result_distance['text'];
-
-    }
-
-    if(array_key_exists('duration',$result)){
-        $result_duration = $result['duration']; //array
-        $result_duration_value = $result_duration['value']; //meters
-        $current_duration = $result_duration_value/1000; //kilometers
-        $current_distance = intval($current_distance);
-
-    }
-
-    //dd($current_distance);
-
-    //$current_distance  = 10;
-
-    $duration = "";
-
-    if(array_key_exists('duration',$result)){
-        $result_duration = $result['duration']; //array
-        $duration = $result_duration['text'];
-    }
-
-
-    return $this->sendResponse([
-        'carrier' => $carrier,
-        'amount' => PricingUtils::transportSable($current_distance, $delivery_type_code),
-        'distance' => $distance,
-        'duration' => $duration,
-        'delivery_type' => $delivery_type_code
-    ], 'Order saved successfully');
 
 
    }
