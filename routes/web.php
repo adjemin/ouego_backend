@@ -36,8 +36,8 @@ Route::resource('product-engin-relations', App\Http\Controllers\ProductEnginRela
 Route::resource('delivery-types', App\Http\Controllers\DeliveryTypeController::class);
 Route::resource('carriers', App\Http\Controllers\CarrierController::class);
 Route::resource('orders', App\Http\Controllers\OrderController::class);
-Route::resource('order-pickups', App\Http\Controllers\OrderPickupController::class);
-Route::resource('order-deliveries', App\Http\Controllers\OrderDeliveryController::class);
+// Route::resource('order-pickups', App\Http\Controllers\OrderPickupController::class);
+// Route::resource('order-deliveries', App\Http\Controllers\OrderDeliveryController::class);
 Route::resource('order-items', App\Http\Controllers\OrderItemController::class);
 Route::resource('customers', App\Http\Controllers\CustomerController::class);
 Route::resource('customer-devices', App\Http\Controllers\CustomerDeviceController::class);

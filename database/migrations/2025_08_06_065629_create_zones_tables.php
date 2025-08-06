@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+Use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -14,12 +15,15 @@ return new class extends Migration
         Schema::create('zones', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('description')->nullable();
+            $table->text("description")->nullable();
             $table->foreignId('zone_base_id')->nullable()->constrained('zones')->nullOnDelete();
-            $table->geometry('geometry')->nullable();
+            $table->geometry('geometry'); 
             $table->timestamps();
             $table->softDeletes();
         });
+
+        // Créer un index spatial sur le champ geom
+        DB::statement('CREATE INDEX idx_zones_geome ON zones USING GIST ("geometry")');
     }
 
     /**

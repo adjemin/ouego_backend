@@ -37,7 +37,7 @@ class Zone extends Model
 
     public function carreers()
     {
-        return $this->belongsToMany(Carreer::class, 'zone_mapping', 'zone_id', 'carrier_id');
+        return $this->belongsToMany(Carrier::class, 'zone_mapping', 'zone_id', 'carrier_id');
     }
 
 

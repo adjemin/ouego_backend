@@ -21,7 +21,7 @@ class TestAPIController extends AppBaseController
             }
 
             $nearDrivers = OrderAssignmentV2Service::searchNearDriverByCarrier($longitude, $latitude);
-    
+
             return $this->sendResponse($nearDrivers, 'New Carrier found successfully');
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), 400);
@@ -29,7 +29,7 @@ class TestAPIController extends AppBaseController
     }
 
     public function getNearestCarrierAndDrivers(Request $request){
-        try{
+        // try{
             $latitude = $request->input('latitude');
             $longitude = $request->input('longitude');
             if(empty($latitude) || empty($longitude)){
@@ -48,9 +48,9 @@ class TestAPIController extends AppBaseController
             $nearestCarriersAndDrivers = $orderAssignmentService->expressOrderAssignment($latitude, $longitude, $rayonKm);
 
             return $this->sendResponse($nearestCarriersAndDrivers, 'Get Nearest Carrier and Drivers found successfully');
-        }catch (\Exception $e){
-            return $this->sendError($e->getMessage(), 400);
-        }
+        // }catch (\Exception $e){
+        //     return $this->sendError($e->getMessage(), 400);
+        // }
     }
 
     public function OndayOrderAssignment(Request $request){
@@ -77,5 +77,24 @@ class TestAPIController extends AppBaseController
         }catch (\Exception $e){
             return $this->sendError($e->getMessage(), 400);
         }
+    }
+
+
+    public function assign(Request $request)
+    {
+        $longitude = $request->input('longitude');
+        $latitude = $request->input('latitude');
+        $nearDrivers = OrderAssignmentV2Service::searchNearDriverByCarrier($longitude, $latitude);
+        $carrier =  $nearDrivers['carrier_info']['carrier'];
+        $order = Order::findOrFail($request->order_id);
+        $drivers = $this->driverFinder->findAvailableDrivers($order); // ex. un service externe
+
+        $tripRequest = $this->tripService->createRequest($drivers, $carrier, $order);
+
+        if ($tripRequest->status !== TripRequest::FAILED) {
+            $this->tripService->dispatchNextDriverInvitation($tripRequest);
+        }
+
+        return response()->json(['trip_request_id' => $tripRequest->id]);
     }
 }

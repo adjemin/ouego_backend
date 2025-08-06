@@ -1793,7 +1793,7 @@ class OrderAPIController extends AppBaseController
     $latitude = $destination_point['latitude'];
     $longitude = $destination_point['longitude'];
 
-    $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_slug']);
+    $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
 
     if(count($carriers)==0){
         return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);

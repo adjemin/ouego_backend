@@ -43,6 +43,11 @@ class TripRequest extends Model
     {
         return $this->hasMany(TripDriverAttempt::class, 'trip_request_id', 'id');
     }
+
+    public function invitations()
+    {
+        return $this->hasMany(OrderInvitation::class, 'trip_request_id', 'id');
+    }
     public function order()
     {
         return $this->belongsTo(Order::class, 'order_id');

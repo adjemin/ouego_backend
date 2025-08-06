@@ -11,101 +11,158 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Log;
 use App\Notifications\NoDriverFoundNotification;
 use App\Models\Driver;
+use App\Models\OrderInvitation;
+use App\Events\OrderAssigned;
+use App\Utils\CustomerNotificationsUtils;
+use App\Models\CustomerNotification;
+use App\Events\CustomerNotificationCreated;
+
+
 
 class TripService
 {
-
-    private $attemptLimit = 2;
+    private const MAX_DRIVER_ATTEMPTS = 3;
+    private const INVITATION_DELAY_SECONDS = 15;
 
     public function __construct()
     {
-        // Initialisation si nécessaire
+        // Injection de dépendances possible ici (repositories, services, etc.)
     }
-    /**
-     * Crée une nouvelle demande de course (TripRequest) et assigne les
-     * chauffeurs correspondants.
-     *
-     * @param Driver[] $drivers les chauffeurs à assigner
-     * @param Carrier $carrier la compagnie de transport
-     * @param Order $order la commande associée
-     * @return TripRequest la demande de course créée
-     */
-    public function createRequest(Driver $drivers, Carrier $carrier, Order $order): TripRequest
-    {
-        // On crée une nouvelle demande de course
-        $tripRequest = TripRequest::create(['carrier_id' => $carrier->id, 'order_id' => $order->id]);
 
-        
-        // Si aucun chauffeur n'est trouvé, on met à jour le statut de la demande
+    /**
+     * Crée une demande de course et génère les invitations aux chauffeurs.
+     */
+    public function createRequest(array $drivers, Carrier $carrier, Order $order): TripRequest
+    {
+        echo "Start createRequest";
+
+        $tripRequest = TripRequest::create([
+            'carrier_id' => $carrier->id,
+            'order_id' => $order->id,
+        ]);
+
         if (empty($drivers)) {
-            $tripRequest->update(['status' => TripRequest::FAILED]);
+            $this->failTripRequest($tripRequest);
             return $tripRequest;
         }
 
-        // On crée une nouvelle liste de tentatives de chauffeur
+        $this->createDriverInvitations($tripRequest, $drivers, $order);
+        return $tripRequest;
+    }
+
+    /**
+     * Envoie une invitation au chauffeur suivant dans la file.
+     */
+    public function dispatchNextDriverInvitation(TripRequest $tripRequest, int $retry = 0, int $orderIndex = 0): void
+    {
+        if ($orderIndex === 0) {
+            $this->incrementAttemptNumber($tripRequest, $retry + 1);
+        }
+
+        $invitation = $this->getNextInvitation($tripRequest, $retry, $orderIndex);
+
+        if (!$invitation) {
+            $this->handleNoDriverFound($tripRequest, $retry);
+            return;
+        }
+
+        $this->notifyDriver($tripRequest, $invitation, $retry, $orderIndex);
+    }
+
+    /**
+     * Gestion des cas où aucun chauffeur ne peut être notifié.
+     */
+    public function handleNoDriverFound(TripRequest $tripRequest, int $retry): void
+    {
+        if ($retry < self::MAX_DRIVER_ATTEMPTS) {
+            $this->dispatchNextDriverInvitation($tripRequest, $retry + 1);
+        } else {
+            $this->failTripRequest($tripRequest);
+            $this->notifyNoDriverFound($tripRequest);
+        }
+    }
+
+    /**
+     * Notifie le client qu'aucun chauffeur n'est disponible.
+     */
+    public function notifyNoDriverFound(TripRequest $tripRequest): void
+    {
+        try {
+            $title = "Aucun conducteur n'a pu vous trouver pour votre course #{$tripRequest->order_id}.";
+            $subtitle = "Aucun conducteur n'est disponible pour l'instant, merci de ressayer plus tard.";
+
+            $notification = CustomerNotification::create([
+                'customer_id' => $tripRequest->order->customer_id,
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'data_id' => $tripRequest->order_id,
+                'type' => $tripRequest->order->table,
+                'is_read' => false,
+                'is_received' => false,
+                'meta_data' => null,
+            ]);
+
+            event(new CustomerNotificationCreated($notification));
+        } catch (\Exception $e) {
+            Log::error("Erreur de notification client (aucun chauffeur trouvé) : " . $e->getMessage());
+        }
+    }
+
+    // ------------------------------
+    // Méthodes privées d'aide
+    // ------------------------------
+
+    private function createDriverInvitations(TripRequest $tripRequest, array $drivers, Order $order): void
+    {
         foreach ($drivers as $index => $driver) {
-            TripDriverAttempt::create([
-                'trip_request_id' => $tripRequest->id,
+            OrderInvitation::create([
                 'driver_id' => $driver->id,
+                'order_id' => $order->id,
+                'trip_request_id' => $tripRequest->id,
+                'is_waiting_acceptation' => true,
+                'acceptation_time' => null,
+                'rejection_time' => null,
+                'latitude' => null,
+                'longitude' => null,
                 'attempt_number' => 0,
                 'order_index' => $index,
                 'status' => TripDriverAttempt::PENDING,
             ]);
         }
-
-        return $tripRequest;
     }
 
-    public function notifyNextDriver(TripRequest $tripRequest, int $retry=0, int $orderIndex=0)
+    private function incrementAttemptNumber(TripRequest $tripRequest, int $attemptNumber): void
     {
-        // Met à jour le numéro de tentative si on recommence un cycle
-        if ($orderIndex === 0) {
-            $tripRequest->attempts()->update(['attempt_number' => $retry + 1]);
-        }
+        $tripRequest->invitations()->update(['attempt_number' => $attemptNumber]);
+    }
 
-        // Récupère la tentative correspondante
-        $attempt = $retry === 0
-            ? $tripRequest->attempts()
-                ->where('status', TripRequest::PENDING)
+    private function getNextInvitation(TripRequest $tripRequest, int $retry, int $orderIndex): ?OrderInvitation
+    {
+        if ($retry === 0) {
+            return $tripRequest->invitations()
+                ->where('status', OrderInvitation::PENDING)
                 ->orderBy('order_index', 'asc')
-                ->first()
-            : TripDriverAttempt::where('trip_request_id', $tripRequest->id)
-                ->where('attempt_number', $retry + 1)
-                ->where('order_index', $orderIndex)
                 ->first();
-
-        // Gère le cas où aucune tentative n’est trouvée
-        if (!$attempt) {
-            $this->handleNoDriverFound($tripRequest, $retry);
-            return;
         }
-        
-        $attempt->update(['status' => 'notified']);
-        Notification::sendNow($attempt->driver, new RideRequestNotification($tripRequest));
 
-        AssignTimeoutCheck::dispatch($tripRequest, $attempt, $retry, $orderIndex)->delay(now()->addSeconds(15));
+        return OrderInvitation::where('trip_request_id', $tripRequest->id)
+            ->where('attempt_number', $retry + 1)
+            ->where('order_index', $orderIndex)
+            ->first();
     }
 
-    public function handleNoDriverFound(TripRequest $tripRequest, int $retry)
+    private function notifyDriver(TripRequest $tripRequest, OrderInvitation $invitation, int $retry, int $orderIndex): void
     {
-        if ($retry < $this->attemptLimit) {
-            // Relancer soit avec la même liste, soit une nouvelle recherche
-            $this->notifyNextDriver($tripRequest, $retry + 1);
-        } else {
-            $tripRequest->update(['status' => 'failed']);
-            $this->notifyNoDriverFound($tripRequest);
-        }
+        $invitation->update(['status' => OrderInvitation::NOTIFIED]);
+
+        event(new OrderAssigned($invitation));
+
+        AssignTimeoutCheck::dispatch($tripRequest, $invitation, $retry, $orderIndex)
+            ->delay(now()->addSeconds(self::INVITATION_DELAY_SECONDS));
     }
 
-    public function notifyNoDriverFound(TripRequest $tripRequest)
+    private function failTripRequest(TripRequest $tripRequest): void
     {
-        try {
-            // Notify the client that no driver was found
-            Notification::send($tripRequest->order->customer, new NoDriverFoundNotification($tripRequest));
-        } catch (\Exception $e) {
-            // Log the error or handle it as needed
-            Log::error("Failed to notify client about no driver found: " . $e->getMessage());
-        }
+        $tripRequest->update(['status' => TripRequest::FAILED]);
     }
-
 }

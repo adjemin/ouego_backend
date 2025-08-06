@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('drivers', function (Blueprint $table) {
-            $table->float('rate')->default(3);
+        Schema::create('zone_mapping', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->foreignId('zone_id')->constrained('zones')->cascadeOnDelete();
+            $table->foreignId('carrier_id')->constrained('carriers')->cascadeOnDelete();
+            $table->timestamps();
         });
     }
 
@@ -21,8 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('drivers', function (Blueprint $table) {
-            $table->dropColumn('rate');
-        });
+        Schema::dropIfExists('zone_mapping');
     }
 };

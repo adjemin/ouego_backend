@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\TripRequest;
 use App\Models\Driver;
+use App\Models\OrderInvitation;
 use App\Models\TripDriverAttempt;
 use App\Services\TripService;
 use App\Services\CarrierService;
@@ -20,16 +21,18 @@ class AssignTimeoutCheck implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(public TripRequest $tripRequest, public Driver $driver, public int $retry, public int $orderIndex) {}
+    public function __construct(
+        public TripRequest $tripRequest, 
+        public OrderInvitation $invitation, 
+        public int $retry, 
+        public int $orderIndex
+    ) {}
 
     public function handle()
     {
-        $attempt = TripDriverAttempt::where('trip_request_id', $this->tripRequest->id)
-            ->where('driver_id', $this->driver->id)
-            ->latest()->first();
-
-        if ($attempt->status === TripDriverAttempt::NOTIFIED || $attempt->status === TripDriverAttempt::REJECTED) {
-            $attempt->status === TripDriverAttempt::NOTIFIED ? $attempt->update(['status' => TripDriverAttempt::TIMEOUT]): null;
+      
+        if ($this->invitation->status === OrderInvitation::NOTIFIED || $this->invitation->status === OrderInvitation::REJECTED) {
+            $this->invitation->status === TripDriverAttempt::NOTIFIED ? $this->invitation->update(['status' => OrderInvitation::TIMEOUT]): null;
             app(TripService::class)->notifyNextDriver($this->tripRequest, $this->retry, $this->orderIndex + 1);
         }
     }

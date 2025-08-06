@@ -8,7 +8,7 @@ use App\Models\Zone;
 class GoogleMapsAPIUtils
 {
 
-    #const  GOOGLE_MAP_API_KEY = "AIzaSyCNZfIwGs9Y1hlRDCyiw3LV8dpLu1biIbM";
+    #const  GOOGLE_MAP_API_KEY = "AIzaSyAP8YmQymC20lzQgLrTWfLznDw4p3tnn-g";
 
     /**
      * @param array $origins
@@ -18,11 +18,11 @@ class GoogleMapsAPIUtils
     public static function getDistance(array $origins,array $destinations){
 
         $response = Http::get('https://maps.googleapis.com/maps/api/distancematrix/json', [
-            'destinations' => $destinations[0].','.$destinations[1],
             'origins' => $origins[0].','.$origins[1],
+            'destinations' => $destinations[0].','.$destinations[1],
             'language' => 'en',
             'mode' => 'driving',
-            'key'=> env('GOOGLE_MAP_API_KEY',"AIzaSyCNZfIwGs9Y1hlRDCyiw3LV8dpLu1biIbM")
+            'key'=> env('GOOGLE_MAP_API_KEY',"AIzaSyAP8YmQymC20lzQgLrTWfLznDw4p3tnn-g")
         ]);
 
         $res = $response->json();
@@ -32,7 +32,7 @@ class GoogleMapsAPIUtils
             $row = $rows[0];
             if(array_key_exists('elements', $row)){
                 $elements = $row['elements'];
-                if(count($elements) >0){
+                if(count($elements) > 0 ){
                     return  $elements[0];
                 }
             }
@@ -66,7 +66,7 @@ class GoogleMapsAPIUtils
     public static function trouverZoneParPointPostGIS(float $longitude, float $latitude): ?Zone
     {
         return Zone::whereRaw(
-            'ST_Contains(geometry, ST_SetSRID(ST_MakePoint(?, ?)::geography, 4326))',
+            'ST_Contains(geometry::geometry, ST_SetSRID(ST_MakePoint(?, ?), 4326))',
             [$longitude, $latitude]
         )->first();
     }
@@ -75,7 +75,7 @@ class GoogleMapsAPIUtils
 
     function trouverZoneParPointGoogleMaps(float $latitude, float $longitude): ?string
     {
-        $apiKey = env('GOOGLE_MAPS_API_KEY', 'AIzaSyAP8YmQymC20lzQgLrTWfLznDw4p3tnn-g');
+        $apiKey = env('GOOGLE_MAP_API_KEY', 'AIzaSyAP8YmQymC20lzQgLrTWfLznDw4p3tnn-g');
         $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng={$latitude},{$longitude}&key={$apiKey}";
     
         $response = Http::get($url);

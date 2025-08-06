@@ -89,6 +89,8 @@ class OrderAssignmentV1Service
         $chauffeursIds = collect($chauffeursProches)->pluck('driver_id');
         $chauffeurs = Driver::whereIn('id', $chauffeursIds)->get()->keyBy('id');
         $maxJetons = $chauffeurs->max('current_balance');
+        $maxJetons = $maxJetons == 0 ? 1 : $maxJetons;
+
 
         // Étape 5 : Calcul des pondérations
         $ponderations = [];
@@ -102,9 +104,9 @@ class OrderAssignmentV1Service
             $score = [];
 
             $score['proximity_driver_carrier'] = number_format(($minDistanceChauffeurCarriere / $distanceChauffeurCarriere) * 100, 2);
-            $score['jetons'] = number_format(($chauffeur->current_balance / $maxJetons) * 100, 2);
+            $score['jetons'] = number_format(($chauffeur->current_balance / ($maxJetons ?? 1)) * 100, 2);
             $score['proximity_carrier_delivery'] = number_format(($minDistanceCarriereLivraison / $distanceCarriereLivraison) * 100, 2);
-            $score['note'] = number_format(($chauffeur->note / 5) * 100, 2);
+            $score['note'] = number_format(($chauffeur->rate / 5) * 100, 2);
             $score['concentration'] = number_format(($minChauffeursCarriere / $nbChauffeursCarriere) * 100, 2);
 
             $scoreTotal = number_format(
@@ -189,13 +191,13 @@ class OrderAssignmentV1Service
                     (1 - $chauffeur->orders / $maxCourses) * 100 * 0.40 +
                     ($minDistanceLivraison / $distanceLivraison) * 100 * 0.35 +
                     ($minDistanceCarriere / $distanceCarriere) * 100 * 0.15 +
-                    ((float)$chauffeur->note / 5) * 100 * 0.05 +
+                    ((float)$chauffeur->rate / 5) * 100 * 0.05 +
                     ($chauffeur->current_balance / $maxJetons) * 100 * 0.05, 3),
                 'details' => [
                     'courses' => $chauffeur->orders,
                     'distance_livraison' => $distanceLivraison,
                     'distance_carriere' => $distanceCarriere,
-                    'note' => (float)$chauffeur->note,
+                    'note' => (float)$chauffeur->rate,
                     'jetons' => $chauffeur->current_balance,
                 ]
             ];
