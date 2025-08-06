@@ -55,7 +55,7 @@ class Driver extends Authenticatable  implements JWTSubject
         'last_location_longitude' => 'double',
         'driver_license_docs' => 'array',
         'services' => 'array',
-        'rate' => 'double',
+        'rate' => 'string',
     ];
 
     public static array $rules = [
