@@ -30,10 +30,6 @@ use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Services\DriverAssignmentService;
 use App\Services\CarrierLocationService;
-use App\Models\ZoneMapping;
-use App\Models\Zone;
-use App\Models\Customer;
-use App\Utilities\AlgoMain;
 /**
  * Class OrderAPIController
  */
@@ -204,6 +200,8 @@ class OrderAPIController extends AppBaseController
                     $delivery_fees = $this->getDeliveryFeesForCourse((array)$item['route_points'], $meta_data['engin_model'], $delivery_type_code);
                 }
 
+                $manutention_pricing = array_key_exists('manutention_pricing', $meta_data)?$meta_data['manutention_pricing']:0; 
+
                 $order->delivery_type_code = $delivery_type_code;
                 $order->save();
 
@@ -216,15 +214,14 @@ class OrderAPIController extends AppBaseController
                 $commission_min = 0;
                 $commission = 0;
 
-
-                $service_due = $total_amount * $commission;
-
                 $service_due = $total_amount * $commission;
                 if($service_due < $commission_min){
                     $service_due = $commission_min;
                 }
 
                 $driver_due = $total_amount - $service_due;
+
+                $total_amount = $delivery_fees + $manutention_pricing;
 
 
                 $orderItem = OrderItem::create([
@@ -240,7 +237,8 @@ class OrderAPIController extends AppBaseController
                     'unit_price' => 0,
                     'order_price' => 0,
                     'delivery_price' => $delivery_fees,
-                    'total_amount' => $delivery_fees,
+                    'manutention_pricing' => $manutention_pricing,
+                    'total_amount' => $total_amount,
                     'service_due' => $service_due,
                     'driver_due' => $driver_due,
                     'currency' => "XOF"
@@ -363,6 +361,7 @@ class OrderAPIController extends AppBaseController
                 $order_price = 0;
 
                 $delivery_price = array_key_exists('delivery_price', $item)?$item['delivery_price']:0;
+                $manutention_pricing = array_key_exists('manutention_pricing', $meta_data)?$meta_data['manutention_pricing']:0; 
 
                 $total_amount = 0;
                 $unit_price = 0;
@@ -388,7 +387,7 @@ class OrderAPIController extends AppBaseController
                 }
 
 
-                $total_amount = $order_price + $delivery_price;
+                $total_amount = $order_price + $delivery_price + $manutention_pricing;
 
                 $commission_min = 0;
                 $commission = 0;
@@ -426,6 +425,7 @@ class OrderAPIController extends AppBaseController
                     'unit_price' => $unit_price,
                     'order_price' => $order_price,
                     'delivery_price' => $delivery_price,
+                    'manutention_pricing' => $manutention_pricing,
                     'total_amount' => $total_amount,
                     'service_due' => $service_due,
                     'driver_due' => $driver_due,
@@ -558,6 +558,7 @@ class OrderAPIController extends AppBaseController
                 $order_price = $quantity * $unit_price;
 
                 $delivery_price = array_key_exists('delivery_price', $item)?$item['delivery_price']:0;
+                $manutention_pricing = array_key_exists('manutention_pricing', $meta_data)?$meta_data['manutention_pricing']:0; 
 
                 $total_amount = $order_price + $delivery_price;
 
@@ -579,6 +580,8 @@ class OrderAPIController extends AppBaseController
 
                 $driver_due = $total_amount - $service_due;
 
+                $total_amount = $total_amount + $manutention_pricing;
+
 
                 $orderItem = OrderItem::create([
                     'order_id' => $order->id,
@@ -592,6 +595,7 @@ class OrderAPIController extends AppBaseController
                     'unit_price' => $unit_price,
                     'order_price' => $order_price,
                     'delivery_price' => $delivery_price,
+                    'manutention_pricing' => $manutention_pricing,
                     'total_amount' => $total_amount,
                     'service_due' => $service_due,
                     'driver_due' => $driver_due,
@@ -643,7 +647,6 @@ class OrderAPIController extends AppBaseController
                         'apartment' => array_key_exists('apartment', $route_point)?$route_point['apartment']:null,
                         'has_handling' => array_key_exists('has_handling', $route_point)?$route_point['has_handling']:null
                     ]);
-
                 }
 
             }
@@ -654,6 +657,7 @@ class OrderAPIController extends AppBaseController
 
         $order_price = 0;
         $delivery_price = 0;
+        $manutention_pricing = 0;
         $driver_due = 0;
         $service_due = 0;
 
@@ -668,6 +672,7 @@ class OrderAPIController extends AppBaseController
 
                 $order_price = $order_price + $order_item->delivery_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
+                $manutention_pricing = $manutention_pricing + $order_item->manutention_pricing;
             }
 
             if($order_item->service_slug == Service::AGREGATS_CONSTRUCTION){
@@ -676,6 +681,7 @@ class OrderAPIController extends AppBaseController
 
                 $order_price = $order_price + $order_item->order_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
+                $manutention_pricing = $manutention_pricing + $order_item->manutention_pricing;
             }
 
             if($order_item->service_slug == Service::LOCATION){
@@ -684,12 +690,14 @@ class OrderAPIController extends AppBaseController
 
                 $order_price = $order_price + $order_item->order_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
+                $manutention_pricing = $manutention_pricing + $order_item->manutention_pricing;
             }
 
         }
 
         $order->order_price = $order_price;
         $order->delivery_price = $delivery_price;
+        $order->manutention_pricing = $manutention_pricing;
         $order->save();
 
         $subtotal = $order->order_price;
@@ -712,6 +720,7 @@ class OrderAPIController extends AppBaseController
             'subtotal' => $subtotal,
             'tax' => $tax,
             'fees_delivery' => $fees_delivery,
+            'fees_manutention' => $manutention_pricing,
             'total' => $invoice_total,
             'status' => Invoice::UNPAID,
             'is_paid_by_customer' => false,

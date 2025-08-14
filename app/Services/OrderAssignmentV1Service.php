@@ -7,6 +7,7 @@ use App\Models\Driver;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Models\Order;
 use App\Models\DriverCarrier;
+use App\Models\RoutePoint;
 
 class OrderAssignmentV1Service
 {
@@ -15,6 +16,8 @@ class OrderAssignmentV1Service
     private float $villeLat = 5.3252258;
     private float $villeLng = -4.019603;
     private float $rayonMaxKm = 50;
+    private int $maxUpdateTime  = 30;
+
 
     public function expressOrderAssignment(float $latitudeLivraison, float $longitudeLivraison, float $rayonKm = 5): array
     {
@@ -47,6 +50,7 @@ class OrderAssignmentV1Service
             ->sortBy('distance')
             ->take(10)
             ->values();
+       
 
             // Étape 3 : Normalisation (conserver carrière la plus proche)
             foreach ($chauffeursProches as $chauffeur) {
@@ -128,6 +132,85 @@ class OrderAssignmentV1Service
         }
 
         return collect($ponderations)->sortByDesc('score_total')->values()->all();
+    }
+
+
+    public function assignDriverToOrder($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): bool
+    {
+
+        $carrier = Carrier::find($carrier_id);
+        if (!$carrier) {
+            throw new \Exception("Carrière non trouvée");
+        }
+        $longitude = $carrier->location_longitude;
+        $latitude = $carrier->location_latitude;
+
+        $route_point = RoutePoint::where([
+            'order_id' => $order_id,
+            'type' => 'destination'
+        ])->first();
+        if (!$carrier) {
+            throw new \Exception("Carrière non trouvée");
+        }
+
+        $deriverIds = DriverCarrier::where('carrier_id', $carrier_id)->pluck('driver_id')->toArray();
+        
+        $query = Driver::select('drivers.*')
+            ->whereIn('id', $deriverIds)
+            ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
+            ->whereRaw('is_available = true')
+            ->whereRaw('is_active = true')
+            ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
+            ->whereJsonContains('services', $service_slug)
+            ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
+
+        if ($maxDistance) {
+            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
+        }
+
+        $chauffeursProches = $query->get();
+
+        // Étape 5 : Calcul des pondérations
+        $ponderations = [];
+
+        foreach ($chauffeursProches as $item) {
+            $chauffeur = $item;
+            $distanceChauffeurCarriere = $item->distance;
+            $distanceCarriereLivraison = GoogleMapsAPIUtils::getDistance(
+                    [$route_point->latitude,
+                    $route_point->longitude],
+                    [$chauffeur->last_location_latitude,
+                    $chauffeur->last_location_longitude]
+                );
+            $nbChauffeursCarriere = $carriereChauffeursCount[$item['carrier_id']] ?? 1;
+
+            $score = [];
+
+            $score['proximity_driver_carrier'] = number_format(($minDistanceChauffeurCarriere / $distanceChauffeurCarriere) * 100, 2);
+            $score['jetons'] = number_format(($chauffeur->current_balance / ($maxJetons ?? 1)) * 100, 2);
+            $score['proximity_carrier_delivery'] = number_format(($minDistanceCarriereLivraison / $distanceCarriereLivraison) * 100, 2);
+            $score['note'] = number_format(($chauffeur->rate / 5) * 100, 2);
+            $score['concentration'] = number_format(($minChauffeursCarriere / $nbChauffeursCarriere) * 100, 2);
+
+            $scoreTotal = number_format(
+                $score['proximity_driver_carrier'] * 0.30 +
+                $score['jetons'] * 0.25 +
+                $score['proximity_carrier_delivery'] * 0.25 +
+                $score['note'] * 0.15 +
+                $score['concentration'] * 0.05,
+                3
+            );
+
+            $ponderations[$chauffeur->id] = [
+                'driver_id' => $chauffeur->id,
+                'carrier_id' => $item['carrier_id'],
+                'distance' => $item['distance'],
+                'score_total' => $scoreTotal,
+                'details' => $score,
+            ];
+        }
+
+        return true;
     }
 
 
