@@ -961,7 +961,7 @@ class OrderAPIController extends AppBaseController
                     $result_distance = $result['distance']; //array
                     $result_distance_value = $result_distance['value']; //meters
                     $current_distance = $result_distance_value/1000; //kilometers
-                    $current_distance = intval($current_distance);
+                    $current_distance = $current_distance;
 
                 }
                 $duration = "";
@@ -978,7 +978,7 @@ class OrderAPIController extends AppBaseController
 
                 //EXPRESS
                 $expressPricing = [
-                    "distance" => $current_distance,
+                    "distance" => $current_distance." km",
                     "duration" => $duration,
                     "amount" => $amount,
                     "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
@@ -1151,7 +1151,7 @@ class OrderAPIController extends AppBaseController
                 $result_distance = $result['distance']; //array
                 $result_distance_value = $result_distance['value']; //meters
                 $distance = $result_distance_value/1000; //kilometers
-                $current_distance = $current_distance + intval($distance);
+                $current_distance = $current_distance + $distance;
             }
 
             if(array_key_exists('duration',$result)){
@@ -1180,7 +1180,7 @@ class OrderAPIController extends AppBaseController
                     $result_distance = $result['distance']; //array
                     $result_distance_value = $result_distance['value']; //meters
                     $distance = $result_distance_value/1000; //kilometers
-                    $current_distance = $current_distance + intval($distance);
+                    $current_distance = $current_distance + $distance;
                 }
 
                 if(array_key_exists('duration',$result)){
@@ -1218,7 +1218,7 @@ class OrderAPIController extends AppBaseController
                         $result_distance = $result['distance']; //array
                         $result_distance_value = $result_distance['value']; //meters
                         $distance = $result_distance_value/1000; //kilometers
-                        $current_distance = $current_distance + intval($distance);
+                        $current_distance = $current_distance + $distance;
                     }
 
                     if(array_key_exists('duration',$result)){
@@ -1244,7 +1244,7 @@ class OrderAPIController extends AppBaseController
                 $result_distance = $result['distance']; //array
                 $result_distance_value = $result_distance['value']; //meters
                 $distance = $result_distance_value/1000; //kilometers
-                $current_distance = $current_distance + intval($distance);
+                $current_distance = $current_distance + $distance;
             }
 
             if(array_key_exists('duration',$result)){
@@ -1376,7 +1376,7 @@ class OrderAPIController extends AppBaseController
             $result_distance = $result['distance']; //array
             $result_distance_value = $result_distance['value']; //meters
             $current_distance = $result_distance_value/1000; //kilometers
-            $current_distance = intval($current_distance);
+            $current_distance = $current_distance;
 
         }
 
@@ -1457,7 +1457,7 @@ class OrderAPIController extends AppBaseController
             $result_distance = $result['distance']; //array
             $result_distance_value = $result_distance['value']; //meters
             $current_distance = $result_distance_value/1000; //kilometers
-            $current_distance = intval($current_distance);
+            $current_distance = $current_distance;
 
         }
 
@@ -1662,8 +1662,8 @@ class OrderAPIController extends AppBaseController
             $result_distance = $result['distance']; //array
             $result_distance_value = $result_distance['value']; //meters
             $current_distance = $result_distance_value/1000; //kilometers
-            $current_distance = intval($current_distance);
-            $distance = $result_distance['text'];
+            $current_distance = $current_distance;
+            $distance = $current_distance." km";
 
         }
 
@@ -1824,8 +1824,8 @@ class OrderAPIController extends AppBaseController
         $result_distance = $result['distance']; //array
         $result_distance_value = $result_distance['value']; //meters
         $current_distance = $result_distance_value/1000; //kilometers
-        $current_distance = intval($current_distance);
-        $distance = $result_distance['text'];
+        $current_distance = $current_distance;
+        $distance = $current_distance.' km';
 
     }
 
@@ -1987,8 +1987,8 @@ class OrderAPIController extends AppBaseController
         $result_distance = $result['distance']; //array
         $result_distance_value = $result_distance['value']; //meters
         $current_distance = $result_distance_value/1000; //kilometers
-        $current_distance = intval($current_distance);
-        $distance = $result_distance['text'];
+        $current_distance = $current_distance;
+        $distance = $current_distance." km";
 
     }
 
@@ -1996,7 +1996,7 @@ class OrderAPIController extends AppBaseController
         $result_duration = $result['duration']; //array
         $result_duration_value = $result_duration['value']; //meters
         $current_duration = $result_duration_value/1000; //kilometers
-        $current_distance = intval($current_distance);
+        $current_distance = $current_distance;
 
     }
 
@@ -2023,7 +2023,7 @@ class OrderAPIController extends AppBaseController
 
    }
 
-   public function cancel($id, Request $request){
+  public function cancel($id, Request $request){
 
     $customer = auth('api-customers')->user();
 
