@@ -24,6 +24,8 @@ use MtnSmsCloud\MTNSMSApi;
 use App\Models\DriverOtp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\OrangeSMSService;
+
 
 /**
  * Class DriverAPIController
@@ -34,10 +36,13 @@ class DriverAPIController extends AppBaseController
 
     private EnginRepository $enginRepository;
 
-    public function __construct(DriverRepository $driverRepo, EnginRepository $enginRepo)
+    private OrangeSMSService $orangeSMSService;
+
+    public function __construct(DriverRepository $driverRepo, EnginRepository $enginRepo, OrangeSMSService $orangeSMSService)
     {
         $this->driverRepository = $driverRepo;
         $this->enginRepository = $enginRepo;
+        $this->orangeSMSService = $orangeSMSService;
     }
 
     /**
@@ -426,37 +431,42 @@ class DriverAPIController extends AppBaseController
 
     public function sendOTP(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'phone' => 'required|string',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'phone' => 'required|string',
+            ]);
 
-        if ($validator->fails()) {
-            return $this->sendError(json_encode($validator->errors()),422);
+            if ($validator->fails()) {
+                return $this->sendError(json_encode($validator->errors()),422);
+            }
+
+            // Vérifier si le numéro de téléphone est déjà enregistré
+            $driver = Driver::where('phone', $request->phone)->first();
+            if ($driver && $driver->is_blocked) {
+                return $this->sendError('Votre compte été bloqué, veuillez contacter le support', 403);
+            }
+
+            // Générer un OTP à 6 chiffres
+            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Créer ou mettre à jour l'entrée DriverOtp
+            $customerOTP = DriverOtp::updateOrCreate(
+                ['phone' => $request->phone],
+                [
+                    'otp' => $otp,
+                    'otp_expires_at' => Carbon::now()->addMinutes(5),
+                    'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
+                ]
+            );
+
+            // Envoyer l'OTP par SMS
+            // $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
+            $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
+
+            return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
+        } catch (\Throwable $th) {
+            return $this->sendError($th->getMessage(),500);
         }
-
-        // Vérifier si le numéro de téléphone est déjà enregistré
-        $driver = Driver::where('phone', $request->phone)->first();
-        if ($driver && $driver->is_blocked) {
-            return $this->sendError('Votre compte été bloqué, veuillez contacter le support', 403);
-        }
-
-        // Générer un OTP à 6 chiffres
-        $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        // Créer ou mettre à jour l'entrée DriverOtp
-        $customerOTP = DriverOtp::updateOrCreate(
-            ['phone' => $request->phone],
-            [
-                'otp' => $otp,
-                'otp_expires_at' => Carbon::now()->addMinutes(5),
-                'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
-            ]
-        );
-
-        // Envoyer l'OTP par SMS
-        $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
-
-        return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
     }
 
     public function verifyOTP(Request $request)

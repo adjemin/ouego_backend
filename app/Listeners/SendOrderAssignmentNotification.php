@@ -12,8 +12,10 @@ use App\Jobs\SendPushNotification;
 use App\Utilities\TwilioUtils;
 use Illuminate\Support\Facades\Log;
 
-class SendOrderAssignmentNotification
+class SendOrderAssignmentNotification implements ShouldQueue
 {
+
+    
     /**
      * Create the event listener.
      */
@@ -34,6 +36,7 @@ class SendOrderAssignmentNotification
         //TwilioUtils::sendSMS($client_phone, $message);
 
         Log::info("SendOrderAssignmentNotification started");
+        echo "SendOrderAssignmentNotification started. Driver id: " . strval($driver->id) . PHP_EOL;
 
         //Push Notification
         $notification = DriverNotification::create([

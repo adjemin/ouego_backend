@@ -160,6 +160,8 @@ Route::prefix('v1/')->group(function () {
     
     Route::post('testing-algorithm/v1/onday-order-assignment', [App\Http\Controllers\API\TestAPIController::class, 'OndayOrderAssignment']);
 
+    Route::post('testing-algorithm/v1/confirm', [App\Http\Controllers\API\TestAPIController::class, 'assign']);
+
 
     Route::resource('customer-addresses', App\Http\Controllers\API\CustomerAddressAPIController::class)
     ->except(['create', 'edit'])

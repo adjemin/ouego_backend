@@ -836,7 +836,7 @@ class OrderAPIController extends AppBaseController
 
         $customer = auth('api-customers')->user();
 
-        $orders = Order::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->get();
+        $orders = Order::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->take(10)->get();
 
         return $this->sendResponse($orders->toArray(), 'Orders retrieved successfully');
 
@@ -1500,6 +1500,43 @@ class OrderAPIController extends AppBaseController
         return $this->sendResponse($order->toArray(), 'Order updated successfully');
 
     }
+
+    // public function confirm($id, Request $request){
+
+    //     $customer = auth('api-customers')->user();
+
+    //     /** @var Order $order */
+    //     $order = $this->orderRepository->find($id);
+
+    //     if (empty($order)) {
+    //         return $this->sendError('Order not found');
+    //     }
+
+    //     $carrierId = $request->get('carrier_id');
+
+    //     if(empty($carrierId)){
+    //         return $this->sendError('carrier_id is required', 400);
+    //     }
+    //     $carrier = Carrier::where('id', $order->carrier_id)->first();
+    //     if(empty($carrier)){
+    //         return $this->sendError('Carrier not found', 400);
+    //     }
+
+    //     $input['is_draft'] = false;
+    //     $input['order_date'] = now();
+    //     $input['status'] = Order::PERFORMER_LOOKUP;
+
+    //     $order->update($input);
+
+    //     // Register order history
+    //     $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
+
+    //     $this->driverAssignmentService->assignNearestDriver($order);
+
+    //     return $this->sendResponse($order->toArray(), 'Order updated successfully');
+
+    // }
+
 
     public function performDriverLookup($id, Request $request){
         /** @var Order $order */

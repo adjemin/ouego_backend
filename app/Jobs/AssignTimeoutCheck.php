@@ -14,9 +14,10 @@ use App\Models\TripDriverAttempt;
 use App\Services\TripService;
 use App\Services\CarrierService;
 
+// class AssignTimeoutCheck implements ShouldQueue
 class AssignTimeoutCheck implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
 
     /**
      * Create a new job instance.
@@ -33,7 +34,7 @@ class AssignTimeoutCheck implements ShouldQueue
       
         if ($this->invitation->status === OrderInvitation::NOTIFIED || $this->invitation->status === OrderInvitation::REJECTED) {
             $this->invitation->status === TripDriverAttempt::NOTIFIED ? $this->invitation->update(['status' => OrderInvitation::TIMEOUT]): null;
-            app(TripService::class)->notifyNextDriver($this->tripRequest, $this->retry, $this->orderIndex + 1);
+            app(TripService::class)->dispatchNextDriverInvitation($this->tripRequest, $this->retry, $this->orderIndex + 1);
         }
     }
 }

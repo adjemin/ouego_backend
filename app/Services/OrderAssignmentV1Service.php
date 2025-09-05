@@ -8,6 +8,7 @@ use App\Utilities\GoogleMapsAPIUtils;
 use App\Models\Order;
 use App\Models\DriverCarrier;
 use App\Models\RoutePoint;
+use App\Models\OrderItem;
 
 class OrderAssignmentV1Service
 {
@@ -135,33 +136,40 @@ class OrderAssignmentV1Service
     }
 
 
-    public function assignDriverToOrder($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): bool
+    public function adaptedExpressOrderAssignment(Order $order, $limit = 5, $maxDistance = null)
     {
 
-        $carrier = Carrier::find($carrier_id);
+        $orderItem = OrderItem::where('order_id', $order->id)->first();
+        if(!$orderItem){
+            throw new \Exception("Commande non trouvée");
+        }
+
+        $carrier = Carrier::find($orderItem->carrier_id);
         if (!$carrier) {
             throw new \Exception("Carrière non trouvée");
         }
+
         $longitude = $carrier->location_longitude;
         $latitude = $carrier->location_latitude;
 
         $route_point = RoutePoint::where([
-            'order_id' => $order_id,
+            'order_id' => $order->id,
             'type' => 'destination'
         ])->first();
+
         if (!$carrier) {
             throw new \Exception("Carrière non trouvée");
         }
 
-        $deriverIds = DriverCarrier::where('carrier_id', $carrier_id)->pluck('driver_id')->toArray();
+        $driverIds = DriverCarrier::where('carrier_id', $orderItem->carrier_id)->distinct('driver_id')->pluck('driver_id')->toArray();
         
         $query = Driver::select('drivers.*')
-            ->whereIn('id', $deriverIds)
+            ->whereIn('id', $driverIds)
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
             ->whereRaw('is_available = true')
             ->whereRaw('is_active = true')
-            ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
-            ->whereJsonContains('services', $service_slug)
+            // ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
+            // ->whereJsonContains('services', $order->service_slug)
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
         if ($maxDistance) {
@@ -170,27 +178,39 @@ class OrderAssignmentV1Service
 
         $chauffeursProches = $query->get();
 
+
         // Étape 5 : Calcul des pondérations
         $ponderations = [];
+        $minDistanceChauffeurCarriere = $chauffeursProches->min('distance');
+        $maxJetons = intval($chauffeursProches->max('current_balance')) > 0 ? $chauffeursProches->max('current_balance') : 1;
+        $chauffeursCarriere = count($driverIds);
 
         foreach ($chauffeursProches as $item) {
             $chauffeur = $item;
-            $distanceChauffeurCarriere = $item->distance;
-            $distanceCarriereLivraison = GoogleMapsAPIUtils::getDistance(
-                    [$route_point->latitude,
-                    $route_point->longitude],
-                    [$chauffeur->last_location_latitude,
-                    $chauffeur->last_location_longitude]
-                );
-            $nbChauffeursCarriere = $carriereChauffeursCount[$item['carrier_id']] ?? 1;
+            $distanceChauffeurCarriere = $item->distance??1;
+            // $distanceCarriereLivraisonData = GoogleMapsAPIUtils::getDistance(
+            //         [$route_point->latitude,
+            //         $route_point->longitude],
+            //         [$chauffeur->last_location_latitude,
+            //         $chauffeur->last_location_longitude]
+            //     );
+
+            $distanceCarriereLivraisonData = GoogleMapsAPIUtils::distanceHaversine(
+                $route_point->latitude,
+                $route_point->longitude,
+                $chauffeur->last_location_latitude,
+                $chauffeur->last_location_longitude
+            );
+            // $distanceCarriereLivraison = $distanceCarriereLivraisonData['distance']['value'] ?? 1;
+            $distanceCarriereLivraison = $distanceCarriereLivraisonData*1000; // en m
 
             $score = [];
 
             $score['proximity_driver_carrier'] = number_format(($minDistanceChauffeurCarriere / $distanceChauffeurCarriere) * 100, 2);
-            $score['jetons'] = number_format(($chauffeur->current_balance / ($maxJetons ?? 1)) * 100, 2);
-            $score['proximity_carrier_delivery'] = number_format(($minDistanceCarriereLivraison / $distanceCarriereLivraison) * 100, 2);
+            $score['jetons'] = number_format((intval($chauffeur->current_balance) / ($maxJetons)) * 100, 2);
+            $score['proximity_carrier_delivery'] = number_format(($distanceCarriereLivraison / $distanceCarriereLivraison) * 100, 2);
             $score['note'] = number_format(($chauffeur->rate / 5) * 100, 2);
-            $score['concentration'] = number_format(($minChauffeursCarriere / $nbChauffeursCarriere) * 100, 2);
+            $score['concentration'] = number_format(($chauffeursCarriere / $chauffeursCarriere) * 100, 2);
 
             $scoreTotal = number_format(
                 $score['proximity_driver_carrier'] * 0.30 +
@@ -203,14 +223,21 @@ class OrderAssignmentV1Service
 
             $ponderations[$chauffeur->id] = [
                 'driver_id' => $chauffeur->id,
-                'carrier_id' => $item['carrier_id'],
+                'carrier_id' => $carrier->id,
                 'distance' => $item['distance'],
                 'score_total' => $scoreTotal,
                 'details' => $score,
             ];
         }
 
-        return true;
+        $ponderations = collect($ponderations)->sortByDesc('score_total')->values()->take($limit)->all();
+
+        if (empty($ponderations)) {
+            throw new \Exception("Aucun chauffeur trouvé à proximité de la carrière");
+        }
+
+
+        return $ponderations;
     }
 
 
