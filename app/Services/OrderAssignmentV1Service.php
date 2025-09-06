@@ -141,7 +141,7 @@ class OrderAssignmentV1Service
 
         $orderItem = OrderItem::where('order_id', $order->id)->first();
         if(!$orderItem){
-            throw new \Exception("Commande non trouvée");
+            throw new \Exception("Article de commande non trouvée");
         }
 
         $carrier = Carrier::find($orderItem->carrier_id);
