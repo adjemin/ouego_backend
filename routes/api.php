@@ -44,6 +44,7 @@ Route::prefix('v1/')->group(function () {
 
     Route::get('products/list', [App\Http\Controllers\API\ProductAPIController::class, 'index']);
     Route::post('products/create', [App\Http\Controllers\API\ProductAPIController::class, 'store'])->middleware("auth.customer:api-customers");
+    Route::get('products/{id}', [App\Http\Controllers\API\ProductAPIController::class, 'show'])->middleware("auth.customer:api-customers");
 
     Route::post('product_types/create', [App\Http\Controllers\API\ProductTypeAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
