@@ -621,4 +621,83 @@ class DriverAPIController extends AppBaseController
 
 
     }
+
+
+     public function withdrawBalance(Request $request){
+
+        try{
+            // Validation des données d'entrée
+            $validator = Validator::make($request->all(), [
+                'driver_id' => 'required|exists:drivers,id',
+                'amount' => 'required|numeric|min:100'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError('Validation Error', $validator->errors());
+            }
+
+
+            // Récupération des données
+            $input = $request->all();
+            $amount = intval($input['amount']);
+
+            // Récupérer le chauffeur
+            $driver = Driver::findOrFail($input['driver_id']);
+
+            if(intval($driver->current_balance) < $amount){
+                return $this->sendError('Solde insuffisant',400);
+            }
+
+            DB::beginTransaction();
+
+            $transaction = Transaction::create([
+                'user_id' => $driver->id,
+                'status' => Transaction::CREATED,
+                'type' => Transaction::TYPE_WITHDRAWAL,
+                'user_source' => $driver->getTable(),
+                'currency_code' => 'XOF',
+                'amount' => $amount,
+                'is_in' => false
+            ]);
+
+            $invoice = Invoice::create([
+                'order_id' => $transaction->id,
+                'customer_id' => $driver->id,
+                'order_source' => $transaction->getTable(),
+                'reference' => Invoice::generateID("WALLET", $transaction->id, $driver->id),
+                'subtotal' => $amount,
+                'tax' => 0,
+                'fees_delivery' => 0,
+                'total' => $amount,
+                'status' => Invoice::UNPAID,
+                'is_paid_by_customer' => false,
+                'currency_code' => 'XOF',
+                'driver_due' => 0,
+                'service_due' => 0
+            ]);
+
+            $payment = Payment::create([
+                'invoice_id' => $invoice->id,
+                'payment_method_code' => 'online',
+                'payment_reference' => Payment::generateReference(),
+                'amount' => $invoice->total,
+                'currency_code' => $invoice->currency_code,
+                'user_id' => $driver->id,
+                'status' => Payment::STATUS_INITIATED,
+                'is_waiting' => true,
+                'is_completed' => false
+            ]);
+
+            $payment = Payment::where(['id' => $payment->id])->first();
+
+            DB::commit();
+
+            return $this->sendResponse($payment->toArray(), 'Payment created successfully');
+        }catch (\Exception $e) {
+            \Log::error('Deposit error: ' . $e->getMessage());
+            return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
+        }
+
+
+    }
 }
