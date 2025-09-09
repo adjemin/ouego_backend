@@ -165,6 +165,9 @@ Route::prefix('v1/')->group(function () {
     Route::resource('customer-addresses', App\Http\Controllers\API\CustomerAddressAPIController::class)
     ->except(['create', 'edit'])
     ->middleware("auth.customer:api-customers"); 
+
+    Route::resource('drivers/transactions', App\Http\Controllers\API\TransactionAPIController::class)
+     ->except(['create', 'edit'])->middleware("auth.driver:api-drivers");
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -222,8 +225,6 @@ Route::prefix('v1/')->group(function () {
 //Route::resource('order-invitations', App\Http\Controllers\API\OrderInvitationAPIController::class)
 //    ->except(['create', 'edit']);
 //
-//Route::resource('transactions', App\Http\Controllers\API\TransactionAPIController::class)
-//    ->except(['create', 'edit']);
 //
 //Route::resource('route-points', App\Http\Controllers\API\RoutePointAPIController::class)
 //    ->except(['create', 'edit']);

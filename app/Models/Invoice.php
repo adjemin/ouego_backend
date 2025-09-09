@@ -13,6 +13,8 @@ class Invoice extends Model
     const UNPAID = "UNPAID";
     const PAID = "PAID";
 
+    public $appends = ['payments'];
+
     public $table = 'invoices';
 
     public $fillable = [
@@ -67,5 +69,8 @@ class Invoice extends Model
         return $service.'-'.$record.'-'.$orderId.'-'.$customerId.'-'.time();
     }
 
+    public function getPaymentsAttribute(){
+        return Payment::where('invoice_id', $this->id)->get();
+    }
 
 }
