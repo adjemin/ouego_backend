@@ -238,15 +238,29 @@ class PaymentAPIController extends AppBaseController
                     $user = Driver::where([
                         'id' => $invoice->customer_id
                     ])->first();
+
+                    switch ($transaction->type) {
+                        case Transaction::TYPE_DEPOSIT :
+                            $user->creditBalance($transaction->amount);
+                            break;
+                        case Transaction::TYPE_WITHDRAWAL :
+                            $user->debitBalance($transaction->amount);
+                            break;
+                    }
                 }else{
                     $user = Customer::where([
                         'id' => $invoice->customer_id
                     ])->first();
+
+                    switch ($transaction->type) {
+                        case Transaction::TYPE_DEPOSIT :
+                            $user->creditBalance($transaction->amount);
+                            break;
+                        case     Transaction::TYPE_WITHDRAWAL :
+                            $user->debitBalance($transaction->amount);
+                            break;
+                    }
                 }
-
-
-
-                $user->debitBalance($transaction->amount);
             }
         }
 
