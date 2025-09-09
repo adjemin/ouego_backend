@@ -11,7 +11,7 @@ use Kreait\Firebase\Factory;
 
 class FirebaseMessagingUtils{
 
-    public static function sendNotification($title, $body, $type, $customerNotification, $firebaseId) {
+    public static function sendNotification($title, $body, $customerNotification, $firebaseId) {
 
         try {
 

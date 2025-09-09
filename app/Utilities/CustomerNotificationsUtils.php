@@ -21,7 +21,6 @@ class CustomerNotificationsUtils
 
             $title = $userNotification->title;
             $subtitle = $userNotification->subtitle;
-            $typeNotification = $userNotification->type;
 
 
             $userDevices = CustomerDevice::where([
@@ -37,7 +36,7 @@ class CustomerNotificationsUtils
 
                 foreach($userDevices as $userDevice){
                     $deviceFirebaseId = "".$userDevice->firebase_id;
-                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId);
+                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle, $metadata, $deviceFirebaseId);
                     array_push($messages_sent, $result);
                 }
 
@@ -60,7 +59,7 @@ class CustomerNotificationsUtils
      * @param $message @Message
      * @return array|string
      */
-    public static function simpleNotify($userId, $metaData, $metaDataId, $type){
+    public static function simpleNotify($userId, $metaData, $metaDataId){
 
         if(is_array($metaData)){
 
@@ -95,7 +94,7 @@ class CustomerNotificationsUtils
             $metadata['id']=  $metaDataId;
             foreach($userDevices as $userDevice){
                 $device = "".$userDevice->firebase_id;
-                $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$type, $metadata, $device);
+                $result = FirebaseMessagingUtils::sendNotification($title, $subtitle, $metadata, $device);
                 array_push($messages_sent, $result);
             }
 

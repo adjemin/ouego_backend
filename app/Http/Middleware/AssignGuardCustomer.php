@@ -7,10 +7,17 @@ use Exception;
 use Illuminate\Http\Request;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use PHPOpenSourceSaver\JWTAuth\JWTAuth;
+use App\Models\CustomerDevice;
 
 class AssignGuardCustomer
 {
+        // private $jwtAuth;
+
+        // public function __construct(JWTAuth $jwtAuth)
+        // {
+        //     $this->jwtAuth = $jwtAuth;
+        // }
     /**
      * Handle an incoming request.
      *
@@ -25,6 +32,15 @@ class AssignGuardCustomer
             try {
                 //$user = JWTAuth::parseToken()->authenticate();
                 $user = auth('api-customers')->userOrFail();
+
+                // $accessToken = $request->bearerToken();
+                // $payload = $this->jwtAuth->getPayload($accessToken);
+                // $device = CustomerDevice::where('customer_id', $user->id)->orderBy('created_at', 'desc')->first();
+                // // Check if the access token is valid
+                // if ($device && $device->firebase_id !== $payload['device_token'] ?? null) {
+                //     $this->jwtAuth->invalidate($accessToken);
+                //     return response()->json('Session expirée. Connectez-vous à nouveau.', 401);
+                // }
                 return $next($request);
             } catch (Exception $e) {
                 if ($e instanceof TokenInvalidException) {

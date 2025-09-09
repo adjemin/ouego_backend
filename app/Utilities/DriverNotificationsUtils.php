@@ -21,7 +21,6 @@ class DriverNotificationsUtils
 
             $title = $userNotification->title;
             $subtitle = $userNotification->subtitle;
-            $typeNotification = $userNotification->type;
 
 
             $userDevices = DriverDevice::where([
@@ -37,7 +36,7 @@ class DriverNotificationsUtils
 
                 foreach($userDevices as $userDevice){
                     $deviceFirebaseId = "".$userDevice->firebase_id;
-                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId);
+                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle, $metadata, $deviceFirebaseId);
 
                     if($result == false){
                         $userDevice->forceDelete();
@@ -67,7 +66,7 @@ class DriverNotificationsUtils
      * @param $message @Message
      * @return array|string
      */
-    public static function simpleNotify($userId, $metaData, $metaDataId, $type){
+    public static function simpleNotify($userId, $metaData, $metaDataId){
 
         if(is_array($metaData)){
 
@@ -102,7 +101,7 @@ class DriverNotificationsUtils
             $metadata['id']=  $metaDataId;
             foreach($userDevices as $userDevice){
                 $device = "".$userDevice->firebase_id;
-                $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$type, $metadata, $device);
+                $result = FirebaseMessagingUtils::sendNotification($title, $subtitle, $metadata, $device);
                 array_push($messages_sent, $result);
             }
 
