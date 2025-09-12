@@ -150,7 +150,7 @@ class Driver extends Authenticatable  implements JWTSubject
     }
 
     //Credit
-    public function credit($amount, $orderId){
+    public function creditBalance($amount, $orderId=null){
         $this->old_balance = $this->current_balance;
         $this->current_balance = $this->current_balance + $amount;
         $this->save();

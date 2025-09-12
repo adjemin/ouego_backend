@@ -144,6 +144,7 @@ class PaymentAPIController extends AppBaseController
             'id' =>  $transaction->invoice_id
         ])->first();
 
+
         if ($transaction->is_waiting && $invoice != null && $invoice->status == Invoice::UNPAID) {
             $transaction->payment_gateway_trans_id = array_key_exists('payment_gateway_trans_id', $input)?$input['payment_gateway_trans_id']:null;
             $transaction->payment_gateway_payment_method = array_key_exists('payment_gateway_payment_method', $input)?$input['payment_gateway_payment_method']:null;
