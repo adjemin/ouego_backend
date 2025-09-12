@@ -48,7 +48,7 @@ class Transaction extends Model
 
 
     public function getInvoiceAttribute(){
-        return Invoice::where(['order_id', $this->id, "order_source"=> "transactions"])->first();
+        return Invoice::where(['order_id'=> $this->id, "order_source"=> "transactions"])->first();
     }
 
 }
