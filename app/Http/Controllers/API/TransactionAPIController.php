@@ -38,6 +38,8 @@ class TransactionAPIController extends AppBaseController
             $request->get('limit')
         );
 
+        $transactions = $transactions->sortByDesc('created_at');
+
         return $this->sendResponse($transactions->toArray(), 'Transactions retrieved successfully');
     }
 
