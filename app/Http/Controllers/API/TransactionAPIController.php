@@ -28,11 +28,17 @@ class TransactionAPIController extends AppBaseController
      */
     public function index(Request $request): JsonResponse
     {
+        $driver = auth('api-drivers')->user();
+        $data = $request->except(['skip', 'limit']);
+        $data['user_id'] = $driver->id;
+
         $transactions = $this->transactionRepository->all(
-            $request->except(['skip', 'limit']),
+            $data,
             $request->get('skip'),
             $request->get('limit')
         );
+
+        $transactions = $transactions->sortByDesc('created_at');
 
         return $this->sendResponse($transactions->toArray(), 'Transactions retrieved successfully');
     }
