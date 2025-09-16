@@ -10,7 +10,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use PHPOpenSourceSaver\JWTAuth\JWTAuth as NewJWTAuth;
 use Illuminate\Support\Facades\Validator;
+use App\Models\CustomerDevice;
 use App\Models\CustomerOTP;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
@@ -21,10 +23,12 @@ use MtnSmsCloud\MTNSMSApi;
 class CustomerAPIController extends AppBaseController
 {
     private CustomerRepository $customerRepository;
+    private NewJWTAuth $jwtAuth;
 
-    public function __construct(CustomerRepository $customerRepo)
+    public function __construct(CustomerRepository $customerRepo, NewJWTAuth $jwtAuth)
     {
         $this->customerRepository = $customerRepo;
+        $this->jwtAuth = $jwtAuth;
     }
 
     /**
@@ -96,7 +100,8 @@ class CustomerAPIController extends AppBaseController
 
         $customer = $this->customerRepository->update($input, $customer->id);
 
-        $token = JWTAuth::fromUser($customer);
+        $device = CustomerDevice::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->first();
+        $token = auth('api-customers')->claims(['device_id' => $device->firebase_id])->fromUser($customer);
 
         return $this->sendResponse([
             'token' => $token,
@@ -151,6 +156,10 @@ class CustomerAPIController extends AppBaseController
             return $this->sendError('phone_number is required');
         }
 
+        if(!array_key_exists('firebase_id', $input)) {
+            return $this->sendError('firebase_id is required');
+        }
+
         $input['phone'] = $input['dialing_code'].''.$input['phone_number'];
 
         $customer = Customer::where('phone', '=', $input['phone'])->first();
@@ -171,7 +180,8 @@ class CustomerAPIController extends AppBaseController
             $customer = $customerDeleted;
         }
 
-        $token = JWTAuth::fromUser($customer);
+        $device = CustomerDevice::create(['customer_id'=> $customer->id, 'firebase_id' => $input['firebase_id']]);
+        $token = auth('api-customers')->claims(['device_id' => $device->firebase_id])->fromUser($customer);
 
 
         return $this->sendResponse([
@@ -199,6 +209,10 @@ class CustomerAPIController extends AppBaseController
             return $this->sendError('phone_number is required',400);
         }
 
+        if(!array_key_exists('firebase_id', $input)) {
+            return $this->sendError('firebase_id is required',400);
+        }
+
         $input['phone'] = $input['dialing_code'].''.$input['phone_number'];
 
         $customer = Customer::where('phone', '=', $input['phone'])->first();
@@ -206,8 +220,18 @@ class CustomerAPIController extends AppBaseController
             return $this->sendError('Compte introuvable', 401);
         }
 
+        if($customer->is_blocked){
+            return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
+        }
 
-        $token = JWTAuth::fromUser($customer);
+        $device = CustomerDevice::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->first();
+        if($device == null || $device->firebase_id !== $input['firebase_id']){
+            CustomerDevice::where('customer_id', $customer->id)->delete();
+            $device = CustomerDevice::create(['customer_id'=> $customer->id, 'firebase_id' => $input['firebase_id']]);
+        } 
+
+        $token = auth('api-customers')->claims(['device_id' => $device->firebase_id])->fromUser($customer);
+    
 
 
         return $this->sendResponse([
@@ -220,7 +244,8 @@ class CustomerAPIController extends AppBaseController
     }
 
     public function logout(Request $request){
-
+        $customer = auth('api-customers')->user();
+        CustomerDevice::where('customer_id', $customer->id)->delete();
         auth('api-customers')->logout();
 
         return response()->json([
@@ -231,23 +256,40 @@ class CustomerAPIController extends AppBaseController
     }
 
 
-    public function refresh()
+    public function refresh(Request $request)
     {
+        try{
+            $accessToken = $request->bearerToken();
+            $payload = $this->jwtAuth->getPayload($accessToken);
+            $device = CustomerDevice::where('firebase_id', $payload['device_id'])->orderBy('created_at', 'desc')->firstOrFail();
+            // Check if the access token is valid
+            if (empty($accessToken) || ($device->firebase_id !== $payload['device_id'] ?? null)) {
+                $this->jwtAuth->invalidate($accessToken);
+                return response()->json('Session expired. Please log in again.', 401);
+            }
 
-        return $this->sendResponse([
-            'token' => auth('api-customers')->refresh(),
-            'token_type' => 'bearer',
-            'expires_in' => JWTAuth::factory()->getTTL(),
-            'server_time'=> now(),
-            'user' => auth('api-customers')->user()
-        ], 'Token refreshed successfully');
+            $customer = Customer::where('id', $device->customer_id)->firstOrFail();
+            $token = auth('api-customers')->claims(['device_id' => $device->firebase_id])->fromUser($customer);
+
+            return $this->sendResponse([
+                'token' => $token,
+                'token_type' => 'bearer',
+                'expires_in' => JWTAuth::factory()->getTTL(),
+                'server_time'=> now(),
+                'user' => auth('api-customers')->user()
+            ], 'Token refreshed successfully');
+
+        }catch(\Exception $e){
+            return response()->json('Session expired. Please log in again.', 401);
+        }
     }
 
     public function getProfil(Request $request){
 
         $customer = auth('api-customers')->user();
 
-        $token = JWTAuth::fromUser($customer);
+        $device = CustomerDevice::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->first();
+        $token = auth('api-customers')->claims(['device_id' => $device->firebase_id])->fromUser($customer);
 
         return $this->sendResponse([
             'token' => $token,
@@ -313,7 +355,7 @@ class CustomerAPIController extends AppBaseController
         }
 
         // Réinitialiser l'OTP
-        $customerOTP->forceDelete();
+        // $customerOTP->forceDelete();
 
         // Récupérer l'utilisateur et générer le token JWT
         $customer = Customer::where('phone', $request->phone)->first();
@@ -322,7 +364,8 @@ class CustomerAPIController extends AppBaseController
             return $this->sendResponse(true, 'OTP verified successfully');
 
         }else{
-            $token = JWTAuth::fromUser($customer);
+            $device = CustomerDevice::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->first();
+            $token = auth('api-customers')->claims(['device_id' => $device->firebase_id])->fromUser($customer);
 
             return $this->sendResponse([
                 'token' => $token,

@@ -35,17 +35,12 @@ class AssignGuardDriver
     {
         if($guard != null){
             try {
+                $driver = auth('api-drivers')->userOrFail();
                 $accessToken = $request->bearerToken();
-                if (!$accessToken) {
-                    return $this->errorResponse('Authorization Token not found', 401);
-                }
-                
                 $payload = $this->jwtAuth->setToken($accessToken)->getPayload();
-                dd($payload->toArray());
-                $driver = auth('api-drivers')->user();
                 $device = DriverDevice::where('driver_id', $driver->id)->orderBy('created_at', 'desc')->first();
                 // Check if the access token is valid
-                if ($device && $accessToken && $device->firebase_id !== $payload['device_token'] ?? null) {
+                if ($device && $accessToken && $device->firebase_id !== $payload["device_id"] ?? null) {
                     $this->jwtAuth->invalidate($accessToken);
                     return $this->errorResponse('Session expirée. Connectez-vous à nouveau.', 401);
                 }
@@ -66,7 +61,7 @@ class AssignGuardDriver
         } else if ($e instanceof TokenExpiredException) {
             try {
                 $token = JWTAuth::refresh(JWTAuth::getToken());
-                $user = JWTAuth::setToken($token)->toUser();
+                JWTAuth::setToken($token)->toUser();
                 $request->headers->set('Authorization', 'Bearer ' . $token);
 
                 return $next($request);
@@ -76,11 +71,9 @@ class AssignGuardDriver
 
         } else if ($e instanceof UserNotDefinedException) {
             return $this->errorResponse('User not found', 401);
-        }
-        else if ($e instanceof TokenBlacklistedException) {
+        } else if ($e instanceof TokenBlacklistedException) {
             return $this->errorResponse('Token has been blacklisted', 401);
-        }
-        else {
+        } else {
             return $this->errorResponse('Authorization Token not found', 401);
         }
     }

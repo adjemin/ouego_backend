@@ -137,7 +137,8 @@ class DriverAPIController extends AppBaseController
 
         $driver = $this->driverRepository->update($input, $id);
 
-        $token = JWTAuth::fromUser($driver);
+        $device = DriverDevice::where('driver_id', $driver->id)->orderBy('created_at', 'desc')->first();
+        $token = auth('api-drivers')->claims(['device_id' => $device->firebase_id])->fromUser($driver);
 
         return $this->sendResponse([
             'token' => $token,
@@ -225,7 +226,7 @@ class DriverAPIController extends AppBaseController
         }
 
         // Generate Token
-        $token = JWTAuth::claim(['device_id' => $device->firebase_id])->fromUser($driver);
+        $token = auth('api-drivers')->claims(['device_id' => $device->firebase_id])->fromUser($driver);
 
 
         return $this->sendResponse([
@@ -273,7 +274,6 @@ class DriverAPIController extends AppBaseController
         }
 
         $token = auth('api-drivers')->claims(['device_id' => $device->firebase_id])->fromUser($driver);
-        // $token = JWTAuth::claims(['firebase_id' => $device->firebase_id])->fromUser($driver);
 
 
         return $this->sendResponse([
@@ -302,20 +302,17 @@ class DriverAPIController extends AppBaseController
     public function refresh(Request $request)
     {
         try {
-
-            dd($request->bearerToken());
-
             $accessToken = $request->bearerToken();
             $payload = $this->jwtAuth->getPayload($accessToken);
-            $device = DriverDevice::where('firebase_id', $payload['device_token'])->orderBy('created_at', 'desc')->firstOrFail();
+            $device = DriverDevice::where('firebase_id', $payload['device_id'])->orderBy('created_at', 'desc')->firstOrFail();
             // Check if the access token is valid
-            if (empty($accessToken) || ($device->firebase_id !== $payload['device_token'] ?? null)) {
+            if (empty($accessToken) || ($device->firebase_id !== $payload['device_id'] ?? null)) {
                 $this->jwtAuth->invalidate($accessToken);
                 return response()->json('Session expired. Please log in again.', 401);
             }
 
             $driver = Driver::where('id', $device->driver_id)->firstOrFail();
-            $token = JWTAuth::claim(['device_id' => $device->firebase_id])->fromUser($driver);
+            $token = auth('api-drivers')->claims(['device_id' => $device->firebase_id])->fromUser($driver);
 
             return $this->sendResponse([
                 'token' => $token,
@@ -345,9 +342,9 @@ class DriverAPIController extends AppBaseController
     public function getProfil(Request $request){
 
         $driver = auth('api-drivers')->user();
-        dd($driver);
 
-        $token = JWTAuth::fromUser($driver);
+        $device = DriverDevice::where('driver_id', $driver->id)->orderBy('created_at', 'desc')->first();
+        $token = auth('api-drivers')->claims(['device_id' => $device->firebase_id])->fromUser($driver);
 
         return $this->sendResponse([
             'token' => $token,
@@ -391,7 +388,8 @@ class DriverAPIController extends AppBaseController
 
         $driver = auth('api-drivers')->user();
 
-        $token = JWTAuth::fromUser($driver);
+        $device = DriverDevice::where('driver_id', $driver->id)->orderBy('created_at', 'desc')->first();
+        $token = auth('api-drivers')->claims(['device_id' => $device->firebase_id])->fromUser($driver);
 
         return $this->sendResponse([
             'token' => $token,
@@ -423,7 +421,8 @@ class DriverAPIController extends AppBaseController
 
         $driver = auth('api-drivers')->user();
 
-        $token = JWTAuth::fromUser($driver);
+        $device = DriverDevice::where('driver_id', $driver->id)->orderBy('created_at', 'desc')->first();
+        $token = auth('api-drivers')->claims(['device_id' => $device->firebase_id])->fromUser($driver);
 
         return $this->sendResponse([
             'token' => $token,
@@ -508,13 +507,13 @@ class DriverAPIController extends AppBaseController
     public function verifyOTP(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone' => 'required|string|exists:driver_otps,phone',
+            'phone' => 'required|string|exists:driver_otps',
             'otp' => 'required|string',
-            'device_token' => 'required|string',
+            'device_id' => 'required|string',
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError(json_encode($validator->errors()),422);
+            return $this->sendError(json_encode($validator->errors()->first()),422);
         }
 
         $customerOTP = DriverOtp::where('phone', $request->phone)->first();
@@ -524,10 +523,10 @@ class DriverAPIController extends AppBaseController
         }
 
         // Rechercher le token de l'appareil
-        $deviceToken = $request->device_token;
+        $deviceToken = $request->device_id;
 
         // Réinitialiser l'OTP
-        $customerOTP->forceDelete();
+        // $customerOTP->forceDelete();
 
         // Récupérer l'utilisateur et générer le token JWT
         $customer = Driver::where('phone', $request->phone)->first();
@@ -536,8 +535,7 @@ class DriverAPIController extends AppBaseController
             return $this->sendError('Aucun compte retrouvé pour ce numéro de téléphone',404);
 
         }else{
-            $claims = ['device_token' => $deviceToken];
-            $token = JWTAuth::claims($claims)->fromUser($customer);
+            $token = auth('api-drivers')->claims(['device_id' => $deviceToken])->fromUser($customer);
 
             $device = DriverDevice::where(['firebase_id' => $deviceToken])->first();
             if(count($device) == 0){
