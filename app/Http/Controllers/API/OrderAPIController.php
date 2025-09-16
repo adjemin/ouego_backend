@@ -978,7 +978,7 @@ class OrderAPIController extends AppBaseController
 
                 //EXPRESS
                 $expressPricing = [
-                    "distance" => $current_distance." km",
+                    "distance" => $current_distance,
                     "duration" => $duration,
                     "amount" => $amount,
                     "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
