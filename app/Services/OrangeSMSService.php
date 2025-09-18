@@ -1,6 +1,8 @@
 <?php
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+
 class OrangeSMSService 
 {
     private $clientId;
@@ -15,8 +17,8 @@ class OrangeSMSService
     {
         $this->clientId = env('SMS_CLIENT_ID', 'dgZ7g3Kko3rkpafn5YDjvnoSF5KQf3h2');
         $this->clientSecret = env('SMS_SECRET', 'lcv6fudZElh7RTwt3uFmTKXsKxjmxEwmsdqJuSRpXgTk');
-        $this->senderPhoneNumber = env('SENDER_PHONE_NUMBER', '+225810393');
-        $this->senderName = env('SENDER_NAME', 'SMS 810393');
+        $this->senderPhoneNumber = env('SENDER_PHONE_NUMBER', '+2250000');
+        $this->senderName = env('SENDER_NAME', 'OUEGO');
         $this->baseUrl = 'https://api.orange.com';
         $this->accessToken = null;
         $this->tokenExpiresAt = null;
@@ -115,12 +117,12 @@ class OrangeSMSService
             // S'assurer que le token est valide
             $this->ensureValidToken();
 
-
             // Préparer les données du SMS
             $smsData = [
                 'outboundSMSMessageRequest' => [
                     'address' => 'tel:' . $recipientPhoneNumber,
                     'senderAddress' => 'tel:' . $this->senderPhoneNumber,
+                    "senderName" => $this->senderName,
                     'outboundSMSTextMessage' => [
                         'message' => $message
                     ]
@@ -164,6 +166,7 @@ class OrangeSMSService
             }
 
             $result = json_decode($response, true);
+            Log::info($result);
             
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \Exception("Erreur de décodage JSON: " . json_last_error_msg());
