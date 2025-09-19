@@ -19,6 +19,7 @@ use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Validator;
+use App\Services\OrangeSMSService;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
 use App\Models\DriverOtp;
@@ -34,10 +35,13 @@ class DriverAPIController extends AppBaseController
 
     private EnginRepository $enginRepository;
 
-    public function __construct(DriverRepository $driverRepo, EnginRepository $enginRepo)
+    private OrangeSMSService $orangeSMSService;
+
+    public function __construct(DriverRepository $driverRepo, EnginRepository $enginRepo, OrangeSMSService $orangeSMSService)
     {
         $this->driverRepository = $driverRepo;
         $this->enginRepository = $enginRepo;
+        $this->orangeSMSService = $orangeSMSService;
     }
 
     /**
@@ -454,7 +458,8 @@ class DriverAPIController extends AppBaseController
         );
 
         // Envoyer l'OTP par SMS
-        $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
+        // $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
+        $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
 
         return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
     }
