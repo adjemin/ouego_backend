@@ -42,7 +42,12 @@ class AssignGuardDriver
                 // Check if the access token is valid
                 if ($device && $accessToken && $device->firebase_id !== $payload["device_id"] ?? null) {
                     $this->jwtAuth->invalidate($accessToken);
-                    return $this->errorResponse('Session expirée. Connectez-vous à nouveau.', 401);
+                    return response()->json([
+                        'code' => 401,
+                        'status' => 'UNAUTHORIZED',
+                        'success' => false,
+                        'message' => 'Session expirée. Connectez-vous à nouveau.'
+                    ], 401);
                 }
                 
                 return $next($request);
@@ -70,7 +75,7 @@ class AssignGuardDriver
             }
 
         } else if ($e instanceof UserNotDefinedException) {
-            return $this->errorResponse('User not found', 401);
+            return $this->errorResponse('Token has expired and cannot be refreshed', 401);
         } else if ($e instanceof TokenBlacklistedException) {
             return $this->errorResponse('Token has been blacklisted', 401);
         } else {

@@ -180,6 +180,7 @@ class CustomerAPIController extends AppBaseController
             $customer = $customerDeleted;
         }
 
+
         $device = CustomerDevice::create(['customer_id'=> $customer->id, 'firebase_id' => $input['firebase_id']]);
         $token = auth('api-customers')->claims(['device_id' => $device->firebase_id])->fromUser($customer);
 
@@ -224,15 +225,12 @@ class CustomerAPIController extends AppBaseController
             return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
         }
 
-        $device = CustomerDevice::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->first();
-        if($device == null || $device->firebase_id !== $input['firebase_id']){
-            CustomerDevice::where('customer_id', $customer->id)->delete();
-            $device = CustomerDevice::create(['customer_id'=> $customer->id, 'firebase_id' => $input['firebase_id']]);
-        } 
+        $deviceToken = $request->firebase_id;
 
+        // Supprimer les anciens appareils associés à ce client
+        CustomerDevice::where('customer_id', $customer->id)->forceDelete();
+        $device = CustomerDevice::create(['customer_id'=> $customer->id, 'firebase_id' => $deviceToken]);
         $token = auth('api-customers')->claims(['device_id' => $device->firebase_id])->fromUser($customer);
-    
-
 
         return $this->sendResponse([
             'token' => $token,
@@ -342,10 +340,11 @@ class CustomerAPIController extends AppBaseController
         $validator = Validator::make($request->all(), [
             'phone' => 'required|string|exists:customer_o_t_ps,phone',
             'otp' => 'required|string',
+            'firebase_id' => 'required|string',
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError(json_encode($validator->errors()),422);
+            return $this->sendError(json_encode($validator->errors()->first()),422);
         }
 
         $customerOTP = CustomerOTP::where('phone', $request->phone)->first();
@@ -364,7 +363,8 @@ class CustomerAPIController extends AppBaseController
             return $this->sendResponse(true, 'OTP verified successfully');
 
         }else{
-            $device = CustomerDevice::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->first();
+            CustomerDevice::where('customer_id', $customer->id)->forceDelete();
+            $device = CustomerDevice::create(['customer_id'=> $customer->id, 'firebase_id' => $request->firebase_id]);
             $token = auth('api-customers')->claims(['device_id' => $device->firebase_id])->fromUser($customer);
 
             return $this->sendResponse([

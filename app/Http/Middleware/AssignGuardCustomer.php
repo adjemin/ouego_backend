@@ -30,15 +30,19 @@ class AssignGuardCustomer
         if($guard != null){
             //auth('api-customers')->shouldUse($guard);
             try {
-                //$user = JWTAuth::parseToken()->authenticate();
                 $user = auth('api-customers')->userOrFail();
                 $accessToken = $request->bearerToken();
-                $payload = $this->jwtAuth->getPayload($accessToken);
+                $payload = $this->jwtAuth->setToken($accessToken)->getPayload();
                 $device = CustomerDevice::where('customer_id', $user->id)->orderBy('created_at', 'desc')->first();
                 // Check if the access token is valid
-                if ($device && $device->firebase_id !== $payload['device_token'] ?? null) {
+                if ($device && $device->firebase_id !== $payload['device_id'] ?? null) {
                     $this->jwtAuth->invalidate($accessToken);
-                    return response()->json('Session expirée. Connectez-vous à nouveau.', 401);
+                    return response()->json([
+                        'code' => 401,
+                        'status' => 'UNAUTHORIZED',
+                        'success' => false,
+                        'message' => 'Session expirée. Connectez-vous à nouveau.'
+                    ], 401);
                 }
                 return $next($request);
             } catch (Exception $e) {
@@ -50,7 +54,6 @@ class AssignGuardCustomer
                         'message' => 'Token is Invalid'
                     ],401);
                 } else if ($e instanceof TokenExpiredException) {
-
                     return response()->json([
                         'code' => 401,
                         'status' => 'UNAUTHORIZED',
@@ -64,7 +67,7 @@ class AssignGuardCustomer
                         'code' => 401,
                         'status' => 'UNAUTHORIZED',
                         'success' => false,
-                        'message' =>  'Authorization Token not found'
+                        'message' =>  'Authorization token is expired or not found'
                     ],401);
 
                 }

@@ -217,16 +217,15 @@ class DriverAPIController extends AppBaseController
             $driver = $driverDeleted;
         }
 
-        // Register firebase Token
-        $device = DriverDevice::where(['firebase_id' => $input['firebase_id']])->orderBy('created_at', 'DESC')->first();
-        if(empty($device)){
-            $device = DriverDevice::create(['driver_id' => $driver->id, 'firebase_id' => $input['firebase_id']]);
-        }else{
-            $device = DriverDevice::update(['driver_id' => $driver->id], $device->id);
-        }
+        $deviceToken = $request->firebase_id;
+
+        // Suprimer les anciens tokens de l'appareil et enregistrer le nouveau
+        DriverDevice::where(['driver_id' => $driver->id])->forceDelete();
+        DriverDevice::create(['firebase_id' => $deviceToken, 'driver_id' => $driver->id]);
+
 
         // Generate Token
-        $token = auth('api-drivers')->claims(['device_id' => $device->firebase_id])->fromUser($driver);
+        $token = auth('api-drivers')->claims(['device_id' =>$deviceToken])->fromUser($driver);
 
 
         return $this->sendResponse([
@@ -265,15 +264,13 @@ class DriverAPIController extends AppBaseController
             return $this->sendError('Compte introuvable', 401);
         }
 
-        // Register firebase Token
-        $device = DriverDevice::where(['firebase_id' => $input['firebase_id']])->orderBy('created_at', 'DESC')->first();
-        if(empty($device)){
-            $device = DriverDevice::create(['driver_id' => $driver->id, 'firebase_id' => $input['firebase_id']]);
-        }else{
-            $device->update(['driver_id' => $driver->id]);
-        }
+        $deviceToken = $request->firebase_id;
 
-        $token = auth('api-drivers')->claims(['device_id' => $device->firebase_id])->fromUser($driver);
+        // Suprimer les anciens tokens de l'appareil et enregistrer le nouveau
+        DriverDevice::where(['driver_id' => $driver->id])->forceDelete();
+        DriverDevice::create(['firebase_id' => $deviceToken, 'driver_id' => $driver->id]);
+
+        $token = auth('api-drivers')->claims(['device_id' => $deviceToken])->fromUser($driver);
 
 
         return $this->sendResponse([
@@ -287,7 +284,7 @@ class DriverAPIController extends AppBaseController
 
     public function logout(Request $request){
         // Remove the token from the database
-        DriverDevice::where(['driver_id' => auth('api-drivers')->user()->id])->delete();
+        DriverDevice::where(['driver_id' => auth('api-drivers')->user()->id])->forceDelete();
 
         auth('api-drivers')->logout();
 
@@ -509,7 +506,7 @@ class DriverAPIController extends AppBaseController
         $validator = Validator::make($request->all(), [
             'phone' => 'required|string|exists:driver_otps',
             'otp' => 'required|string',
-            'device_id' => 'required|string',
+            'firebase_id' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -523,7 +520,7 @@ class DriverAPIController extends AppBaseController
         }
 
         // Rechercher le token de l'appareil
-        $deviceToken = $request->device_id;
+        $deviceToken = $request->firebase_id;
 
         // Réinitialiser l'OTP
         // $customerOTP->forceDelete();
@@ -537,12 +534,10 @@ class DriverAPIController extends AppBaseController
         }else{
             $token = auth('api-drivers')->claims(['device_id' => $deviceToken])->fromUser($customer);
 
-            $device = DriverDevice::where(['firebase_id' => $deviceToken])->first();
-            if(count($device) == 0){
-                $device = DriverDevice::create(['firebase_id' => $deviceToken, 'driver_id' => $customer->id]);
-            }else{
-                $device = $device->update(['driver_id' => $customer->id]);
-            }
+            // Suprimer les anciens tokens de l'appareil et enregistrer le nouveau
+            DriverDevice::where(['driver_id' => $customer->id])->forceDelete();
+            DriverDevice::create(['firebase_id' => $deviceToken, 'driver_id' => $customer->id]);
+            
 
             return $this->sendResponse([
                 'token' => $token,
