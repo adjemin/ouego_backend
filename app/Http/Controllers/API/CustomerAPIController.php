@@ -13,6 +13,7 @@ use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use PHPOpenSourceSaver\JWTAuth\JWTAuth as NewJWTAuth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\CustomerDevice;
+use App\Services\OrangeSMSService;
 use App\Models\CustomerOTP;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
@@ -23,12 +24,15 @@ use MtnSmsCloud\MTNSMSApi;
 class CustomerAPIController extends AppBaseController
 {
     private CustomerRepository $customerRepository;
+    private OrangeSMSService $orangeSMSService;
     private NewJWTAuth $jwtAuth;
 
-    public function __construct(CustomerRepository $customerRepo, NewJWTAuth $jwtAuth)
+    public function __construct(CustomerRepository $customerRepo, NewJWTAuth $jwtAuth, OrangeSMSService $orangeSMSService)
     {
         $this->customerRepository = $customerRepo;
         $this->jwtAuth = $jwtAuth;
+        $this->customerRepository = $customerRepo;
+        $this->orangeSMSService = $orangeSMSService;
     }
 
     /**
@@ -330,7 +334,8 @@ class CustomerAPIController extends AppBaseController
         );
 
         // Envoyer l'OTP par SMS
-        $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
+        // $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
+        $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
 
         return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
     }

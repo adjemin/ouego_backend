@@ -1477,6 +1477,10 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Order not found');
         }
 
+        if (empty($customer)) {
+            return $this->sendError('Unauthorized', 401);
+        }
+
         $input['is_draft'] = false;
         $input['order_date'] = now();
         $input['status'] = Order::PERFORMER_LOOKUP;
