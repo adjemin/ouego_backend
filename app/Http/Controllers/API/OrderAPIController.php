@@ -1495,7 +1495,7 @@ class OrderAPIController extends AppBaseController
            'type' => 'source'
         ])->first();
 
-        $this->driverAssignmentService->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 1);
+        $this->driverAssignmentService->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 5);
 
         // $this->driverAssignmentService->assignNearestDriver($order);
 
