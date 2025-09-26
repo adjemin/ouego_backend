@@ -144,6 +144,7 @@ class PaymentAPIController extends AppBaseController
             'id' =>  $transaction->invoice_id
         ])->first();
 
+
         if ($transaction->is_waiting && $invoice != null && $invoice->status == Invoice::UNPAID) {
             $transaction->payment_gateway_trans_id = array_key_exists('payment_gateway_trans_id', $input)?$input['payment_gateway_trans_id']:null;
             $transaction->payment_gateway_payment_method = array_key_exists('payment_gateway_payment_method', $input)?$input['payment_gateway_payment_method']:null;
@@ -238,15 +239,29 @@ class PaymentAPIController extends AppBaseController
                     $user = Driver::where([
                         'id' => $invoice->customer_id
                     ])->first();
+
+                    switch ($transaction->type) {
+                        case Transaction::TYPE_DEPOSIT :
+                            $user->creditBalance($transaction->amount);
+                            break;
+                        case Transaction::TYPE_WITHDRAWAL :
+                            $user->debitBalance($transaction->amount);
+                            break;
+                    }
                 }else{
                     $user = Customer::where([
                         'id' => $invoice->customer_id
                     ])->first();
+
+                    switch ($transaction->type) {
+                        case Transaction::TYPE_DEPOSIT :
+                            $user->creditBalance($transaction->amount);
+                            break;
+                        case     Transaction::TYPE_WITHDRAWAL :
+                            $user->debitBalance($transaction->amount);
+                            break;
+                    }
                 }
-
-
-
-                $user->debitBalance($transaction->amount);
             }
         }
 

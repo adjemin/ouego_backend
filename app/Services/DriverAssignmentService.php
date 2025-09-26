@@ -51,36 +51,6 @@ class DriverAssignmentService
         return $query->limit($limit)->get();
     }
 
-    // Fonction ameliorée pour assigner un chauffeur le plus proche disponible
-    // public function findNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
-    // {
-    //     $maxUpdateTime = 30;
-
-    //     // Casts explicites en double precision pour éviter l'erreur PostgreSQL
-    //     $pointExpression = 'ST_SetSRID(ST_MakePoint(?::double precision, ?::double precision), 4326)';
-
-    //     $query = Driver::select('drivers.*')
-    //         ->selectRaw(
-    //             "ST_Distance(last_location, $pointExpression) as distance",
-    //             [$longitude, $latitude]
-    //         )
-    //         ->where('is_available', true)
-    //         ->where('is_active', true)
-    //         ->whereRaw("updated_at >= NOW() - INTERVAL '{$maxUpdateTime} MINUTE'")
-    //         ->whereJsonContains('services', $service_slug)
-    //         ->orderByRaw("last_location <-> $pointExpression", [$longitude, $latitude]);
-
-    //     if ($maxDistance) {
-    //         $query->whereRaw(
-    //             "ST_DWithin(last_location, $pointExpression, ?)",
-    //             [$longitude, $latitude, $maxDistance]
-    //         );
-    //     }
-
-    //     return $query->limit($limit)->get();
-    // }
-
-
     /**
      * Assigne une course au chauffeur le plus proche disponible.
      *
@@ -98,61 +68,37 @@ class DriverAssignmentService
         ])->first();
 
         if($route_point != null){
-            $nearestDrivers = $this->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 1, $distance);
+            $nearestDrivers = $this->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 5, $distance);
 
             if ($nearestDrivers->isEmpty()) {
                 return null;
             }
 
-            $driver = $nearestDrivers->first();
+            // $driver = $nearestDrivers;
+
             // Ici, vous pouvez ajouter la logique pour assigner effectivement la course au chauffeur
             // Par exemple, mettre à jour le statut du chauffeur, créer un enregistrement de course, etc.
-
-            $orderInvitation = OrderInvitation::where([
-                'driver_id' => $driver->id,
-                'order_id' => $order->id,
-            ])->first();
-
-
-            if($orderInvitation != null && $orderInvitation->is_waiting_acceptation == false && $orderInvitation->rejection_time != null){
-                //Retirer le driver concerné de $nearestDrivers et retourner un autre driver
-                $nearestDrivers = $nearestDrivers->filter(function ($driver) use ($orderInvitation) {
-                    return $driver->id !== $orderInvitation->driver_id;
-                });
-
-                if ($nearestDrivers->isEmpty()) {
-                    return null;
-                }
-
-                $driver = $nearestDrivers->first();
-
+            foreach($nearestDrivers as $driver){
                 $orderInvitation = OrderInvitation::where([
                     'driver_id' => $driver->id,
                     'order_id' => $order->id,
                 ])->first();
-
-            }
-
-            if($orderInvitation == null){
-                $orderInvitation = OrderInvitation::create([
-                    'driver_id' => $driver->id,
-                    'order_id' => $order->id,
-                    'is_waiting_acceptation' => true,
-                    'acceptation_time' => null,
-                    'rejection_time' => null,
-                    'latitude' => null,
-                    'longitude' => null
-                ]);
-
-            }
-
-            if($orderInvitation->is_waiting_acceptation == true){
+    
+                if($orderInvitation == null){
+                    $orderInvitation = OrderInvitation::create([
+                        'driver_id' => $driver->id,
+                        'order_id' => $order->id,
+                        'is_waiting_acceptation' => true,
+                        'acceptation_time' => null,
+                        'rejection_time' => null,
+                        'latitude' => null,
+                        'longitude' => null
+                    ]);
+                }
+    
                 // Déclencher l'événement d'assignation de commande
                 event(new OrderAssigned($orderInvitation));
             }
-
-
-
 
             return $driver;
 
@@ -165,7 +111,7 @@ class DriverAssignmentService
 
     }
 
-     public function adaptedExpressOrderAssignment($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): array
+    public function adaptedExpressOrderAssignment($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): array
     {
 
         $carrier = Carrier::find($carrier_id);
@@ -252,4 +198,5 @@ class DriverAssignmentService
 
         return $ponderations;
     }
+}
 }

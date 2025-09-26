@@ -44,6 +44,7 @@ Route::prefix('v1/')->group(function () {
 
     Route::get('products/list', [App\Http\Controllers\API\ProductAPIController::class, 'index']);
     Route::post('products/create', [App\Http\Controllers\API\ProductAPIController::class, 'store'])->middleware("auth.customer:api-customers");
+    Route::get('products/{id}', [App\Http\Controllers\API\ProductAPIController::class, 'show'])->middleware("auth.customer:api-customers");
 
     Route::post('product_types/create', [App\Http\Controllers\API\ProductTypeAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
@@ -145,6 +146,7 @@ Route::prefix('v1/')->group(function () {
     Route::delete('drivers/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'removeCarrierFromDriver'])->middleware("auth.driver:api-drivers");
 
     Route::post('drivers/transactions/balance/deposit', [App\Http\Controllers\API\DriverAPIController::class, 'depositBalance']);
+    Route::post('drivers/transactions/balance/withdraw', [App\Http\Controllers\API\DriverAPIController::class, 'withdrawBalance']);
 
     Route::get('carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
     Route::get('carriers/search', [App\Http\Controllers\API\CarrierAPIController::class, 'search'])->middleware("auth.driver:api-drivers");
@@ -166,6 +168,9 @@ Route::prefix('v1/')->group(function () {
     Route::resource('customer-addresses', App\Http\Controllers\API\CustomerAddressAPIController::class)
     ->except(['create', 'edit'])
     ->middleware("auth.customer:api-customers"); 
+
+    Route::resource('drivers/transactions', App\Http\Controllers\API\TransactionAPIController::class)
+     ->except(['create', 'edit'])->middleware("auth.driver:api-drivers");
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -223,8 +228,6 @@ Route::prefix('v1/')->group(function () {
 //Route::resource('order-invitations', App\Http\Controllers\API\OrderInvitationAPIController::class)
 //    ->except(['create', 'edit']);
 //
-//Route::resource('transactions', App\Http\Controllers\API\TransactionAPIController::class)
-//    ->except(['create', 'edit']);
 //
 //Route::resource('route-points', App\Http\Controllers\API\RoutePointAPIController::class)
 //    ->except(['create', 'edit']);

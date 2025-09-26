@@ -302,6 +302,7 @@ class CustomerAPIController extends AppBaseController
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), $e->getCode());
         }
+
     }
 
     public function verifyOTP(Request $request)
