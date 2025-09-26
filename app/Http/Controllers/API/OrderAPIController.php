@@ -1490,6 +1490,13 @@ class OrderAPIController extends AppBaseController
         // Register order history
         $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
 
+        //  $route_point = RoutePoint::where([
+        //    'order_id' => $order->id,
+        //    'type' => 'source'
+        // ])->first();
+
+        // $this->driverAssignmentService->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 5);
+
         $this->driverAssignmentService->assignNearestDriver($order);
 
         return $this->sendResponse($order->toArray(), 'Order updated successfully');

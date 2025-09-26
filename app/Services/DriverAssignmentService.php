@@ -31,7 +31,7 @@ class DriverAssignmentService
         ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
         ->whereRaw('is_available = true')
         ->whereRaw('is_active = true')
-        // ->whereRaw("updated_at >= NOW() - INTERVAL '{$maxUpdateTime} MINUTE'")
+        ->whereRaw("updated_at >= NOW() - INTERVAL '{$maxUpdateTime} MINUTE'")
         ->whereJsonContains('services', $service_slug)
         ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
@@ -59,38 +59,36 @@ class DriverAssignmentService
         ])->first();
 
         if($route_point != null){
-            $nearestDrivers = $this->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 1, $distance);
+            $nearestDrivers = $this->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 5, $distance);
 
             if ($nearestDrivers->isEmpty()) {
                 return null;
             }
 
-            $driver = $nearestDrivers->first();
+            // $driver = $nearestDrivers;
 
             // Ici, vous pouvez ajouter la logique pour assigner effectivement la course au chauffeur
             // Par exemple, mettre à jour le statut du chauffeur, créer un enregistrement de course, etc.
-
-            $orderInvitation = OrderInvitation::where([
-                'driver_id' => $driver->id,
-                'order_id' => $order->id,
-            ])->first();
-
-            if($orderInvitation == null){
-                $orderInvitation = OrderInvitation::create([
+            foreach($nearestDrivers as $driver){
+                $orderInvitation = OrderInvitation::where([
                     'driver_id' => $driver->id,
                     'order_id' => $order->id,
-                    'is_waiting_acceptation' => true,
-                    'acceptation_time' => null,
-                    'rejection_time' => null,
-                    'latitude' => null,
-                    'longitude' => null
-                ]);
-
-
-
+                ])->first();
+    
+                if($orderInvitation == null){
+                    $orderInvitation = OrderInvitation::create([
+                        'driver_id' => $driver->id,
+                        'order_id' => $order->id,
+                        'is_waiting_acceptation' => true,
+                        'acceptation_time' => null,
+                        'rejection_time' => null,
+                        'latitude' => null,
+                        'longitude' => null
+                    ]);
+                }
+    
                 // Déclencher l'événement d'assignation de commande
                 event(new OrderAssigned($orderInvitation));
-
             }
 
             return $driver;
