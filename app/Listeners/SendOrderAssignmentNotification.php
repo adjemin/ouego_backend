@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Log;
 
 class SendOrderAssignmentNotification
 {
+
+    
     /**
      * Create the event listener.
      */
@@ -34,6 +36,7 @@ class SendOrderAssignmentNotification
         //TwilioUtils::sendSMS($client_phone, $message);
 
         Log::info("SendOrderAssignmentNotification started");
+        echo "SendOrderAssignmentNotification started. Driver id: " . strval($driver->id) . PHP_EOL;
 
         //Push Notification
         $notification = DriverNotification::create([

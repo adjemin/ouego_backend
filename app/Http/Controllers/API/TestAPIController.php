@@ -6,9 +6,32 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Http\Request;
 use App\Services\OrderAssignmentV1Service;
 use App\Services\OrderAssignmentV2Service;
+use App\Services\TripService;
+use App\Models\Order;
+use App\Jobs\NotifyDriverForOrder;
+use Illuminate\Support\Facades\Log;
+
+
 
 class TestAPIController extends AppBaseController
 {
+
+    private $orderAssignmentService;
+    private $orderAssignmentV2Service;
+    private $tripService;
+
+    public function __construct(
+        OrderAssignmentV1Service $orderAssignmentService, 
+        OrderAssignmentV2Service $orderAssignmentV2Service,
+        TripService $tripService
+    )
+    {
+        $this->orderAssignmentService = $orderAssignmentService;
+        $this->orderAssignmentV2Service = $orderAssignmentV2Service;
+        $this->tripService = $tripService;
+        
+    }
+
     public function searchNearDriverByCarrier(Request $request){
         try {
             $longitude = $request->input('longitude');
@@ -82,19 +105,35 @@ class TestAPIController extends AppBaseController
 
     public function assign(Request $request)
     {
-        $longitude = $request->input('longitude');
-        $latitude = $request->input('latitude');
-        $nearDrivers = OrderAssignmentV2Service::searchNearDriverByCarrier($longitude, $latitude);
-        $carrier =  $nearDrivers['carrier_info']['carrier'];
-        $order = Order::findOrFail($request->order_id);
-        $drivers = $this->driverFinder->findAvailableDrivers($order); // ex. un service externe
+        $startTime = microtime(true);
+        $order = Order::find($request->input('order_id'));
 
-        $tripRequest = $this->tripService->createRequest($drivers, $carrier, $order);
-
-        if ($tripRequest->status !== TripRequest::FAILED) {
-            $this->tripService->dispatchNextDriverInvitation($tripRequest);
+        if (empty($order)) {
+            return $this->sendError('Order not found');
         }
 
-        return response()->json(['trip_request_id' => $tripRequest->id]);
+        $orderInfo = [
+            'order_id' => $order->id,
+            'user' => $order->user,
+            'status' => $order->status,
+            'pickup_location' => $order->pickup_location,
+            'destination_location' => $order->destination_location,
+            'assigned_at' => now(),
+            'limit' => $request->input('limit'),
+            'max_distance' => $request->input('max_distance')
+        ];
+
+        dispatch(function () use ($order, $request) {
+            NotifyDriverForOrder::dispatchSync(
+                $order->id,
+                $request->input('limit'),
+                $request->input('max_distance')
+            );
+        })->afterResponse();
+        
+        $endTime = microtime(true);
+        Log::info("Temps d'execution assign : ".($endTime - $startTime)." secondes");
+
+        return $this->sendResponse($orderInfo, 'Order assigned successfully');
     }
 }

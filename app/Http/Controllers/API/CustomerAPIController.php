@@ -265,38 +265,44 @@ class CustomerAPIController extends AppBaseController
 
     public function sendOTP(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'phone' => 'required|string',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'phone' => 'required|string',
+            ]);
 
-        if ($validator->fails()) {
-            return $this->sendError(json_encode($validator->errors()),422);
+            if ($validator->fails()) {
+                return $this->sendError(json_encode($validator->errors()),422);
+            }
+
+            // Vérifier si le numéro de téléphone est déjà enregistré
+            $customer = Customer::where('phone', $request->phone)->first();
+            if ($customer && $customer->is_blocked) {
+                return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
+            }
+
+            // Générer un OTP à 6 chiffres
+            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Créer ou mettre à jour l'entrée CustomerOTP
+            $customerOTP = CustomerOTP::updateOrCreate(
+                ['phone' => $request->phone],
+                [
+                    'otp' => $otp,
+                    'otp_expires_at' => Carbon::now()->addMinutes(5),
+                    'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
+                ]
+            );
+
+            // Envoyer l'OTP par SMS
+            // $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
+            $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
+            
+            return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), $e->getCode());
         }
 
-        // Vérifier si le numéro de téléphone est déjà enregistré
-        $customer = Customer::where('phone', $request->phone)->first();
-        if ($customer && $customer->is_blocked) {
-            return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
-        }
-
-        // Générer un OTP à 6 chiffres
-        $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        // Créer ou mettre à jour l'entrée CustomerOTP
-        $customerOTP = CustomerOTP::updateOrCreate(
-            ['phone' => $request->phone],
-            [
-                'otp' => $otp,
-                'otp_expires_at' => Carbon::now()->addMinutes(5),
-                'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
-            ]
-        );
-
-        // Envoyer l'OTP par SMS
-        // $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
-        $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
-
-        return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
     }
 
     public function verifyOTP(Request $request)
