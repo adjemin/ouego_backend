@@ -30,6 +30,7 @@ use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Services\DriverAssignmentService;
 use App\Services\CarrierLocationService;
+use App\Services\TripService;
 /**
  * Class OrderAPIController
  */
@@ -39,12 +40,19 @@ class OrderAPIController extends AppBaseController
 
     private DriverAssignmentService $driverAssignmentService;
     private CarrierLocationService $carrierLocationService;
+    private TripService $tripService;
 
-    public function __construct(OrderRepository $orderRepo, DriverAssignmentService $driverAssignmentService, CarrierLocationService $carrierLocationService)
+    public function __construct(
+        OrderRepository $orderRepo, 
+        DriverAssignmentService $driverAssignmentService, 
+        CarrierLocationService $carrierLocationService,
+        TripService $tripService
+    )
     {
         $this->orderRepository = $orderRepo;
         $this->driverAssignmentService = $driverAssignmentService;
         $this->carrierLocationService = $carrierLocationService;
+        $this->tripService = $tripService;
     }
 
     /**
@@ -1499,14 +1507,13 @@ class OrderAPIController extends AppBaseController
         // Register order history
         $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
 
-        //  $route_point = RoutePoint::where([
-        //    'order_id' => $order->id,
-        //    'type' => 'source'
-        // ])->first();
+        if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
+            $this->driverAssignmentService->assignCourseAndLocationNearestDriver($order);
+        }
 
-        // $this->driverAssignmentService->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 5);
-
-        $this->driverAssignmentService->assignNearestDriver($order);
+        if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
+            $this->tripService->getDriverAndNotify($order);
+        }
 
         return $this->sendResponse($order->toArray(), 'Order updated successfully');
 
@@ -1908,72 +1915,6 @@ class OrderAPIController extends AppBaseController
         return $this->sendError($e->getMessage(), 400);
     }
 
-    $inner_radius = 0;
-
-    $outer_radius = 100;
-
-    $destination_point = $destination_list->last();
-
-    $latitude = $destination_point['latitude'];
-    $longitude = $destination_point['longitude'];
-
-    $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
-
-    if(count($carriers)==0){
-        return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
-    }
-
-    $carrier = $carriers->first();
-
-    $source_point = [
-        "latitude" => $carrier->location_latitude,
-        "longitude" =>  $carrier->location_longitude,
-    ];
-
-
-    $result = GoogleMapsAPIUtils::getDistance([
-        $source_point['latitude'],
-        $source_point['longitude']
-    ],[
-        $destination_point['latitude'],
-        $destination_point['longitude']
-
-    ]);
-
-
-    $current_distance = 0;
-    $distance= "";
-
-    if(array_key_exists('distance',$result)){
-        $result_distance = $result['distance']; //array
-        $result_distance_value = $result_distance['value']; //meters
-        $current_distance = $result_distance_value/1000; //kilometers
-        $current_distance = $current_distance;
-        $distance = $current_distance.' km';
-
-    }
-
-    $duration = "";
-
-    if(array_key_exists('duration',$result)){
-        $result_duration = $result['duration']; //array
-        $duration = $result_duration['text'];
-    }
-
-    //dd($current_distance);
-
-    //$current_distance = 55;
-
-
-    return $this->sendResponse([
-        'carrier' => $carrier,
-        'amount' => PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code),
-        'distance' => $distance,
-        'duration' => $duration,
-        'delivery_type' => $delivery_type_code
-    ], 'Order saved successfully');
-
-
    }
 
    public function estimateDeliveryPriceSable(Request $request){
@@ -2105,29 +2046,16 @@ class OrderAPIController extends AppBaseController
         ]);
 
 
-        $current_distance = 0;
         $distance = "";
 
         if(array_key_exists('distance',$result)){
             $result_distance = $result['distance']; //array
             $result_distance_value = $result_distance['value']; //meters
             $current_distance = $result_distance_value/1000; //kilometers
-            $current_distance = intval($current_distance);
-            $distance = $result_distance['text'];
+            $current_distance = number_format($current_distance);
+            $distance = $current_distance." km";
 
         }
-
-        if(array_key_exists('duration',$result)){
-            $result_duration = $result['duration']; //array
-            $result_duration_value = $result_duration['value']; //meters
-            $current_duration = $result_duration_value/1000; //kilometers
-            $current_distance = intval($current_distance);
-
-        }
-
-        //dd($current_distance);
-
-        //$current_distance  = 10;
 
         $duration = "";
 
@@ -2148,79 +2076,6 @@ class OrderAPIController extends AppBaseController
     } catch (\Throwable $th) {
         return $this->sendError($th->getMessage(), 400);
     }
-
-    $inner_radius = 0;
-
-    $outer_radius = 100;
-
-    $destination_point = $destination_list->last();
-
-    $latitude = $destination_point['latitude'];
-    $longitude = $destination_point['longitude'];
-
-    $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
-
-    if(count($carriers)==0){
-        return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
-    }
-
-    $carrier = $carriers->first();
-
-    $source_point = [
-        "latitude" => $carrier->location_latitude,
-        "longitude" =>  $carrier->location_longitude,
-    ];
-
-
-    $result = GoogleMapsAPIUtils::getDistance([
-        $source_point['latitude'],
-        $source_point['longitude']
-    ],[
-        $destination_point['latitude'],
-        $destination_point['longitude']
-
-    ]);
-
-
-    $current_distance = 0;
-    $distance = "";
-
-    if(array_key_exists('distance',$result)){
-        $result_distance = $result['distance']; //array
-        $result_distance_value = $result_distance['value']; //meters
-        $current_distance = $result_distance_value/1000; //kilometers
-        $current_distance = $current_distance;
-        $distance = $current_distance." km";
-
-    }
-
-    if(array_key_exists('duration',$result)){
-        $result_duration = $result['duration']; //array
-        $result_duration_value = $result_duration['value']; //meters
-        $current_duration = $result_duration_value/1000; //kilometers
-        $current_distance = $current_distance;
-
-    }
-
-    //dd($current_distance);
-
-    //$current_distance  = 10;
-
-    $duration = "";
-
-    if(array_key_exists('duration',$result)){
-        $result_duration = $result['duration']; //array
-        $duration = $result_duration['text'];
-    }
-
-
-    return $this->sendResponse([
-        'carrier' => $carrier,
-        'amount' => PricingUtils::transportSable($current_distance, $delivery_type_code),
-        'distance' => $distance,
-        'duration' => $duration,
-        'delivery_type' => $delivery_type_code
-    ], 'Order saved successfully');
 
 
    }

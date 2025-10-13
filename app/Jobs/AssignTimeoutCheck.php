@@ -17,7 +17,7 @@ use App\Services\CarrierService;
 // class AssignTimeoutCheck implements ShouldQueue
 class AssignTimeoutCheck implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.

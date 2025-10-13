@@ -26,9 +26,9 @@ class TripService
     private const MAX_DRIVER_ATTEMPTS = 3;
     private const INVITATION_DELAY_SECONDS = 15;
 
-    private OrderAssignmentV1Service $orderAssignmentService;
+    private DriverAssignmentService $orderAssignmentService;
 
-    public function __construct(OrderAssignmentV1Service $orderAssignmentService)
+    public function __construct(DriverAssignmentService $orderAssignmentService)
     {
         // Injection de dépendances possible ici (repositories, services, etc.)
         $this->orderAssignmentService = $orderAssignmentService;
@@ -174,14 +174,121 @@ class TripService
     }
 
 
-    public function getDriverAndNotify(Order $order, $limit = 5, $maxDistance = null)
+    /**
+     * Recherche des chauffeurs et lance le processus de notification séquentielle
+     * 
+     * @param Order $order
+     * @param int $limit Nombre maximum de chauffeurs à rechercher (défaut: 5)
+     * @param float|null $maxDistance Distance maximum en mètres (optionnel)
+     * @return array Résultat de l'opération avec statut et données
+     */
+    public function getDriverAndNotify(Order $order, $limit = 5, $maxDistance = null): array
     {
-        $driversData = $this->orderAssignmentService->adaptedExpressOrderAssignment($order, $limit, $maxDistance);
-        $drivers =  array_column($driversData, 'driver_id');
-        $carrier_id = $driversData[0]['carrier_id'];
+        try {
 
-        $tripRequest = $this->createRequest($drivers, $carrier_id, $order->id);
-        $this->dispatchNextDriverInvitation($tripRequest);
-        return 0;
+            // Validation des données d'entrée
+            if (!$order || !$order->exists) {
+                Log::error("getDriverAndNotify: Commande invalide", ['order_id' => $order?->id]);
+                return [
+                    'success' => false,
+                    'message' => 'Commande invalide',
+                    'data' => null
+                ];
+            }
+
+
+            Log::info("Début de recherche de chauffeurs", [
+                'order_id' => $order->id,
+                'limit' => $limit,
+                'max_distance' => $maxDistance
+            ]);
+
+            // Vérification du produit associé
+            $product = $order->items->first();
+            if (!$product || !$product->carrier_id) {
+                Log::error("getDriverAndNotify: Aucun produit ou carrier_id manquant", [
+                    'order_id' => $order->id,
+                    'product_exists' => !!$product
+                ]);
+                return [
+                    'success' => false,
+                    'message' => 'Produit ou transporteur non trouvé pour cette commande',
+                    'data' => null
+                ];
+            }
+
+            // Recherche des chauffeurs avec l'algorithme de pondération
+            $driversData = $this->orderAssignmentService->aggregatExpressOrderAssignment(
+                $product->carrier_id, 
+                $order->id, 
+                $order->service_slug, 
+                $limit, 
+                $maxDistance
+            );
+
+    
+            // Vérification que des chauffeurs ont été trouvés
+            if (empty($driversData)) {
+                Log::warning("getDriverAndNotify: Aucun chauffeur trouvé", [
+                    'order_id' => $order->id,
+                    'carrier_id' => $product->carrier_id,
+                    'service_slug' => $order->service_slug
+                ]);
+                return [
+                    'success' => false,
+                    'message' => 'Aucun chauffeur disponible trouvé',
+                    'data' => [
+                        'drivers_searched' => 0,
+                        'carrier_id' => $product->carrier_id
+                    ]
+                ];
+            }
+
+            $drivers = array_column($driversData, 'driver_id');
+            $carrier_id =$product->carrier_id;
+
+            Log::info("Chauffeurs trouvés, création de la demande de course", [
+                'order_id' => $order->id,
+                'drivers_count' => count($drivers),
+                'carrier_id' => $carrier_id
+            ]);
+
+            
+            // Création de la demande de course et des invitations
+            $tripRequest = $this->createRequest($drivers, $carrier_id, $order->id);
+            
+            // Lancement du processus de notification séquentielle
+            $this->dispatchNextDriverInvitation($tripRequest);
+
+            Log::info("Processus de notification lancé avec succès", [
+                'trip_request_id' => $tripRequest->id,
+                'order_id' => $order->id,
+                'drivers_invited' => count($drivers)
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Processus de recherche de chauffeur lancé avec succès',
+                'data' => [
+                    'trip_request_id' => $tripRequest->id,
+                    'drivers_invited' => count($drivers),
+                    'carrier_id' => $carrier_id,
+                    'drivers_data' => $driversData
+                ]
+            ];
+
+        } catch (\Exception $e) {
+            Log::error("Erreur dans getDriverAndNotify", [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Erreur lors de la recherche de chauffeurs: ' . $e->getMessage(),
+                'data' => null
+            ];
+        }
     }   
 }
