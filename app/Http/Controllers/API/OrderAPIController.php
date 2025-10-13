@@ -1512,7 +1512,7 @@ class OrderAPIController extends AppBaseController
         }
 
         if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-            $this->tripService->getDriverAndNotify($order);
+            $this->driverAssignmentService->getAggregatDriverAndNotify($order);
         }
 
         return $this->sendResponse($order->toArray(), 'Order updated successfully');

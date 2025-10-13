@@ -39,7 +39,6 @@ class TripService
      */
     public function createRequest(array $drivers, $carrier_id, $order_id): TripRequest
     {
-        echo "Start createRequest";
 
         $tripRequest = TripRequest::create([
             'carrier_id' => $carrier_id,
