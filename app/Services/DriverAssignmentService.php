@@ -43,6 +43,13 @@ class DriverAssignmentService
             'type' => 'source'
         ])->first();
 
+        if (!$route_point) {
+            $route_point = RoutePoint::where([
+                'order_id' => $order->id
+            ])->first();
+        }
+
+        
         if($route_point != null){
             $nearestDrivers = $this->findCourseAndLocationNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, $this->maxDrivers, $distance);
 
