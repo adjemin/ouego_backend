@@ -171,6 +171,11 @@ Route::prefix('v1/')->group(function () {
 
     Route::resource('drivers/transactions', App\Http\Controllers\API\TransactionAPIController::class)
      ->except(['create', 'edit'])->middleware("auth.driver:api-drivers");
+
+
+    Route::get('zones-with-carriers', [App\Http\Controllers\API\ZoneAPIController::class, 'indexWithCarrier']);
+    Route::resource('zones', App\Http\Controllers\API\ZoneAPIController::class)
+        ->except(['create', 'edit']);
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
