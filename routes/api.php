@@ -176,6 +176,8 @@ Route::prefix('v1/')->group(function () {
     Route::get('zones-with-carriers', [App\Http\Controllers\API\ZoneAPIController::class, 'indexWithCarrier']);
     Route::resource('zones', App\Http\Controllers\API\ZoneAPIController::class)
         ->except(['create', 'edit']);
+
+    Route::get('delivery-objects', [App\Http\Controllers\API\DeliveryObjectAPIController::class, 'index'])->name('api.delivery-objects.index');
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

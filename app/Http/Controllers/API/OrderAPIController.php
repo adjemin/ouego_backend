@@ -96,6 +96,7 @@ class OrderAPIController extends AppBaseController
             "reference" => Order::generateReference(),
             "customer_id" => $customer->id,
             "status" => Order::INITIATED,
+            'order_object' => $request->input('order_object'),
             "is_started" => false,
             "is_running" => false,
             "is_waiting" => true,

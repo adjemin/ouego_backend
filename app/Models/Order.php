@@ -75,6 +75,7 @@ class Order extends Model
         'service_slug',
         'status',
         'comment',
+        'order_object',
         'order_date',
         'is_started',
         'is_running',
