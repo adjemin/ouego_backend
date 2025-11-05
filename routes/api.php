@@ -147,6 +147,7 @@ Route::prefix('v1/')->group(function () {
 
     Route::post('drivers/transactions/balance/deposit', [App\Http\Controllers\API\DriverAPIController::class, 'depositBalance']);
     Route::post('drivers/transactions/balance/withdraw', [App\Http\Controllers\API\DriverAPIController::class, 'withdrawBalance']);
+    Route::get('drivers/earnings/daily', [App\Http\Controllers\API\DriverAPIController::class, 'getDailyEarnings'])->middleware("auth.driver:api-drivers");
 
     Route::get('carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
     Route::get('carriers/search', [App\Http\Controllers\API\CarrierAPIController::class, 'search'])->middleware("auth.driver:api-drivers");
