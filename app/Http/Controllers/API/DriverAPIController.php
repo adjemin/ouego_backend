@@ -710,4 +710,37 @@ class DriverAPIController extends AppBaseController
 
 
     }
+
+    public function getDailyEarnings(Request $request): JsonResponse
+    {
+        try {
+            $driver = auth('api-drivers')->user();
+
+            if (!$driver) {
+                return $this->sendError('Driver not authenticated', 401);
+            }
+
+            $today = Carbon::now();
+            $startOfDay = $today->copy()->startOfDay();
+            $endOfDay = $today->copy()->endOfDay();
+
+            $todayOrders = DB::table('orders')
+                ->join('invoices', 'orders.id', '=', 'invoices.order_id')
+                ->where('orders.driver_id', $driver->id)
+                ->where('orders.status', 'delivered')
+                ->where('invoices.driver_due', '>', 0)
+                ->whereBetween('orders.created_at', [$startOfDay, $endOfDay])
+                ->sum('invoices.driver_due');
+
+            return $this->sendResponse([
+                'daily_earnings' => floatval($todayOrders),
+                'date' => $today->format('Y-m-d'),
+                'driver_id' => $driver->id
+            ], 'Daily earnings retrieved successfully');
+
+        } catch (\Exception $e) {
+            Log::error('Daily earnings error: ' . $e->getMessage());
+            return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
+        }
+    }
 }

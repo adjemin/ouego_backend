@@ -12,7 +12,7 @@ class OrderItem extends Model
 
     public $table = 'order_items';
 
-    protected $appends = ['service','route_points'];
+    protected $appends = ['service','route_points','carrier'];
 
     public $fillable = [
         'order_id',
@@ -131,5 +131,17 @@ class OrderItem extends Model
         ])->get();
     }
 
+    public function getCarrierAttribute()
+    {
+        if ($this->carrier_id) {
+            return Carrier::where('id', $this->carrier_id)->first();
+        }
+        return null;
+    }
+
+    public function carrier()
+    {
+        return $this->belongsTo(Carrier::class, 'carrier_id', 'id');
+    }
 
 }
