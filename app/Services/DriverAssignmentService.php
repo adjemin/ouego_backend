@@ -19,11 +19,11 @@ use Illuminate\Support\Facades\Log;
 class DriverAssignmentService
 {
 
-     // Ville de référence : Abidjan
-    private float $villeLat = 5.3252258;
-    private float $villeLng = -4.019603;
-    private float $rayonMaxKm = 50;
-    private int $maxUpdateTime  = 30;
+    // Ville de référence : Abidjan
+    // private float $villeLat = 5.3252258;
+    // private float $villeLng = -4.019603;
+    // private float $rayonMaxKm = 50;
+    // private int $maxUpdateTime  = 30;
     private int $maxDrivers = 5;
     
 
@@ -222,7 +222,7 @@ class DriverAssignmentService
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
             ->whereRaw('is_available = true')
             ->whereRaw('is_active = true')
-            // ->whereRaw("updated_at >= NOW() - INTERVAL '{$maxUpdateTime} MINUTE'")
+            ->whereRaw("updated_at >= NOW() - INTERVAL '{$maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
