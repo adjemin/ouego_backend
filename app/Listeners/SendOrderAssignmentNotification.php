@@ -30,8 +30,8 @@ class SendOrderAssignmentNotification
     public function handle(OrderAssigned $event): void
     {
 
-        $driver = \App\Models\Driver::find($event->orderInvitation->driver_id);
-        $client_phone = $driver->phone;
+        // $driver = \App\Models\Driver::find($event->orderInvitation->driver_id);
+        // $client_phone = $driver->phone;
         //$message = "Course #".$event->orderInvitation->order_id." vous a été affectée | +". $client_phone." | Acceptez ou Refusez la course";
         //TwilioUtils::sendSMS($client_phone, $message);
 
