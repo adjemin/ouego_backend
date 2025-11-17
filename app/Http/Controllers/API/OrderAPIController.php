@@ -2048,13 +2048,14 @@ class OrderAPIController extends AppBaseController
 
 
         $distance = "";
+        $current_distance = 0; // Initialiser la variable
 
         if(array_key_exists('distance',$result)){
             $result_distance = $result['distance']; //array
             $result_distance_value = $result_distance['value']; //meters
             $current_distance = $result_distance_value/1000; //kilometers
-            $current_distance = number_format($current_distance);
-            $distance = $current_distance." km";
+            $formatted_distance = number_format($current_distance);
+            $distance = $formatted_distance." km";
 
         }
 
