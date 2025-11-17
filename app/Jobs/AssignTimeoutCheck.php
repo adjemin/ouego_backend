@@ -8,16 +8,16 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\TripRequest;
-use App\Models\Driver;
 use App\Models\OrderInvitation;
 use App\Models\TripDriverAttempt;
 use App\Services\TripService;
-use App\Services\CarrierService;
 
-// class AssignTimeoutCheck implements ShouldQueue
-class AssignTimeoutCheck 
+class AssignTimeoutCheck implements ShouldQueue
+// class AssignTimeoutCheck 
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $timeout = 30;
 
     /**
      * Create a new job instance.

@@ -10,20 +10,23 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\DriverNotification;
 use App\Models\NotificationDeliveryStatus;
 use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
 use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
+use Exception;
 
 
-class SendPushNotification
+class SendPushNotification implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     // Nombre maximum de tentatives
     public $tries = 3;
 
     // Délai entre les tentatives (en secondes)
     public $backoff = [10, 60, 180];
+
+    // Timeout pour le job (en secondes)
+    public $timeout = 30;
 
 
     protected $fcmToken;
@@ -71,23 +74,31 @@ class SendPushNotification
                 'id' => $this->notificationData->id
             ];
 
-            $message = CloudMessage::withTarget('token', $this->fcmToken)
-               ->withNotification(Notification::fromArray($notification))
-               ->withHighestPossiblePriority()
-               ->withData(array(
+            $message = CloudMessage::fromArray([
+                'token' => $this->fcmToken,
+                'notification' => $notification,
+                'data' => [
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'id' => "".$this->notificationData->id,
+                    'id' => (string)$this->notificationData->id,
                     'status' => 'done',
-                    'notification_type' => "".$this->notificationData->type,
-                    'notification_id' => "".$this->notificationData->id,
-                    'meta_data_id' => "".$this->notificationData->data_id,
-                    //'notification' => json_encode($customerNotification),
-                    "title" => "".$this->notificationData->title,
-                    "body" => "".$this->notificationData->subtitle,
+                    'notification_type' => (string)$this->notificationData->type,
+                    'notification_id' => (string)$this->notificationData->id,
+                    'meta_data_id' => (string)$this->notificationData->data_id,
+                    'title' => (string)$this->notificationData->title,
+                    'body' => (string)$this->notificationData->subtitle,
                     'message_id' => $messageId
-                ));
+                ],
+                'android' => [
+                    'priority' => 'high'
+                ],
+                'apns' => [
+                    'headers' => [
+                        'apns-priority' => '10'
+                    ]
+                ]
+            ]);
 
-            $result = $messaging->send($message);
+            $messaging->send($message);
 
            // Mise à jour du statut avec l'ID du message FCM
            $deliveryStatus->update([

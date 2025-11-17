@@ -10866,5 +10866,5 @@ return array(
     'Whoops\\Util\\SystemFacade' => $vendorDir . '/filp/whoops/src/Whoops/Util/SystemFacade.php',
     'Whoops\\Util\\TemplateHelper' => $vendorDir . '/filp/whoops/src/Whoops/Util/TemplateHelper.php',
     'voku\\helper\\ASCII' => $vendorDir . '/voku/portable-ascii/src/voku/helper/ASCII.php',
-    '©' => $vendorDir . '/symfony/cache/Traits/ValueWrapper.php',
+    'ï¿½' => $vendorDir . '/symfony/cache/Traits/ValueWrapper.php',
 );

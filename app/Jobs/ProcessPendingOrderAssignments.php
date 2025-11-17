@@ -9,18 +9,15 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Order;
 use App\Services\DriverAssignmentService;
-use App\Events\OrderAssigned;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
-use Carbon\Carbon;
-use App\Services\TripService;
 use App\Models\Service;
 use App\Models\OrderInvitation;
 
-// class ProcessPendingOrderAssignments implements ShouldQueue
-class ProcessPendingOrderAssignments
+class ProcessPendingOrderAssignments implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 5;
     public $backoff = [30, 60, 120, 300, 600];
@@ -30,16 +27,34 @@ class ProcessPendingOrderAssignments
     
     // Délai d'attente pour une réponse (en minutes)
     private const INVITATION_TIMEOUT = 5;
+    
+    // Limite du nombre de commandes à traiter par batch
+    private const BATCH_LIMIT = 50;
 
     public function handle(DriverAssignmentService $driverAssignmentService)
     {
-        // Optimisation : eager loading pour éviter N+1
+        Log::info("ProcessPendingOrderAssignments job started");
+        
+        // Vérifier si un autre job est déjà en cours
+        $lockKey = 'processing_pending_orders';
+        if (Cache::has($lockKey)) {
+            Log::info("ProcessPendingOrderAssignments job already running, skipping");
+            return;
+        }
+        
+        // Acquérir le lock pour 10 minutes
+        Cache::put($lockKey, true, 600);
+        
+        try {
+        // Optimisation : eager loading pour éviter N+1 et limitation du batch
         $pendingOrders = Order::with(['orderInvitations' => function($query) {
                 $query->where('is_waiting_acceptation', true);
             }])
             ->where('status', Order::PERFORMER_LOOKUP)
             ->whereNull('driver_id')
             ->where('is_draft', false)
+            ->orderBy('created_at', 'asc') // Traiter les plus anciennes en premier
+            ->limit(self::BATCH_LIMIT)
             ->get();
 
         if ($pendingOrders->isEmpty()) {
@@ -69,6 +84,12 @@ class ProcessPendingOrderAssignments
         // ✅ Replanifier UNE SEULE FOIS après le traitement de toutes les commandes
         if ($needsRecheck) {
             ProcessPendingOrderAssignments::dispatch()->delay(now()->addMinutes(10));
+        }
+        
+        } finally {
+            // Libérer le lock
+            Cache::forget($lockKey);
+            Log::info("ProcessPendingOrderAssignments job completed");
         }
     }
 

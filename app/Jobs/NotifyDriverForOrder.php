@@ -4,8 +4,9 @@ namespace App\Jobs;
 
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\Services\TripService;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class NotifyDriverForOrder
+class NotifyDriverForOrder implements ShouldQueue
 {
     use Dispatchable;
 

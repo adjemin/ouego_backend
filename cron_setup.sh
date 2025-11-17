@@ -1,0 +1,2 @@
+#!/bin/bash
+(crontab -l 2>/dev/null; echo "* * * * * cd /Users/monmackbook/Documents/adjemin/ouego_backend && /opt/homebrew/opt/php@8.2/bin/php artisan schedule:run >> /tmp/laravel_schedule.log 2>&1") | crontab -
