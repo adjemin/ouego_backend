@@ -17,9 +17,10 @@ use App\Services\TripService;
 use App\Models\Service;
 use App\Models\OrderInvitation;
 
-class ProcessPendingOrderAssignments implements ShouldQueue
+// class ProcessPendingOrderAssignments implements ShouldQueue
+class ProcessPendingOrderAssignments
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
 
     public $tries = 5;
     public $backoff = [30, 60, 120, 300, 600];
