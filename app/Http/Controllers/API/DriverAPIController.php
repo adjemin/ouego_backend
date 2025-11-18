@@ -10,6 +10,8 @@ use App\Models\EnginPicture;
 use App\Models\Invoice;
 use App\Models\Transaction;
 use App\Models\Payment;
+use App\Models\Zone;
+use App\Models\DriverCarrier;
 use App\Repositories\DriverRepository;
 use App\Repositories\EnginRepository;
 use Illuminate\Http\JsonResponse;
@@ -567,7 +569,7 @@ class DriverAPIController extends AppBaseController
             ]);
 
             if ($validator->fails()) {
-                return $this->sendError('Validation Error', $validator->errors());
+                return $this->sendError('Validation Error', 422);
             }
 
             // Récupération des données
@@ -643,7 +645,7 @@ class DriverAPIController extends AppBaseController
             ]);
 
             if ($validator->fails()) {
-                return $this->sendError('Validation Error', $validator->errors());
+                return $this->sendError('Validation Error', 422);
             }
 
 
@@ -740,6 +742,57 @@ class DriverAPIController extends AppBaseController
 
         } catch (\Exception $e) {
             Log::error('Daily earnings error: ' . $e->getMessage());
+            return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
+        }
+    }
+
+    public function updateZoneBase(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'zone_base_id' => 'required|exists:zones,id'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError('Validation Error', 422);
+            }
+
+            $driver = auth('api-drivers')->user();
+            
+            if (!$driver) {
+                return $this->sendError('Driver not authenticated', 401);
+            }
+
+            $zoneId = $request->zone_base_id;
+            $zone = Zone::with('carriers')->findOrFail($zoneId);
+
+            DB::beginTransaction();
+
+            $driver->zone_base_id = $zoneId;
+            $driver->save();
+
+            DriverCarrier::where('driver_id', $driver->id)->delete();
+
+            $carriersInZone = $zone->carriers;
+            
+            foreach ($carriersInZone as $carrier) {
+                DriverCarrier::create([
+                    'driver_id' => $driver->id,
+                    'carrier_id' => $carrier->id
+                ]);
+            }
+
+            DB::commit();
+
+            return $this->sendResponse([
+                'driver' => $driver->fresh()->load('zoneBase'),
+                'assigned_carriers' => $carriersInZone,
+                'zone' => $zone
+            ], 'Zone de base mise à jour avec succès. Carriers assignés automatiquement.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Update zone base error: ' . $e->getMessage());
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
     }

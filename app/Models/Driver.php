@@ -36,6 +36,7 @@ class Driver extends Authenticatable  implements JWTSubject
         'services',
         'driver_license_docs',
         'rate',
+        'zone_base_id',
     ];
 
     protected $casts = [
@@ -56,6 +57,7 @@ class Driver extends Authenticatable  implements JWTSubject
         'driver_license_docs' => 'array',
         'services' => 'array',
         'rate' => 'string',
+        'zone_base_id' => 'integer',
     ];
 
     public static array $rules = [
@@ -189,7 +191,9 @@ class Driver extends Authenticatable  implements JWTSubject
     }
 
 
-
-
+    public function zoneBase()
+    {
+        return $this->belongsTo(Zone::class, 'zone_base_id');
+    }
 
 }
