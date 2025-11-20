@@ -12,6 +12,7 @@ use App\Models\Transaction;
 use App\Models\Payment;
 use App\Models\Zone;
 use App\Models\DriverCarrier;
+use App\Models\OrderInvitation;
 use App\Repositories\DriverRepository;
 use App\Repositories\EnginRepository;
 use Illuminate\Http\JsonResponse;
@@ -793,6 +794,70 @@ class DriverAPIController extends AppBaseController
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Update zone base error: ' . $e->getMessage());
+            return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
+        }
+    }
+
+    public function getPendingOrderInvitations(): JsonResponse
+    {
+        try {
+            $driver = auth('api-drivers')->user();
+            
+            if (!$driver) {
+                return $this->sendError('Driver not authenticated', 401);
+            }
+
+            $pendingInvitations = OrderInvitation::where('driver_id', $driver->id)
+                ->where('is_waiting_acceptation', true)
+                ->with(['order' => function($query) {
+                    $query->with(['customer', 'orderItems']);
+                }])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $formattedInvitations = $pendingInvitations->map(function($invitation) {
+                return [
+                    'id' => $invitation->id,
+                    'order_id' => $invitation->order_id,
+                    'status' => $invitation->status,
+                    'is_waiting_acceptation' => $invitation->is_waiting_acceptation,
+                    'latitude' => $invitation->latitude,
+                    'longitude' => $invitation->longitude,
+                    'attempt_number' => $invitation->attempt_number,
+                    'created_at' => $invitation->created_at,
+                    'order' => $invitation->order ? [
+                        'id' => $invitation->order->id,
+                        'pickup_address' => $invitation->order->pickup_address,
+                        'delivery_address' => $invitation->order->delivery_address,
+                        'pickup_latitude' => $invitation->order->pickup_latitude,
+                        'pickup_longitude' => $invitation->order->pickup_longitude,
+                        'delivery_latitude' => $invitation->order->delivery_latitude,
+                        'delivery_longitude' => $invitation->order->delivery_longitude,
+                        'status' => $invitation->order->status,
+                        'customer' => $invitation->order->customer ? [
+                            'id' => $invitation->order->customer->id,
+                            'name' => $invitation->order->customer->name,
+                            'phone' => $invitation->order->customer->phone
+                        ] : null,
+                        'order_items' => $invitation->order->orderItems ? $invitation->order->orderItems->map(function($item) {
+                            return [
+                                'id' => $item->id,
+                                'quantity' => $item->quantity,
+                                'service_slug' => $item->service_slug,
+                                'meta_data' => $item->meta_data,
+                            ];
+                        }) : []
+                    ] : null
+                ];
+            });
+
+            return $this->sendResponse([
+                'pending_invitations' => $formattedInvitations,
+                'count' => $formattedInvitations->count()
+            ], 'Demandes de course en attente récupérées avec succès');
+
+        } catch (\Exception $e) {
+            Log::error('Get pending order invitations error: ' . $e->getMessage());
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
     }

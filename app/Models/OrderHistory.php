@@ -36,6 +36,10 @@ class OrderHistory extends Model
         return Order::where('id', $this->order_id)->first();
     }
 
+    public function order(){
+        return $this->belongsTo(Order::class, 'order_id', 'id');
+    }
+
     public function getCreatorInfoAttribute()
     {
         return DB::table($this->creator)

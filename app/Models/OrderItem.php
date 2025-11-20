@@ -59,6 +59,7 @@ class OrderItem extends Model
         return RoutePoint::where(['order_id' => $this->order_id])->orderBy('visit_order', 'ASC')->get();
     }
 
+
     public function getServiceAttribute()
     {
         return Service::where([

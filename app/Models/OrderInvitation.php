@@ -50,6 +50,10 @@ class OrderInvitation extends Model
         return Order::where('id', $this->order_id)->first();
     }
 
+    public function order(){
+        return $this->belongsTo(Order::class, 'order_id', 'id');
+    }
+
 
 
 }
