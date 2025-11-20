@@ -193,7 +193,7 @@ class Driver extends Authenticatable  implements JWTSubject
 
     public function zoneBase()
     {
-        return $this->belongsTo(Zone::class, 'zone_base_id');
+        return $this->belongsTo(Zone::class, 'zone_base_id', 'id');
     }
 
     public function getZoneBaseInfoAttribute()
@@ -203,7 +203,7 @@ class Driver extends Authenticatable  implements JWTSubject
         }
 
         $zone = $this->zoneBase;
-        $carriers = $zone->carriers()->select(['id', 'name', 'address', 'latitude', 'longitude', 'phone'])->get();
+        $carriers = $zone->carriers()->select(['carriers.id', 'carriers.name', 'carriers.location_latitude', 'carriers.location_longitude', 'carriers.phone'])->get();
         
         return [
             'id' => $zone->id,
