@@ -17,7 +17,7 @@ class Driver extends Authenticatable  implements JWTSubject
 
     protected $guard = 'api-drivers';
 
-    protected $appends = ['cars', 'current_order_count'];
+    protected $appends = ['cars', 'current_order_count', 'zone_base_info'];
 
     public $fillable = [
         'first_name',
@@ -194,6 +194,23 @@ class Driver extends Authenticatable  implements JWTSubject
     public function zoneBase()
     {
         return $this->belongsTo(Zone::class, 'zone_base_id');
+    }
+
+    public function getZoneBaseInfoAttribute()
+    {
+        if (!$this->zoneBase) {
+            return null;
+        }
+
+        $zone = $this->zoneBase;
+        $carriers = $zone->carriers()->select(['id', 'name', 'address', 'latitude', 'longitude', 'phone'])->get();
+        
+        return [
+            'id' => $zone->id,
+            'name' => $zone->name,
+            'description' => $zone->description,
+            'carriers' => $carriers
+        ];
     }
 
 }
