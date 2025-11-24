@@ -216,7 +216,7 @@ class DriverAssignmentService
      */
     public function findCourseAndLocationNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
     {
-        $maxUpdateTime  = 30;
+        $maxUpdateTime  = 120;
         // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
         $query = Driver::select('drivers.*')
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
