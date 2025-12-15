@@ -43,7 +43,6 @@ class ProcessPendingOrderAssignments
             ->get();
 
         if ($pendingOrders->isEmpty()) {
-            Log::info("No pending orders to process");
             return;
         }
 
@@ -58,10 +57,6 @@ class ProcessPendingOrderAssignments
                 }
                 
             } catch (Throwable $e) {
-                Log::error("Error processing order {$order->id}: " . $e->getMessage(), [
-                    'exception' => $e,
-                    'order_id' => $order->id
-                ]);
                 // Ne pas fail le job entier pour une seule commande
             }
         }
@@ -112,7 +107,6 @@ class ProcessPendingOrderAssignments
         $order->update(['status' => Order::PERFORMER_NOT_FOUND]);
         $order->newOrderHistory(Order::PERFORMER_NOT_FOUND, 'system', null);
         
-        Log::warning("Order {$order->id} marked as PERFORMER_NOT_FOUND after " . self::MAX_INVITATIONS . " attempts");
     }
 
     private function assignDriver(Order $order, DriverAssignmentService $service): void
@@ -128,15 +122,12 @@ class ProcessPendingOrderAssignments
                 break;
                 
             default:
-                Log::warning("Unknown service type for order {$order->id}: {$order->service_slug}");
+                break;
         }
     }
 
     public function failed(Throwable $exception)
     {
-        Log::error('ProcessPendingOrderAssignments job failed completely', [
-            'exception' => $exception->getMessage(),
-            'trace' => $exception->getTraceAsString()
-        ]);
+        // Gérer l'échec du job si nécessaire
     }
 }

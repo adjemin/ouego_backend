@@ -628,7 +628,6 @@ class DriverAPIController extends AppBaseController
 
             return $this->sendResponse($payment->toArray(), 'Payment created successfully');
         }catch (\Exception $e) {
-            \Log::error('Deposit error: ' . $e->getMessage());
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
 
@@ -707,7 +706,6 @@ class DriverAPIController extends AppBaseController
 
             return $this->sendResponse($payment->toArray(), 'Payment created successfully');
         }catch (\Exception $e) {
-            \Log::error('Deposit error: ' . $e->getMessage());
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
 
@@ -742,7 +740,6 @@ class DriverAPIController extends AppBaseController
             ], 'Daily earnings retrieved successfully');
 
         } catch (\Exception $e) {
-            Log::error('Daily earnings error: ' . $e->getMessage());
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
     }
@@ -793,7 +790,6 @@ class DriverAPIController extends AppBaseController
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Update zone base error: ' . $e->getMessage());
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
     }
@@ -857,7 +853,6 @@ class DriverAPIController extends AppBaseController
             ], 'Demandes de course en attente récupérées avec succès');
 
         } catch (\Exception $e) {
-            Log::error('Get pending order invitations error: ' . $e->getMessage());
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
     }

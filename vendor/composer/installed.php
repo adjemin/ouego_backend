@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'laravel/laravel',
-        'pretty_version' => 'dev-main',
-        'version' => 'dev-main',
-        'reference' => '1a7809481487a3538a78e8d3f50eb4f8def74e08',
+        'pretty_version' => 'dev-develop',
+        'version' => 'dev-develop',
+        'reference' => '74f005406936e9e8f1016e9ea2098981d61e2469',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -580,9 +580,9 @@
             ),
         ),
         'kreait/firebase-php' => array(
-            'pretty_version' => '7.21.1',
-            'version' => '7.21.1.0',
-            'reference' => '74d80b80263507a30da8b29fa84e0c84039c61ab',
+            'pretty_version' => '7.22.0',
+            'version' => '7.22.0.0',
+            'reference' => '97a39cb83de9acf1b0de8b0aa2fa0da0d8955c79',
             'type' => 'library',
             'install_path' => __DIR__ . '/../kreait/firebase-php',
             'aliases' => array(),
@@ -625,9 +625,9 @@
             'dev_requirement' => false,
         ),
         'laravel/laravel' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
-            'reference' => '1a7809481487a3538a78e8d3f50eb4f8def74e08',
+            'pretty_version' => 'dev-develop',
+            'version' => 'dev-develop',
+            'reference' => '74f005406936e9e8f1016e9ea2098981d61e2469',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

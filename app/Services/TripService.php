@@ -108,7 +108,7 @@ class TripService
 
             event(new CustomerNotificationCreated($notification));
         } catch (\Exception $e) {
-            Log::error("Erreur de notification client (aucun chauffeur trouvé) : " . $e->getMessage());
+            // Gestion des erreurs lors de l'envoi de la notification
         }
     }
 
@@ -187,7 +187,6 @@ class TripService
 
             // Validation des données d'entrée
             if (!$order || !$order->exists) {
-                Log::error("getDriverAndNotify: Commande invalide", ['order_id' => $order?->id]);
                 return [
                     'success' => false,
                     'message' => 'Commande invalide',
@@ -195,20 +194,9 @@ class TripService
                 ];
             }
 
-
-            Log::info("Début de recherche de chauffeurs", [
-                'order_id' => $order->id,
-                'limit' => $limit,
-                'max_distance' => $maxDistance
-            ]);
-
             // Vérification du produit associé
             $product = $order->items->first();
             if (!$product || !$product->carrier_id) {
-                Log::error("getDriverAndNotify: Aucun produit ou carrier_id manquant", [
-                    'order_id' => $order->id,
-                    'product_exists' => !!$product
-                ]);
                 return [
                     'success' => false,
                     'message' => 'Produit ou transporteur non trouvé pour cette commande',
@@ -228,11 +216,6 @@ class TripService
     
             // Vérification que des chauffeurs ont été trouvés
             if (empty($driversData)) {
-                Log::warning("getDriverAndNotify: Aucun chauffeur trouvé", [
-                    'order_id' => $order->id,
-                    'carrier_id' => $product->carrier_id,
-                    'service_slug' => $order->service_slug
-                ]);
                 return [
                     'success' => false,
                     'message' => 'Aucun chauffeur disponible trouvé',
@@ -246,24 +229,12 @@ class TripService
             $drivers = array_column($driversData, 'driver_id');
             $carrier_id =$product->carrier_id;
 
-            Log::info("Chauffeurs trouvés, création de la demande de course", [
-                'order_id' => $order->id,
-                'drivers_count' => count($drivers),
-                'carrier_id' => $carrier_id
-            ]);
-
             
             // Création de la demande de course et des invitations
             $tripRequest = $this->createRequest($drivers, $carrier_id, $order->id);
             
             // Lancement du processus de notification séquentielle
             $this->dispatchNextDriverInvitation($tripRequest);
-
-            Log::info("Processus de notification lancé avec succès", [
-                'trip_request_id' => $tripRequest->id,
-                'order_id' => $order->id,
-                'drivers_invited' => count($drivers)
-            ]);
 
             return [
                 'success' => true,
@@ -277,11 +248,6 @@ class TripService
             ];
 
         } catch (\Exception $e) {
-            Log::error("Erreur dans getDriverAndNotify", [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             return [
                 'success' => false,

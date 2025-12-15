@@ -98,7 +98,6 @@ class DriverAssignmentService
 
             // Validation des données d'entrée
             if (!$order || !$order->exists) {
-                Log::error("getDriverAndNotify: Commande invalide", ['order_id' => $order?->id]);
                 return [
                     'success' => false,
                     'message' => 'Commande invalide',
@@ -107,19 +106,11 @@ class DriverAssignmentService
             }
 
 
-            Log::info("Début de recherche de chauffeurs", [
-                'order_id' => $order->id,
-                'limit' => $limit,
-                'max_distance' => $maxDistance
-            ]);
+            
 
             // Vérification du produit associé
             $product = $order->items->first();
             if (!$product || !$product->carrier_id) {
-                Log::error("getDriverAndNotify: Aucun produit ou carrier_id manquant", [
-                    'order_id' => $order->id,
-                    'product_exists' => !!$product
-                ]);
                 return [
                     'success' => false,
                     'message' => 'Produit ou transporteur non trouvé pour cette commande',
@@ -139,11 +130,7 @@ class DriverAssignmentService
     
             // Vérification que des chauffeurs ont été trouvés
             if (empty($driversData)) {
-                Log::warning("getDriverAndNotify: Aucun chauffeur trouvé", [
-                    'order_id' => $order->id,
-                    'carrier_id' => $product->carrier_id,
-                    'service_slug' => $order->service_slug
-                ]);
+               
                 return [
                     'success' => false,
                     'message' => 'Aucun chauffeur disponible trouvé',
@@ -157,11 +144,6 @@ class DriverAssignmentService
             $nearestDriverIds = array_column($driversData, 'driver_id');
             $carrier_id =$product->carrier_id;
 
-            Log::info("Chauffeurs trouvés, création de la demande de course", [
-                'order_id' => $order->id,
-                'drivers_count' => count($nearestDriverIds),
-                'carrier_id' => $carrier_id
-            ]);
 
             foreach($nearestDriverIds as $driverId){
                 $orderInvitation = OrderInvitation::where([
@@ -188,11 +170,6 @@ class DriverAssignmentService
             return $driversData;
 
         } catch (\Exception $e) {
-            Log::error("Erreur dans getDriverAndNotify", [
-                'order_id' => $order->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             return [
                 'success' => false,

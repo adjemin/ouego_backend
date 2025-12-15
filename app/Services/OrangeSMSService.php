@@ -166,7 +166,6 @@ class OrangeSMSService
             }
 
             $result = json_decode($response, true);
-            Log::info($result);
             
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \Exception("Erreur de décodage JSON: " . json_last_error_msg());

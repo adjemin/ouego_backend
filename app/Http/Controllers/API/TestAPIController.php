@@ -132,7 +132,6 @@ class TestAPIController extends AppBaseController
         })->afterResponse();
         
         $endTime = microtime(true);
-        Log::info("Temps d'execution assign : ".($endTime - $startTime)." secondes");
 
         return $this->sendResponse($orderInfo, 'Order assigned successfully');
     }
