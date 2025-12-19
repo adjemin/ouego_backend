@@ -40,7 +40,7 @@ class TransactionAPIController extends AppBaseController
 
         $transactions = $transactions->sortByDesc('created_at');
 
-        return $this->sendResponse($transactions->toArray(), 'Transactions retrieved successfully');
+        return $this->sendResponse($transactions->values()->toArray(), 'Transactions retrieved successfully');
     }
 
     /**
