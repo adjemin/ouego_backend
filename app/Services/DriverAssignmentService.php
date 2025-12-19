@@ -259,13 +259,17 @@ class DriverAssignmentService
         foreach ($chauffeursProches as $item) {
             $chauffeur = $item;
             $distanceChauffeurCarriere = $item->distance;
-            $distanceCarriereLivraisonData = GoogleMapsAPIUtils::getDistance(
-                    [$route_point->latitude,
-                    $route_point->longitude],
-                    [$chauffeur->last_location_latitude,
-                    $chauffeur->last_location_longitude]
-                );
-            $distanceCarriereLivraison = $distanceCarriereLivraisonData['distance']['value'] ?? 1;
+
+            // Calcul de distance avec Haversine (calcul local, pas d'appel API)
+            $distanceCarriereLivraisonKm = GoogleMapsAPIUtils::distanceHaversine(
+                $route_point->latitude,
+                $route_point->longitude,
+                $chauffeur->last_location_latitude,
+                $chauffeur->last_location_longitude
+            );
+
+            // Convertir en mètres pour cohérence
+            $distanceCarriereLivraison = $distanceCarriereLivraisonKm * 1000;
 
             $score = [];
 

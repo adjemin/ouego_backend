@@ -35,22 +35,24 @@ class AlgoMain{
         // Rechercher la carriere la plus proche
         foreach($carriers as $carrier){
 
-            // Calculer la distance entre le chauffeur et la carriere
-            $result = GoogleMapsAPIUtils::getDistance([
-                $longitude,
+            // Calculer la distance avec Haversine (calcul local, pas d'appel API)
+            $distanceKm = GoogleMapsAPIUtils::distanceHaversine(
                 $latitude,
-            ],[
+                $longitude,
                 $carrier->location_latitude,
                 $carrier->location_longitude
-            ]);
+            );
 
+            // Convertir en mètres
+            $distance = $distanceKm * 1000;
 
-            $distance = $result['distance']['value'];
+            // Estimation du temps de trajet (moyenne : 40 km/h en ville)
+            $duration = ($distanceKm / 40) * 3600; // en secondes
 
             $nearCarrier = [
                 'carrier' => $carrier,
                 'distance' => $distance,
-                'duration' => $result['duration']['value'],
+                'duration' => round($duration),
             ];
         }
 
@@ -67,16 +69,19 @@ class AlgoMain{
             throw new \Exception("Aucun chauffeur trouvé");
         }
 
-        // Filtrer les chauffeurs par distance
+        // Filtrer les chauffeurs par distance (Haversine - calcul local)
         $drivers = $drivers->filter(function ($driver) use ($carrier, $maxDistance) {
-            $distance = GoogleMapsAPIUtils::getDistance(
-                [$carrier->location_latitude, $carrier->location_longitude],
-                [$driver->last_location_latitude, $driver->last_location_longitude]
-            )['distance']['value'];
+            $distanceKm = GoogleMapsAPIUtils::distanceHaversine(
+                $carrier->location_latitude,
+                $carrier->location_longitude,
+                $driver->last_location_latitude,
+                $driver->last_location_longitude
+            );
 
-            $driver->distance = $distance;
+            // Convertir en mètres
+            $driver->distance = $distanceKm * 1000;
 
-            return $distance <= $maxDistance*1000; // Convertir en mètres
+            return $distanceKm <= $maxDistance;
         });
 
         if ($drivers->isEmpty()) {
