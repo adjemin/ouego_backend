@@ -28,6 +28,7 @@ use App\Models\DriverOtp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\OrangeSMSService;
+use App\Models\Order;
 
 
 /**
@@ -728,7 +729,7 @@ class DriverAPIController extends AppBaseController
             $todayOrders = DB::table('orders')
                 ->join('invoices', 'orders.id', '=', 'invoices.order_id')
                 ->where('orders.driver_id', $driver->id)
-                ->where('orders.status', 'delivered')
+                ->whereIn('orders.status', [Order::DELIVERED, Order::DELIVERED])
                 ->where('invoices.driver_due', '>', 0)
                 ->whereBetween('orders.created_at', [$startOfDay, $endOfDay])
                 ->sum('invoices.driver_due');
