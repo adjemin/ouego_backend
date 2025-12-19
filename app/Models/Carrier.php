@@ -20,6 +20,7 @@ class Carrier extends Model
     public $fillable = [
         'name',
         'phone',
+        'photo',
         'location_latitude',
         'location_longitude',
         'is_active',
@@ -31,6 +32,7 @@ class Carrier extends Model
     protected $casts = [
         'name' => 'string',
         'phone' => 'string',
+        'photo' => 'string',
         'location_latitude' => 'double',
         'location_longitude' => 'double',
         'is_active' => 'boolean',
