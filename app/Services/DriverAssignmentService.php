@@ -23,7 +23,7 @@ class DriverAssignmentService
     // private float $villeLat = 5.3252258;
     // private float $villeLng = -4.019603;
     // private float $rayonMaxKm = 50;
-    // private int $maxUpdateTime  = 30;
+    private int $maxUpdateTime  = 30;
     private int $maxDrivers = 5;
     
 
@@ -105,9 +105,6 @@ class DriverAssignmentService
                 ];
             }
 
-
-            
-
             // Vérification du produit associé
             $product = $order->items->first();
             if (!$product || !$product->carrier_id) {
@@ -118,12 +115,13 @@ class DriverAssignmentService
                 ];
             }
 
+
             // Recherche des chauffeurs avec l'algorithme de pondération
             $driversData = $this->aggregatExpressOrderAssignment(
-                $product->carrier_id, 
-                $order->id, 
-                $order->service_slug, 
-                $limit, 
+                $product->carrier_id,
+                $order->id,
+                $order->service_slug,
+                $limit,
                 $maxDistance
             );
 
@@ -142,7 +140,6 @@ class DriverAssignmentService
             }
 
             $nearestDriverIds = array_column($driversData, 'driver_id');
-            $carrier_id =$product->carrier_id;
 
 
             foreach($nearestDriverIds as $driverId){
@@ -193,13 +190,12 @@ class DriverAssignmentService
      */
     public function findCourseAndLocationNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
     {
-        $maxUpdateTime  = 120;
         // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
         $query = Driver::select('drivers.*')
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
             ->whereRaw('is_available = true')
             ->whereRaw('is_active = true')
-            ->whereRaw("updated_at >= NOW() - INTERVAL '{$maxUpdateTime} MINUTE'")
+            ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
@@ -246,6 +242,7 @@ class DriverAssignmentService
             $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
         }
 
+
         $chauffeursProches = $query->get();
 
         // Étape 5 : Calcul des pondérations
@@ -254,7 +251,6 @@ class DriverAssignmentService
         $maxJetons = $chauffeursProches->max('current_balance');
         $maxJetons = $maxJetons > 0 ? $maxJetons : 1;
         $chauffeursCarriere = count($driverIds);
-
 
         foreach ($chauffeursProches as $item) {
             $chauffeur = $item;
@@ -280,13 +276,14 @@ class DriverAssignmentService
             $score['concentration'] = number_format(($chauffeursCarriere / $chauffeursCarriere) * 100, 2);
 
             $scoreTotal = number_format(
-                $score['proximity_driver_carrier'] * 0.30 +
-                $score['jetons'] * 0.25 +
-                $score['proximity_carrier_delivery'] * 0.25 +
-                $score['note'] * 0.15 +
-                $score['concentration'] * 0.05,
+                floatval($score['proximity_driver_carrier']) * 0.30 +
+                floatval($score['jetons']) * 0.25 +
+                floatval($score['proximity_carrier_delivery']) * 0.25 +
+                floatval($score['note']) * 0.15 +
+                floatval($score['concentration']) * 0.05,
                 3
             );
+
 
             $ponderations[$chauffeur->id] = [
                 'driver_id' => $chauffeur->id,
