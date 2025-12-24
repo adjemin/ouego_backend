@@ -37,29 +37,28 @@ class OrderAssignmentV2Service {
 
         // Rechercher la carriere la plus proche
         foreach($carriers as $carrier){
-            // Calculer la distance entre le chauffeur et la carriere
-            $reponse = GoogleMapsAPIUtils::getDistance(
-                [$latitude,$longitude],
-                [$carrier->location_latitude,$carrier->location_longitude]
+            // Calculer la distance entre le chauffeur et la carriere (Haversine - calcul local)
+            $distanceKm = GoogleMapsAPIUtils::distanceHaversine(
+                $latitude,
+                $longitude,
+                $carrier->location_latitude,
+                $carrier->location_longitude
             );
-            
-            if(!array_key_exists('distance', $reponse)){
-                throw new \Exception("Une erreur est survenue lors de la recherche de la carrière");
-            }
 
-           if(array_key_exists('distance', $reponse)){
-               if($nearCarrier->count() == 0){
-                    $nearCarrier = collect([
-                        'carrier' => $carrier,
-                        'distance' => $reponse['distance']['value'],
-                    ]);
-                }elseif($reponse['distance']['value'] < $nearCarrier['distance']){
-                    $nearCarrier = [
-                        'carrier' => $carrier,
-                        'distance' => $reponse['distance']['value'],
-                    ];
-                }
-           }
+            // Convertir en mètres pour cohérence avec le reste du code
+            $distanceMeters = $distanceKm * 1000;
+
+            if($nearCarrier->count() == 0){
+                $nearCarrier = collect([
+                    'carrier' => $carrier,
+                    'distance' => $distanceMeters,
+                ]);
+            }elseif($distanceMeters < $nearCarrier['distance']){
+                $nearCarrier = [
+                    'carrier' => $carrier,
+                    'distance' => $distanceMeters,
+                ];
+            }
         }
 
 
@@ -74,20 +73,19 @@ class OrderAssignmentV2Service {
             throw new \Exception("Aucun chauffeur trouvé");
         }
         
-        // Filtrer les chauffeurs par distance
-        $drivers = $drivers->filter(function ($driver) use ($carrier) {
-            $reponse = GoogleMapsAPIUtils::getDistance(
-                [$carrier->location_latitude, $carrier->location_longitude],
-                [$driver->last_location_latitude, $driver->last_location_longitude]
+        // Filtrer les chauffeurs par distance (Haversine - calcul local)
+        $drivers = $drivers->filter(function ($driver) use ($nearCarrier) {
+            $distanceKm = GoogleMapsAPIUtils::distanceHaversine(
+                $nearCarrier['carrier']->location_latitude,
+                $nearCarrier['carrier']->location_longitude,
+                $driver->last_location_latitude,
+                $driver->last_location_longitude
             );
 
-            if(!array_key_exists('distance', $reponse)){
-                throw new \Exception("Une erreur est survenue lors de la recherche de chauffeurs");
-            }
+            // Convertir en mètres pour cohérence
+            $driver->distance = $distanceKm * 1000;
 
-            $driver->distance = $reponse['distance']['value'];
-
-            return $reponse['distance']['value'] <= self::$maxDistance*1000;
+            return $distanceKm <= self::$maxDistance;
         });
 
         if ($drivers->isEmpty()) {
