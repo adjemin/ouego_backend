@@ -133,24 +133,6 @@ class Driver extends Authenticatable  implements JWTSubject
         }
     }
 
-    //Debit
-    public function debit($amount, $orderId){
-        $this->old_balance = $this->current_balance;
-        $this->current_balance = $this->current_balance - $amount;
-        $this->save();
-
-        //Create Transaction
-        Transaction::create([
-            'user_id' => $this->id,
-            'user_source' => $this->getTable(),
-            'type' => 'debit',
-            'currency_code' => 'XOF',
-            'amount' => $amount,
-            'is_in' => false,
-            'order_id' => $orderId
-        ]);
-    }
-
     //Credit
     public function creditBalance($amount, $orderId=null){
         $this->old_balance = $this->current_balance;
@@ -170,10 +152,21 @@ class Driver extends Authenticatable  implements JWTSubject
     }
 
 
-    public function debitBalance($amount){
+    public function debitBalance($amount, $orderId=null){
         $this->old_balance = $this->current_balance;
-        $this->current_balance = $this->current_balance + $amount;
+        $this->current_balance = $this->current_balance - $amount;
         $this->save();
+
+        //Create Transaction
+        Transaction::create([
+            'user_id' => $this->id,
+            'user_source' => $this->getTable(),
+            'type' => 'credit',
+            'currency_code' => 'XOF',
+            'amount' => $amount,
+            'is_in' => true,
+            'order_id' => $orderId
+        ]);
     }
 
     public function hasCurrentOrders(){

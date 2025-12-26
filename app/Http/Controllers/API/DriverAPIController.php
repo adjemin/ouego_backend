@@ -27,6 +27,7 @@ use MtnSmsCloud\MTNSMSApi;
 use App\Models\DriverOtp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use App\Services\OrangeSMSService;
 use App\Models\Order;
 
@@ -723,19 +724,23 @@ class DriverAPIController extends AppBaseController
             }
 
             $today = Carbon::now();
-            $startOfDay = $today->copy()->startOfDay();
-            $endOfDay = $today->copy()->endOfDay();
 
-            $todayOrders = DB::table('orders')
-                ->join('invoices', 'orders.id', '=', 'invoices.order_id')
+            
+
+            $dailyEarnings = DB::table('orders')
+                ->join('invoices', function($join) {
+                    $join->on('orders.id', '=', 'invoices.order_id');
+                })
                 ->where('orders.driver_id', $driver->id)
-                ->whereIn('orders.status', [Order::DELIVERED, Order::DELIVERED])
+                ->whereIn('orders.status', [Order::DELIVERED, Order::DELIVERED_FINISH])
                 ->where('invoices.driver_due', '>', 0)
-                ->whereBetween('orders.created_at', [$startOfDay, $endOfDay])
+                ->whereDate('orders.created_at', $today->toDateString())
                 ->sum('invoices.driver_due');
 
+            
+
             return $this->sendResponse([
-                'daily_earnings' => floatval($todayOrders),
+                'daily_earnings' => floatval($dailyEarnings ?? 0),
                 'date' => $today->format('Y-m-d'),
                 'driver_id' => $driver->id
             ], 'Daily earnings retrieved successfully');

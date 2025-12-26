@@ -217,13 +217,13 @@ class OrderAPIController extends AppBaseController
 
                 $total_amount = $delivery_fees;
 
-                $commission_min = doubleval(Setting::get('COMMISSION_COURSE_MIN'));
-                $commission = doubleval(Setting::get('COMMISSION_COURSE'))/100;
+                $commission_min = doubleval(Setting::get('OUEGO_COMMISSION_COURSE_MIN'));
+                $commission = doubleval(Setting::get('COURSE_COMMISSION_OUEGO'));
 
                 $commission_min = 0;
                 $commission = 0;
 
-                $service_due = $total_amount * $commission;
+                $service_due = $commission;
                 if($service_due < $commission_min){
                     $service_due = $commission_min;
                 }
@@ -375,14 +375,14 @@ class OrderAPIController extends AppBaseController
                 $total_amount = 0;
                 $unit_price = 0;
 
-                if($product->slug == "gravier"){
+                if($product->slug == Product::GRAVIER_SLUG){
                     $unit_price = doubleval($productType->price);
 
                     $order_price = $quantity * $unit_price;
                 }
 
 
-                if($product->slug == "sable" && array_key_exists('pricing', $meta_data)){
+                if($product->slug == Product::SABLE_SLUG && array_key_exists('pricing', $meta_data)){
                     $pricing = $meta_data['pricing'];
 
                     if(!is_array($pricing)){
@@ -401,13 +401,13 @@ class OrderAPIController extends AppBaseController
                 $commission_min = 0;
                 $commission = 0;
 
-                if($product->slug == "gravier"){
-                   // $commission_min = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO_MIN'));
+                if($product->slug == Product::GRAVIER_SLUG){
+                   $commission_min = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO_MIN'));
                     $commission = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO'));
                 }
 
-                if($product->slug == "sable"){
-                    //$commission_min = doubleval(Setting::get('SABLE_COMMISSION_OUEGO_MIN'));
+                if($product->slug == Product::SABLE_SLUG){
+                    $commission_min = doubleval(Setting::get('SABLE_COMMISSION_OUEGO_MIN'));
                     $commission = doubleval(Setting::get('SABLE_COMMISSION_OUEGO'));
                 }
 
@@ -573,16 +573,10 @@ class OrderAPIController extends AppBaseController
 
                 $currency = $typeEnginModel->currency_code;
 
-                //$commission_min = doubleval(Setting::get('SABLE_COMMISSION_OUEGO_MIN'));
-                //$commission = doubleval(Setting::get('SABLE_COMMISSION_OUEGO'))/100;
+                $commission_min = doubleval(Setting::get('LOCATION_COMMISSION_OUEGO_MIN'));
+                $commission = doubleval(Setting::get('LOCATION_COMMISSION_OUEGO'));
+                $service_due = $commission;
 
-                $commission_min = 0;
-                $commission = 0;
-
-
-                $service_due = $total_amount * $commission;
-
-                $service_due = $total_amount * $commission;
                 if($service_due < $commission_min){
                     $service_due = $commission_min;
                 }
@@ -624,6 +618,8 @@ class OrderAPIController extends AppBaseController
             if(!is_array($route_points)){
                 $route_points = (array)$route_points;
             }
+
+
 
             foreach ($route_points as $route_point) {
 
