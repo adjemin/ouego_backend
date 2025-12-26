@@ -66,6 +66,10 @@ class Order extends Model
     //cancelled_with_payment //Final status for paid cancellation
     const CANCELLED_WITH_PAYMENT = "cancelled_with_payment";
 
+
+   CONST PAYMENT_MODE_CASH = "cash";
+   CONST PAYMENT_MODE_ONLINE = "online";
+
     protected $appends = ['customer','driver', 'service','items', 'invoice', 'route_points'];
 
     public $fillable = [
@@ -170,6 +174,10 @@ class Order extends Model
         return OrderItem::where('order_id', $this->id)->get();
     }
 
+    public function invoice(){
+        return $this->hasOne(Invoice::class, 'order_id', 'id');
+    }
+
     public function getInvoiceAttribute(){
         return Invoice::where('order_id', $this->id)->first();
     }
@@ -227,13 +235,12 @@ class Order extends Model
             if($driver != null){
 
                 if($this->getInvoiceAttribute() != null){
-
-                    if($this->payment_method_code == 'cash'){
+                    if($this->payment_method_code == Order::PAYMENT_MODE_CASH){
                         $amount = $this->getInvoiceAttribute()->service_due;
-                        $driver->debit($amount, $this->id);
+                        $driver->debitBalance($amount, $this->id);
                     }else{
                         $amount = $this->getInvoiceAttribute()->driver_due;
-                        $driver->credit($amount, $this->id);
+                        $driver->creditBalance($amount, $this->id);
                     }
                 }
 

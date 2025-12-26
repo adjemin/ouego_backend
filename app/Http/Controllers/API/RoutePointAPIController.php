@@ -381,17 +381,17 @@ class RoutePointAPIController extends AppBaseController
 
         $order = Order::where(['id' => $routePoint->order_id])->first();
 
-        if($routePoint->type == "source" && $input['status'] == RoutePoint::SUCCESS){
+        if($routePoint->type == RoutePoint::POINT_TYPE_SOURCE && $input['status'] == RoutePoint::SUCCESS){
 
             $routePointsPickedListCount = RoutePoint::where([
                 'order_id' => $routePoint->order_id,
                 "is_completed" => true,
-                "type" => "source"
+                "type" => RoutePoint::POINT_TYPE_SOURCE
             ])->count();
 
             $routePointsPickupListCount = RoutePoint::where([
                 'order_id' => $routePoint->order_id,
-                "type" => "source"
+                "type" => RoutePoint::POINT_TYPE_SOURCE
             ])->count();
 
             if($routePointsPickedListCount == $routePointsPickupListCount){
@@ -409,16 +409,16 @@ class RoutePointAPIController extends AppBaseController
         }
 
 
-        if($routePoint->type == "destination" && $input['status'] == RoutePoint::SUCCESS){
+        if($routePoint->type == RoutePoint::POINT_TYPE_DESTINATION && $input['status'] == RoutePoint::SUCCESS){
             $routePointsDeliveriesCount = RoutePoint::where([
                 'order_id' => $routePoint->order_id,
                 "is_completed" => true,
-                "type" => "destination"
+                "type" => RoutePoint::POINT_TYPE_DESTINATION
             ])->count();
 
             $routePointsDeliveriesListCount = RoutePoint::where([
                 'order_id' => $routePoint->order_id,
-                "type" => "destination"
+                "type" => RoutePoint::POINT_TYPE_DESTINATION
             ])->count();
 
             if($routePointsDeliveriesCount == $routePointsDeliveriesListCount){

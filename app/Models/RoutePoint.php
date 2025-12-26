@@ -19,6 +19,10 @@ class RoutePoint extends Model
     const  SUCCESS = "success";
     const  CANCELLED = "cancelled";
 
+
+    const POINT_TYPE_SOURCE = 'source';
+    const POINT_TYPE_DESTINATION = 'destination';
+
     protected  $appends = ['histories'];
 
     public $fillable = [
