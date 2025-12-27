@@ -233,7 +233,6 @@ class Order extends Model
             $driver = Driver::where(['id' => $this->driver_id])->first();
 
             if($driver != null){
-
                 if($this->getInvoiceAttribute() != null){
                     if($this->payment_method_code == Order::PAYMENT_MODE_CASH){
                         $amount = $this->getInvoiceAttribute()->service_due;
