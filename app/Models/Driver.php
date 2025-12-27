@@ -153,9 +153,11 @@ class Driver extends Authenticatable  implements JWTSubject
 
 
     public function debitBalance($amount, $orderId=null){
+        
         $this->old_balance = $this->current_balance;
-        $this->current_balance = $this->current_balance - $amount;
+        $this->current_balance = ($this->current_balance - $amount);
         $this->save();
+
 
         //Create Transaction
         Transaction::create([

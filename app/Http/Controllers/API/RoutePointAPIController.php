@@ -421,6 +421,7 @@ class RoutePointAPIController extends AppBaseController
                 "type" => RoutePoint::POINT_TYPE_DESTINATION
             ])->count();
 
+
             if($routePointsDeliveriesCount == $routePointsDeliveriesListCount){
                 $order->status = Order::DELIVERED_FINISH;
                 $order->is_running = false;
