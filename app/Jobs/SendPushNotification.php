@@ -95,16 +95,8 @@ class SendPushNotification
                 'status' => 'SENT'
             ]);
 
-            Log::info("FCM Notification sent successfully", [
-                'notification_id' => $this->notificationData->id,
-                'fcm_message_id' => $messageId
-            ]);
 
         } catch (Exception $e) {
-            Log::error("FCM Notification failed", [
-                'notification_id' => $this->notificationData->id,
-                'error' => $e->getMessage()
-            ]);
 
             $deliveryStatus->update([
                 'status' => 'FAILED',

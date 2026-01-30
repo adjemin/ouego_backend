@@ -14,6 +14,9 @@ class Product extends Model
 
     protected $appends = ['product_types'];
 
+   const GRAVIER_SLUG = "gravier";
+   const SABLE_SLUG = "sable";
+
     public $fillable = [
         'name',
         'slug',

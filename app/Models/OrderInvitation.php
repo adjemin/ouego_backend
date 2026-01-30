@@ -9,6 +9,13 @@ class OrderInvitation extends Model
 {
     use SoftDeletes;
 
+    const PENDING = "pending";
+    const NOTIFIED = "notified";
+    const ACCEPTED = "accepted";
+    const REJECTED = "rejected";
+    const TIMEOUT = "timeout";
+
+
     public $table = 'order_invitations';
 
     protected $appends = ['order'];
@@ -20,7 +27,11 @@ class OrderInvitation extends Model
         'acceptation_time',
         'rejection_time',
         'latitude',
-        'longitude'
+        'longitude',
+        'trip_request_id',
+        'index',
+        'attempt_number',
+        'status'
     ];
 
     protected $casts = [
@@ -37,6 +48,10 @@ class OrderInvitation extends Model
 
     public function getOrderAttribute(){
         return Order::where('id', $this->order_id)->first();
+    }
+
+    public function order(){
+        return $this->belongsTo(Order::class, 'order_id', 'id');
     }
 
 

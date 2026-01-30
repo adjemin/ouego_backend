@@ -17,7 +17,7 @@ class Driver extends Authenticatable  implements JWTSubject
 
     protected $guard = 'api-drivers';
 
-    protected $appends = ['cars'];
+    protected $appends = ['cars', 'current_order_count', 'zone_base_info'];
 
     public $fillable = [
         'first_name',
@@ -34,8 +34,9 @@ class Driver extends Authenticatable  implements JWTSubject
         'last_location_latitude',
         'last_location_longitude',
         'services',
-        'driver_license_docs'
-
+        'driver_license_docs',
+        'rate',
+        'zone_base_id',
     ];
 
     protected $casts = [
@@ -55,6 +56,8 @@ class Driver extends Authenticatable  implements JWTSubject
         'last_location_longitude' => 'double',
         'driver_license_docs' => 'array',
         'services' => 'array',
+        'rate' => 'string',
+        'zone_base_id' => 'integer',
     ];
 
     public static array $rules = [
@@ -113,6 +116,12 @@ class Driver extends Authenticatable  implements JWTSubject
         $json_array =  json_decode(stripslashes($value), true);
         return $json_array ;
     }
+    public function getCurrentOrderCountAttribute(){
+        return Order::where('driver_id', $this->id)
+            // ->where('is_draft', false)
+            ->where('is_completed', false)
+            ->count();
+    }
 
     public function setLastLocationAttribute($value){
         $latitude = $value['latitude'] ?? $this->last_location_latitude;
@@ -124,26 +133,8 @@ class Driver extends Authenticatable  implements JWTSubject
         }
     }
 
-    //Debit
-    public function debit($amount, $orderId){
-        $this->old_balance = $this->current_balance;
-        $this->current_balance = $this->current_balance - $amount;
-        $this->save();
-
-        //Create Transaction
-        Transaction::create([
-            'user_id' => $this->id,
-            'user_source' => $this->getTable(),
-            'type' => 'debit',
-            'currency_code' => 'XOF',
-            'amount' => $amount,
-            'is_in' => false,
-            'order_id' => $orderId
-        ]);
-    }
-
     //Credit
-    public function credit($amount, $orderId){
+    public function creditBalance($amount, $orderId=null){
         $this->old_balance = $this->current_balance;
         $this->current_balance = $this->current_balance + $amount;
         $this->save();
@@ -161,14 +152,60 @@ class Driver extends Authenticatable  implements JWTSubject
     }
 
 
-    public function debitBalance($amount){
+    public function debitBalance($amount, $orderId=null){
+        
         $this->old_balance = $this->current_balance;
-        $this->current_balance = $this->current_balance + $amount;
+        $this->current_balance = ($this->current_balance - $amount);
         $this->save();
+
+
+        //Create Transaction
+        Transaction::create([
+            'user_id' => $this->id,
+            'user_source' => $this->getTable(),
+            'type' => 'credit',
+            'currency_code' => 'XOF',
+            'amount' => $amount,
+            'is_in' => true,
+            'order_id' => $orderId
+        ]);
+    }
+
+    public function hasCurrentOrders(){
+        return Order::where('driver_id', $this->id)
+            ->where('is_draft', false)
+            ->where('is_completed', false)
+            ->where('is_started', false)
+            ->count();
+    }
+
+    public function ratingNote(){
+        return Order::where('driver_id', $this->id)
+            ->where('is_completed', true)
+            ->avg('rating');
     }
 
 
+    public function zoneBase()
+    {
+        return $this->belongsTo(Zone::class, 'zone_base_id', 'id');
+    }
 
+    public function getZoneBaseInfoAttribute()
+    {
+        if (!$this->zoneBase) {
+            return null;
+        }
 
+        $zone = $this->zoneBase;
+        $carriers = $zone->carriers()->select(['carriers.id', 'carriers.name', 'carriers.location_latitude', 'carriers.location_longitude', 'carriers.phone'])->get();
+        
+        return [
+            'id' => $zone->id,
+            'name' => $zone->name,
+            'description' => $zone->description,
+            'carriers' => $carriers
+        ];
+    }
 
 }

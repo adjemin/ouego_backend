@@ -57,13 +57,9 @@ class SendPushCustomerNotification
                 ]);
 
             $result = $messaging->send($message);
-            Log::info("Notification envoyée avec succès: " . json_encode($result));
         } catch (Kreait\Firebase\Exception\Messaging\NotFound $e) {
-            // Le token n'est plus valide
-            Log::warning("Token Firebase invalide: " . $this->firebaseId);
-            throw $e; // Relancer l'exception pour que le job échoue et soit potentiellement retryé
+            // Le token n'est plus valide            throw $e; // Relancer l'exception pour que le job échoue et soit potentiellement retryé
         } catch (\Exception $e) {
-            Log::error("Erreur lors de l'envoi de la notification: " . $e->getMessage());
             throw $e;
         }
     }

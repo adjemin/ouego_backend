@@ -94,16 +94,8 @@ class SendTestPushNotificationJob
 
                 $deliveryStatus->save();
 
-                Log::info("FCM Notification sent successfully", [
-                    'notification_id' => $notification['id'],
-                    'fcm_message_id' => $messageId
-                ]);
             }
         } catch (\Exception $e) {
-            Log::error('Erreur lors de l\'envoi des notifications push de test', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             throw $e; // Relance l'exception pour que le job soit réessayé
         }

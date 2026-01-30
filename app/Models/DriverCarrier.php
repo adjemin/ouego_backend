@@ -22,5 +22,14 @@ class DriverCarrier extends Model
         
     ];
 
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class, 'driver_id');
+    }
+    public function carrier()
+    {
+        return $this->belongsTo(Carrier::class, 'carrier_id');
+    }
+
     
 }

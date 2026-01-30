@@ -13,6 +13,8 @@ class Invoice extends Model
     const UNPAID = "UNPAID";
     const PAID = "PAID";
 
+    public $appends = ['payments'];
+
     public $table = 'invoices';
 
     public $fillable = [
@@ -23,6 +25,7 @@ class Invoice extends Model
         'subtotal',
         'tax',
         'fees_delivery',
+        'fees_manutention',
         'total',
         'status',
         'is_paid_by_customer',
@@ -41,6 +44,7 @@ class Invoice extends Model
         'subtotal' => 'double',
         'tax' => 'double',
         'fees_delivery' => 'double',
+        'fees_manutention', 'double',
         'total' => 'double',
         'status' => 'string',
         'is_paid_by_customer' => 'boolean',
@@ -67,5 +71,8 @@ class Invoice extends Model
         return $service.'-'.$record.'-'.$orderId.'-'.$customerId.'-'.time();
     }
 
+    public function getPaymentsAttribute(){
+        return Payment::where('invoice_id', $this->id)->get();
+    }
 
 }

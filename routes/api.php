@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1/')->group(function () {
 
-
     Route::post('driver_notifications/test/send/{id}', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'submitTestNotification']);
 
     //OTP
@@ -45,6 +44,7 @@ Route::prefix('v1/')->group(function () {
 
     Route::get('products/list', [App\Http\Controllers\API\ProductAPIController::class, 'index']);
     Route::post('products/create', [App\Http\Controllers\API\ProductAPIController::class, 'store'])->middleware("auth.customer:api-customers");
+    Route::get('products/{id}', [App\Http\Controllers\API\ProductAPIController::class, 'show'])->middleware("auth.customer:api-customers");
 
     Route::post('product_types/create', [App\Http\Controllers\API\ProductTypeAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
@@ -146,13 +146,27 @@ Route::prefix('v1/')->group(function () {
     Route::delete('drivers/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'removeCarrierFromDriver'])->middleware("auth.driver:api-drivers");
 
     Route::post('drivers/transactions/balance/deposit', [App\Http\Controllers\API\DriverAPIController::class, 'depositBalance']);
+    Route::post('drivers/transactions/balance/withdraw', [App\Http\Controllers\API\DriverAPIController::class, 'withdrawBalance']);
+    Route::get('drivers/earnings/daily', [App\Http\Controllers\API\DriverAPIController::class, 'getDailyEarnings'])->middleware("auth.driver:api-drivers");
+    Route::put('drivers/zone-base/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateZoneBase'])->middleware("auth.driver:api-drivers");
+    Route::get('drivers/order-invitations/pending', [App\Http\Controllers\API\DriverAPIController::class, 'getPendingOrderInvitations'])->middleware("auth.driver:api-drivers");
 
+    Route::get('zones', [App\Http\Controllers\API\ZoneAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
     Route::get('carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
     Route::get('carriers/search', [App\Http\Controllers\API\CarrierAPIController::class, 'search'])->middleware("auth.driver:api-drivers");
 
     Route::post('notifications/confirm-delivery', [App\Http\Controllers\API\NotificationAPIController::class, 'confirmDelivery']);
 
     Route::post('carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'store']);
+
+    // TEST ROUTES
+    Route::post('testing-algorithm/drivers-by-carriers', [App\Http\Controllers\API\TestAPIController::class, 'searchNearDriverByCarrier']);
+    
+    Route::post('testing-algorithm/v1/nearest-carrier-and-drivers', [App\Http\Controllers\API\TestAPIController::class, 'getNearestCarrierAndDrivers']);
+    
+    Route::post('testing-algorithm/v1/onday-order-assignment', [App\Http\Controllers\API\TestAPIController::class, 'OndayOrderAssignment']);
+
+    Route::post('testing-algorithm/v1/confirm', [App\Http\Controllers\API\TestAPIController::class, 'assign']);
 
 
     Route::resource('customer-addresses', App\Http\Controllers\API\CustomerAddressAPIController::class)
@@ -165,6 +179,16 @@ Route::prefix('v1/')->group(function () {
     Route::post('customer-profiles/create', [App\Http\Controllers\API\CustomerProfileAPIController::class, 'store']);
     Route::put('customer-profiles/{id}/update', [App\Http\Controllers\API\CustomerProfileAPIController::class, 'update']);
     Route::delete('customer-profiles/{id}/delete', [App\Http\Controllers\API\CustomerProfileAPIController::class, 'destroy']);
+
+    Route::resource('drivers/transactions', App\Http\Controllers\API\TransactionAPIController::class)
+     ->except(['create', 'edit'])->middleware("auth.driver:api-drivers");
+
+
+    Route::get('zones-with-carriers', [App\Http\Controllers\API\ZoneAPIController::class, 'indexWithCarrier']);
+    Route::resource('zones', App\Http\Controllers\API\ZoneAPIController::class)
+        ->except(['create', 'edit']);
+
+    Route::get('delivery-objects', [App\Http\Controllers\API\DeliveryObjectAPIController::class, 'index'])->name('api.delivery-objects.index');
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -222,8 +246,6 @@ Route::prefix('v1/')->group(function () {
 //Route::resource('order-invitations', App\Http\Controllers\API\OrderInvitationAPIController::class)
 //    ->except(['create', 'edit']);
 //
-//Route::resource('transactions', App\Http\Controllers\API\TransactionAPIController::class)
-//    ->except(['create', 'edit']);
 //
 //Route::resource('route-points', App\Http\Controllers\API\RoutePointAPIController::class)
 //    ->except(['create', 'edit']);

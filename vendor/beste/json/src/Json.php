@@ -17,9 +17,9 @@ final class Json
     private const DECODE_DEFAULT = JSON_BIGINT_AS_STRING;
 
     /**
-     * param non-empty-string $json
-     *
      * @throws UnexpectedValueException
+     *
+     * @return ($forceArray is true ? array<mixed> : mixed)
      */
     public static function decode(string $json, ?bool $forceArray = null): mixed
     {
@@ -37,6 +37,8 @@ final class Json
      * @param non-empty-string $path
      *
      * @throws UnexpectedValueException
+     *
+     * @return ($forceArray is true ? array<mixed> : mixed)
      */
     public static function decodeFile(string $path, ?bool $forceArray = null): mixed
     {

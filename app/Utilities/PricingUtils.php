@@ -3,6 +3,7 @@
 namespace App\Utilities;
 
 use App\Models\Setting;
+use Illuminate\Support\Facades\Mail;
 
 class PricingUtils{
 
@@ -28,21 +29,9 @@ class PricingUtils{
         $frais_route = doubleval(Setting::get('GRAVIER_FRAIS_DE_ROUTE'));
 
         //COMMISSION OUEGO (à titre indicatif)
-        //$commission_ouego = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO'));
+        $commission_ouego = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO'));
 
-
-        $difference_distance = $distance - $distance_de_base;
-
-        if($difference_distance <0){
-            $difference_distance = 0;
-        }
-
-        $difference_quantity = $quantity - $quantite_de_base;
-        if($difference_quantity < 0){
-            $difference_quantity = 0;
-        }
-
-        $amount = $prix_de_base  + ($difference_distance * $prix_kilometre) + ($difference_quantity * $prix_tonnage)  + $frais_route;
+        $amount = $prix_de_base  + (MAX(0, ($distance - $distance_de_base)) * $prix_kilometre) + (MAX(0, ($quantity - $quantite_de_base)) * $prix_tonnage)  + $frais_route + $commission_ouego;
 
         $amount =  self::round_up($amount, 100);
 
@@ -83,20 +72,20 @@ class PricingUtils{
         $prix_kilometre = doubleval(Setting::get('SABLE_PRIX_KILOMETRE'));
 
 
+        // PRIX QUANTITE DE BASE (T)
+        $quantitte_base = doubleval(Setting::get('GRAVIER_QUANTITE_DE_BASE'));
+
+        // PRIX PAR TONNAGE
+        $prix_tonnage = doubleval(Setting::get('GRAVIER_PRIX_TONNAGE'));
+
+
         //FRAIS_DE_ROUTE
         $frais_route = doubleval(Setting::get('SABLE_FRAIS_DE_ROUTE'));
 
         //COMMISSION OUEGO (à titre indicatif)
-       // $commission_ouego = doubleval(Setting::get('SABLE_COMMISSION_OUEGO'));
+        $commission_ouego = doubleval(Setting::get('SABLE_COMMISSION_OUEGO'));
 
-       $difference_distance = $distance - $distance_de_base;
-
-       if($difference_distance <0){
-           $difference_distance = 0;
-       }
-
-
-        $amount =  $prix_de_base + ($difference_distance * $prix_kilometre) + $frais_route;
+        $amount =  $prix_de_base + (MAX(0, ($distance - $distance_de_base)) * $prix_kilometre) + $frais_route + $commission_ouego;
 
         $amount =  self::round_up($amount, 100);
 
@@ -140,17 +129,19 @@ class PricingUtils{
 
         $frais_route = doubleval(Setting::get('FRAIS_ROUTE'));
 
+        $commission_course = doubleval(Setting::get('COURSE_COMMISSION_OUEGO'));
+
         $initial_distance = $distance;
 
 
         $t1 = max($prix_base, min($typeEnginModel->slice_1_max_distance, $initial_distance) * $typeEnginModel->slice_1_pricing);
-        $t2 = max(0, min($typeEnginModel->slice_2_max_distance - $typeEnginModel->slice_1_max_distance, max(0, $initial_distance - $typeEnginModel->slice_1_max_distance))) * $typeEnginModel->slice_2_pricing;
+        $t2 = max(0, min(($typeEnginModel->slice_2_max_distance - $typeEnginModel->slice_1_max_distance), max(0, $initial_distance - $typeEnginModel->slice_1_max_distance))) * $typeEnginModel->slice_2_pricing;
         $t3 = max(0,$initial_distance - $typeEnginModel->slice_2_max_distance) * $typeEnginModel->slice_3_pricing;
 
 
         $chargement = $typeEnginModel->manutention_pricing;
 
-        $amount = $t1 + $t2 + $t3 + $chargement + $frais_route;
+        $amount = $t1 + $t2 + $t3 + $chargement + $frais_route + $commission_course;
 
         $amount =  self::round_up($amount, 100);
 
@@ -175,7 +166,6 @@ class PricingUtils{
         }
 
         return self::round_up($amount, 100);
-        //return self::round_up($amount, 100) ;
 
     }
 
@@ -188,7 +178,7 @@ class PricingUtils{
 
         $marge_chauffeur_course_par_km = doubleval(Setting::get('MARGE_CHAUFFEUR_COURSE'));
 
-        $commission_course = doubleval(Setting::get('COMMISSION_COURSE'));
+        $commission_course = doubleval(Setting::get('TRANSPORT_COMMISSION_OUEGO'));
 
         $marge_brute = $marge_chauffeur_course_par_km + $commission_course;
 

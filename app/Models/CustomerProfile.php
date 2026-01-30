@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CustomerProfile extends Model
 {
-    use SoftDeletes;
 
     public $table = 'customer_profiles';
 
