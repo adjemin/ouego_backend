@@ -35,7 +35,8 @@ class Customer extends Authenticatable  implements JWTSubject
         'is_email_verified',
         'email',
         'otp',
-        'otp_expires_at'
+        'otp_expires_at',
+        'profile_id'
     ];
 
     protected $casts = [
@@ -58,6 +59,7 @@ class Customer extends Authenticatable  implements JWTSubject
         'is_email_verified' => 'boolean',
         'email' => 'string',
         'otp' => 'string',
+        'profile_id' => 'integer',
     ];
 
     public static array $rules = [
@@ -84,5 +86,8 @@ class Customer extends Authenticatable  implements JWTSubject
         return [];
     }
 
-
+    public function profile()
+    {
+        return $this->belongsTo(CustomerProfile::class, 'profile_id');
+    }
 }
