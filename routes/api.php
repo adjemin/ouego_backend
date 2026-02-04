@@ -171,7 +171,14 @@ Route::prefix('v1/')->group(function () {
 
     Route::resource('customer-addresses', App\Http\Controllers\API\CustomerAddressAPIController::class)
     ->except(['create', 'edit'])
-    ->middleware("auth.customer:api-customers"); 
+    ->middleware("auth.customer:api-customers");
+
+    // Customer Profiles
+    Route::get('customer-profiles/list', [App\Http\Controllers\API\CustomerProfileAPIController::class, 'index']);
+    Route::get('customer-profiles/{id}', [App\Http\Controllers\API\CustomerProfileAPIController::class, 'show']);
+    Route::post('customer-profiles/create', [App\Http\Controllers\API\CustomerProfileAPIController::class, 'store']);
+    Route::put('customer-profiles/{id}/update', [App\Http\Controllers\API\CustomerProfileAPIController::class, 'update']);
+    Route::delete('customer-profiles/{id}/delete', [App\Http\Controllers\API\CustomerProfileAPIController::class, 'destroy']);
 
     Route::resource('drivers/transactions', App\Http\Controllers\API\TransactionAPIController::class)
      ->except(['create', 'edit'])->middleware("auth.driver:api-drivers");
