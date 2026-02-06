@@ -215,8 +215,6 @@ class OrderAPIController extends AppBaseController
                 $order->save();
 
 
-                $total_amount = $delivery_fees;
-
                 $commission_min = doubleval(Setting::get('OUEGO_COMMISSION_COURSE_MIN'));
                 $commission = doubleval(Setting::get('COURSE_COMMISSION_OUEGO'));
 
@@ -228,7 +226,7 @@ class OrderAPIController extends AppBaseController
                     $service_due = $commission_min;
                 }
 
-                $driver_due = $total_amount - $service_due;
+                $driver_due = ($delivery_fees - $service_due) + $manutention_pricing;
 
                 $total_amount = $delivery_fees + $manutention_pricing;
 
@@ -402,7 +400,7 @@ class OrderAPIController extends AppBaseController
                 $commission = 0;
 
                 if($product->slug == Product::GRAVIER_SLUG){
-                   $commission_min = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO_MIN'));
+                    $commission_min = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO_MIN'));
                     $commission = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO'));
                 }
 
@@ -473,7 +471,6 @@ class OrderAPIController extends AppBaseController
                     'apartment' => null
                 ]);
 
-                //dd($sourceRoutePoint);
 
 
             }
