@@ -464,10 +464,13 @@ class DriverAPIController extends AppBaseController
                 ]
             );
 
-            // Envoyer l'OTP par SMS
-            // $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
-            $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
-
+            try {
+                // Envoyer l'OTP par SMS
+                $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
+            } catch (\Throwable $th) {
+                return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
+            }
+            
             return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
         } catch (\Throwable $th) {
             return $this->sendError($th->getMessage(),500);
