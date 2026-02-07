@@ -28,9 +28,12 @@ use App\Http\Controllers\AppBaseController;
 use Carbon\Carbon;
 use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
-use App\Services\DriverAssignmentService;
+use App\Services\DriverExpressAssignmentService;
 use App\Services\CarrierLocationService;
 use App\Services\TripService;
+
+use function PHPUnit\Framework\isFinite;
+
 /**
  * Class OrderAPIController
  */
@@ -38,19 +41,19 @@ class OrderAPIController extends AppBaseController
 {
     private OrderRepository $orderRepository;
 
-    private DriverAssignmentService $driverAssignmentService;
+    private DriverExpressAssignmentService $driverExpressAssignmentService;
     private CarrierLocationService $carrierLocationService;
     private TripService $tripService;
 
     public function __construct(
         OrderRepository $orderRepo, 
-        DriverAssignmentService $driverAssignmentService, 
+        DriverExpressAssignmentService $driverExpressAssignmentService, 
         CarrierLocationService $carrierLocationService,
         TripService $tripService
     )
     {
         $this->orderRepository = $orderRepo;
-        $this->driverAssignmentService = $driverAssignmentService;
+        $this->driverExpressAssignmentService = $driverExpressAssignmentService;
         $this->carrierLocationService = $carrierLocationService;
         $this->tripService = $tripService;
     }
@@ -91,6 +94,25 @@ class OrderAPIController extends AppBaseController
 
         $items = (array) $request->input('items');
 
+        // check if delivery type is journée
+        if(count($items)){
+            $meta_data = (array) $items[0]['meta_data'];
+            $delivery_type_code = array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:null;
+            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+
+            // Limiter la course en journée à partir de 12H
+            if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE && now()->hour > $cutoffHour){
+                return $this->sendError("Impossible de lancer une course en journée après {$cutoffHour}H00.");
+            }
+
+            // Limiter la course en semaine uniquement du lundi au jeudi
+            if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+                $dayOfWeekIso = now()->dayOfWeekIso;
+                if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                    return $this->sendError("Les courses en semaine ne peuvent être lancées que du lundi au jeudi.");
+                }
+            }
+        }
 
         $order = Order::create([
             "reference" => Order::generateReference(),
@@ -214,13 +236,10 @@ class OrderAPIController extends AppBaseController
                 $order->delivery_type_code = $delivery_type_code;
                 $order->save();
 
-
                 $commission_min = doubleval(Setting::get('OUEGO_COMMISSION_COURSE_MIN'));
                 $commission = doubleval(Setting::get('COURSE_COMMISSION_OUEGO'));
 
-                $commission_min = 0;
-                $commission = 0;
-
+    
                 $service_due = $commission;
                 if($service_due < $commission_min){
                     $service_due = $commission_min;
@@ -1501,14 +1520,29 @@ class OrderAPIController extends AppBaseController
         // Register order history
         $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
 
-        if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
-            $this->driverAssignmentService->assignCourseAndLocationNearestDriver($order);
-        }
+       if($order->delivery_type_code == DeliveryType::TYPE_EXPRESS){
+            if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
+                $this->driverExpressAssignmentService->assignCourseAndLocationNearestDriver($order);
+            }
 
-        if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-            $this->driverAssignmentService->getAggregatDriverAndNotify($order);
-        }
+            if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
+                $this->driverExpressAssignmentService->getAggregatDriverAndNotify($order);
+            }
+       }
 
+       if($order->delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+            // Assign driver to order
+       }
+
+       if($order->delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+            // Assign driver to order
+       }
+
+       if($order->delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            // Assign driver to order
+       }
+
+        
         return $this->sendResponse($order->toArray(), 'Order updated successfully');
 
     }
@@ -1543,7 +1577,7 @@ class OrderAPIController extends AppBaseController
     //     // Register order history
     //     $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
 
-    //     $this->driverAssignmentService->assignNearestDriver($order);
+    //     $this->driverExpressAssignmentService->assignNearestDriver($order);
 
     //     return $this->sendResponse($order->toArray(), 'Order updated successfully');
 
@@ -1563,7 +1597,7 @@ class OrderAPIController extends AppBaseController
         //    'type' => 'source'
         //])->first();
 
-        //$driver =  $this->driverAssignmentService->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 1);
+        //$driver =  $this->driverExpressAssignmentService->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 1);
         //dd($driver);
 
         if($order->driver_id == null || $order->acceptation_time == null){
@@ -1574,7 +1608,7 @@ class OrderAPIController extends AppBaseController
                 ])->get();
 
                 if(count($orderInvitations) == 0){
-                   $driver =  $this->driverAssignmentService->assignNearestDriver($order, 10);
+                   $driver =  $this->driverExpressAssignmentService->assignNearestDriver($order, 10);
                    //dd($driver);
                 }
 

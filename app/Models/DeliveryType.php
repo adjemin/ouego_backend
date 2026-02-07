@@ -11,6 +11,11 @@ class DeliveryType extends Model
 
     public $table = 'delivery_types';
 
+    const TYPE_EXPRESS = "EXPRESS";
+    const TYPE_EN_JOURNEE = "en-journee";
+    const TYPE_DE_NUIT = "de-nuit";
+    const TYPE_DE_SEMAINE = "en-semaine";
+
     public $fillable = [
         'name',
         'icon',

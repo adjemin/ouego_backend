@@ -278,5 +278,44 @@ class Order extends Model
     }
 
 
+    // Order scops for driver
+   
+    public function scopeActive($q)
+    {
+        return $q->where('is_draft', false)
+                ->where('is_completed', false);
+    }
+
+    public function scopeStarted($q)
+    {
+        return $q->where(function ($qq) {
+            $qq->where('is_started', true)
+            ->orWhere('is_running', true);
+        });
+    }
+
+    public function scopeNotStarted($q)
+    {
+        // "reçue mais non démarrée"
+        return $q->where('is_started', false)
+                ->where('is_running', false);
+        // si chez vous "non démarrée" = is_waiting=true, tu peux ajouter:
+        // ->where('is_waiting', true);
+    }
+
+    public function scopeExpress($q)
+    {
+        return $q->where('delivery_type_code', DeliveryType::TYPE_EXPRESS);
+    }
+
+    public function scopeDay($q)
+    {
+        return $q->where('delivery_type_code', DeliveryType::TYPE_EN_JOURNEE);
+    }
+
+    public function scopeWeek($q)
+    {
+        return $q->where('delivery_type_code', DeliveryType::TYPE_DE_SEMAINE);
+    }
 
 }

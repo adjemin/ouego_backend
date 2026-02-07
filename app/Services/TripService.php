@@ -26,9 +26,9 @@ class TripService
     private const MAX_DRIVER_ATTEMPTS = 3;
     private const INVITATION_DELAY_SECONDS = 15;
 
-    private DriverAssignmentService $orderAssignmentService;
+    private DriverExpressAssignmentService $orderAssignmentService;
 
-    public function __construct(DriverAssignmentService $orderAssignmentService)
+    public function __construct(DriverExpressAssignmentService $orderAssignmentService)
     {
         // Injection de dépendances possible ici (repositories, services, etc.)
         $this->orderAssignmentService = $orderAssignmentService;

@@ -8,7 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Order;
-use App\Services\DriverAssignmentService;
+use App\Services\DriverExpressAssignmentService;
 use App\Events\OrderAssigned;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -31,7 +31,7 @@ class ProcessPendingOrderAssignments
     // Délai d'attente pour une réponse (en minutes)
     private const INVITATION_TIMEOUT = 5;
 
-    public function handle(DriverAssignmentService $driverAssignmentService)
+    public function handle(DriverExpressAssignmentService $driverAssignmentService)
     {
         // Optimisation : eager loading pour éviter N+1
         $pendingOrders = Order::with(['orderInvitations' => function($query) {
@@ -67,7 +67,7 @@ class ProcessPendingOrderAssignments
         }
     }
 
-    private function processOrder(Order $order, DriverAssignmentService $service): string
+    private function processOrder(Order $order, DriverExpressAssignmentService $service): string
     {
         $waitingInvitations = $order->orderInvitations;
         $invitationCount = $waitingInvitations->count();
@@ -109,14 +109,15 @@ class ProcessPendingOrderAssignments
         
     }
 
-    private function assignDriver(Order $order, DriverAssignmentService $service): void
+    private function assignDriver(Order $order, DriverExpressAssignmentService $service): void
     {
         switch ($order->service_slug) {
             case Service::COURSE:
+                $service->assignCourseAndLocationNearestDriver($order);
+                break;
             case Service::LOCATION:
                 $service->assignCourseAndLocationNearestDriver($order);
                 break;
-                
             case Service::AGREGATS_CONSTRUCTION:
                 $service->getAggregatDriverAndNotify($order);
                 break;

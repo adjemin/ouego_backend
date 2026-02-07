@@ -109,6 +109,10 @@ class Driver extends Authenticatable  implements JWTSubject
         return $json_array ;
     }
 
+    public function orders(){
+        return $this->hasMany(Order::class, 'driver_id');
+    }
+
     public function getDriverLicenseDocsAttribute($value){
         if($value == null){
             return [];
