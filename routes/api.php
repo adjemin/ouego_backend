@@ -189,6 +189,14 @@ Route::prefix('v1/')->group(function () {
         ->except(['create', 'edit']);
 
     Route::get('delivery-objects', [App\Http\Controllers\API\DeliveryObjectAPIController::class, 'index'])->name('api.delivery-objects.index');
+
+    // Commercials
+    Route::get('commercials/list', [App\Http\Controllers\API\CommercialAPIController::class, 'index']);
+    Route::get('commercials/{id}', [App\Http\Controllers\API\CommercialAPIController::class, 'show']);
+    Route::get('commercials/code/{code}', [App\Http\Controllers\API\CommercialAPIController::class, 'findByCode']);
+    Route::post('commercials/create', [App\Http\Controllers\API\CommercialAPIController::class, 'store']);
+    Route::put('commercials/{id}/update', [App\Http\Controllers\API\CommercialAPIController::class, 'update']);
+    Route::delete('commercials/{id}/delete', [App\Http\Controllers\API\CommercialAPIController::class, 'destroy']);
 });
 
 //Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

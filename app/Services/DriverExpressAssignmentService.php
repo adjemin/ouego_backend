@@ -115,7 +115,7 @@ class DriverExpressAssignmentService
 
 
             // Recherche des chauffeurs avec l'algorithme de pondération
-            $driversData = $this->aggregatExpressOrderAssignment(
+            $driversData = $this->aggregatOrderAssignment(
                 $product->carrier_id,
                 $order->id,
                 $order->service_slug,
@@ -188,6 +188,7 @@ class DriverExpressAssignmentService
      */
     public function findCourseAndLocationNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
     {
+        // Vérification si le jour samedi
         $isSaturday = now()->dayOfWeekIso === 6;
 
         // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
@@ -212,6 +213,7 @@ class DriverExpressAssignmentService
             ->withCount([
                 'orders as day_active_count'  => fn($q) => $q->active()->day(),
                 'orders as week_active_count' => fn($q) => $q->active()->week(),
+                'orders as night_active_count' => fn($q) => $q->active()->night(),
             ])
 
             // 3) Limites chauffeur trois cours en journée et cinq cours en semaine
@@ -234,6 +236,11 @@ class DriverExpressAssignmentService
                 }, '>=', 3);
             }
 
+            // 6) Limites chauffeur trois cours en nuit entre minuit et 7h
+            if (now()->hour >= 0 && now()->hour < 7) {
+                $query->having('night_active_count','<', 3);
+            }
+
 
         if ($maxDistance) {
             $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
@@ -242,7 +249,7 @@ class DriverExpressAssignmentService
         return $query->limit($limit)->get();
     }
 
-    public function aggregatExpressOrderAssignment($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): array
+    public function aggregatOrderAssignment($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): array
     {
 
         $isSaturday = now()->dayOfWeekIso === 6;
@@ -287,6 +294,7 @@ class DriverExpressAssignmentService
             ->withCount([
                 'orders as day_active_count'  => fn($q) => $q->active()->day(),
                 'orders as week_active_count' => fn($q) => $q->active()->week(),
+                'orders as night_active_count' => fn($q) => $q->active()->night(),
             ])
 
             // 3) Limites chauffeur trois cours en journée et cinq cours en semaine
@@ -307,6 +315,11 @@ class DriverExpressAssignmentService
                     $q->active()
                     ->day()->where('is_completed', false);
                 }, '>=', 3);
+            }
+
+            // 6) Limites chauffeur trois cours en nuit entre minuit et 7h
+            if (now()->hour >= 0 && now()->hour < 7) {
+                $query->having('night_active_count','<', 3);
             }
 
         if ($maxDistance) {

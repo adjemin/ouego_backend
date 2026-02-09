@@ -9,6 +9,7 @@ use App\Models\OrderInvitation;
 use App\Models\OrderItem;
 use App\Models\Service;
 use App\Models\Setting;
+use App\Models\Commercial;
 use App\Models\Product;
 use App\Models\Payment;
 use App\Models\ProductType;
@@ -29,33 +30,54 @@ use Carbon\Carbon;
 use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Services\DriverExpressAssignmentService;
+use App\Services\DriverEnSemaineAssignmentService;
+use App\Services\DriverEnjourneeAssignmentService;
 use App\Services\CarrierLocationService;
-use App\Services\TripService;
-
-use function PHPUnit\Framework\isFinite;
-
 /**
  * Class OrderAPIController
  */
 class OrderAPIController extends AppBaseController
 {
     private OrderRepository $orderRepository;
-
-    private DriverExpressAssignmentService $driverExpressAssignmentService;
     private CarrierLocationService $carrierLocationService;
-    private TripService $tripService;
 
     public function __construct(
         OrderRepository $orderRepo, 
-        DriverExpressAssignmentService $driverExpressAssignmentService, 
         CarrierLocationService $carrierLocationService,
-        TripService $tripService
     )
     {
         $this->orderRepository = $orderRepo;
-        $this->driverExpressAssignmentService = $driverExpressAssignmentService;
         $this->carrierLocationService = $carrierLocationService;
-        $this->tripService = $tripService;
+    }
+
+    private function getCommercialDiscount($customer): array
+    {
+        $discount = 0;
+
+        if (!empty($customer->code_commercial)) {
+            $commercial = Commercial::where('code', $customer->code_commercial)->first();
+
+            if ($commercial) {
+                $endDate = Setting::get('COMMERCIAL_END_DATE') ?? '2026-12-31';
+                $maxOrders = intval(Setting::get('COMMERCIAL_MAX_ORDERS') ?? 5);
+                $discountAmount = doubleval(Setting::get('COMMERCIAL_DISCOUNT_AMOUNT') ?? 2500);
+
+                if (Carbon::now()->lte(Carbon::parse($endDate))) {
+                    $discountedOrdersCount = Invoice::where('customer_id', $customer->id)
+                        ->where('coupon', $customer->code_commercial)
+                        ->count();
+
+                    if ($discountedOrdersCount < $maxOrders) {
+                        $discount = $discountAmount;
+                    }
+                }
+            }
+        }
+
+        return [
+            'discount' => $discount,
+            'has_commercial_discount' => $discount > 0,
+        ];
     }
 
     /**
@@ -94,15 +116,31 @@ class OrderAPIController extends AppBaseController
 
         $items = (array) $request->input('items');
 
-        // check if delivery type is journée
+        // Verifier la disponibilité de la course le type de livraison
         if(count($items)){
             $meta_data = (array) $items[0]['meta_data'];
             $delivery_type_code = array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:null;
-            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+
+            if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
+                $now = now();
+                // Plage Horaires interdites
+                $start_morning = $now->copy()->setTime(6, 0);
+                $end_morning   = $now->copy()->setTime(8, 59);
+
+                $start_evening = $now->copy()->setTime(17, 0);
+                $end_envening   = $now->copy()->setTime(19, 59);
+
+                if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
+                    return $this->sendError("L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.");
+                }
+            }
 
             // Limiter la course en journée à partir de 12H
-            if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE && now()->hour > $cutoffHour){
-                return $this->sendError("Impossible de lancer une course en journée après {$cutoffHour}H00.");
+            if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+                $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+                if(now()->hour < 6 || now()->hour > $cutoffHour){
+                    return $this->sendError("Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.");
+                }
             }
 
             // Limiter la course en semaine uniquement du lundi au jeudi
@@ -110,6 +148,16 @@ class OrderAPIController extends AppBaseController
                 $dayOfWeekIso = now()->dayOfWeekIso;
                 if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
                     return $this->sendError("Les courses en semaine ne peuvent être lancées que du lundi au jeudi.");
+                }
+            }
+
+            if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+                $now = now();
+                $start = $now->copy()->setTime(7, 0);
+                $end   = $now->copy()->setTime(19, 30);
+
+                if ($now->lt($start) || $now->gt($end)) {
+                    return $this->sendError("L’option Course De nuit est disponible uniquement de 07H00 à 19H30.");
                 }
             }
         }
@@ -732,7 +780,31 @@ class OrderAPIController extends AppBaseController
         }
 
         $discount = 0;
+        $coupon = null;
 
+        if (!empty($customer->code_commercial)) {
+            $commercial = Commercial::where('code', $customer->code_commercial)->first();
+
+            if ($commercial) {
+                $endDate = Setting::get('COMMERCIAL_END_DATE') ?? '2026-12-31';
+                $maxOrders = intval(Setting::get('COMMERCIAL_MAX_ORDERS') ?? 5);
+                $discountAmount = doubleval(Setting::get('COMMERCIAL_DISCOUNT_AMOUNT') ?? 2500);
+                $creditAmount = doubleval(Setting::get('COMMERCIAL_CREDIT_AMOUNT') ?? 2500);
+
+                if (Carbon::now()->lte(Carbon::parse($endDate))) {
+                    $discountedOrdersCount = Invoice::where('customer_id', $customer->id)
+                        ->where('coupon', $customer->code_commercial)
+                        ->count();
+
+                    if ($discountedOrdersCount < $maxOrders) {
+                        $discount = $discountAmount;
+                        $invoice_total = max(0, $invoice_total - $discount);
+                        $commercial->creditBalance($creditAmount);
+                        $coupon = $customer->code_commercial;
+                    }
+                }
+            }
+        }
 
         $invoice = Invoice::create([
             'order_id' => $order->id,
@@ -750,7 +822,7 @@ class OrderAPIController extends AppBaseController
             'driver_due' => $driver_due,
             'service_due' => $service_due,
             'discount' => $discount,
-            'coupon' => null
+            'coupon' => $coupon
         ]);
 
 
@@ -1046,11 +1118,18 @@ class OrderAPIController extends AppBaseController
                     "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
                 ];
 
+                $customer = auth('api-customers')->user();
+                $commercialDiscount = $this->getCommercialDiscount($customer);
+
                 return $this->sendResponse([
-                    $expressPricing,
-                    $sameDayPricing,
-                    $sameNightPricing,
-                    $sameWeekPricing
+                    'pricings' => [
+                        $expressPricing,
+                        $sameDayPricing,
+                        $sameNightPricing,
+                        $sameWeekPricing
+                    ],
+                    'discount' => $commercialDiscount['discount'],
+                    'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
                 ], 'Order saved successfully');
 
 
@@ -1521,67 +1600,42 @@ class OrderAPIController extends AppBaseController
         $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
 
        if($order->delivery_type_code == DeliveryType::TYPE_EXPRESS){
+            $expressService = app(DriverExpressAssignmentService::class);
             if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
-                $this->driverExpressAssignmentService->assignCourseAndLocationNearestDriver($order);
+                $expressService->assignCourseAndLocationNearestDriver($order, 10);
             }
 
             if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-                $this->driverExpressAssignmentService->getAggregatDriverAndNotify($order);
+                $expressService->getAggregatDriverAndNotify($order);
             }
        }
 
        if($order->delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
             // Assign driver to order
-       }
+            $enjourneeService = app(DriverEnjourneeAssignmentService::class);
+            if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
+                $enjourneeService->assignCourseAndLocationNearestDriver($order, 10);
+            }
 
-       if($order->delivery_type_code == DeliveryType::TYPE_DE_NUIT){
-            // Assign driver to order
+            if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
+                $enjourneeService->getAggregatDriverAndNotify($order);
+            }
        }
 
        if($order->delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
             // Assign driver to order
+            $enSemaineService = app(DriverEnSemaineAssignmentService::class);
+            if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
+                $enSemaineService->assignCourseAndLocationNearestDriver($order, 10);
+            }
+
+            if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
+                $enSemaineService->getAggregatDriverAndNotify($order);
+            }
        }
 
-        
         return $this->sendResponse($order->toArray(), 'Order updated successfully');
-
     }
-
-    // public function confirm($id, Request $request){
-
-    //     $customer = auth('api-customers')->user();
-
-    //     /** @var Order $order */
-    //     $order = $this->orderRepository->find($id);
-
-    //     if (empty($order)) {
-    //         return $this->sendError('Order not found');
-    //     }
-
-    //     $carrierId = $request->get('carrier_id');
-
-    //     if(empty($carrierId)){
-    //         return $this->sendError('carrier_id is required', 400);
-    //     }
-    //     $carrier = Carrier::where('id', $order->carrier_id)->first();
-    //     if(empty($carrier)){
-    //         return $this->sendError('Carrier not found', 400);
-    //     }
-
-    //     $input['is_draft'] = false;
-    //     $input['order_date'] = now();
-    //     $input['status'] = Order::PERFORMER_LOOKUP;
-
-    //     $order->update($input);
-
-    //     // Register order history
-    //     $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
-
-    //     $this->driverExpressAssignmentService->assignNearestDriver($order);
-
-    //     return $this->sendResponse($order->toArray(), 'Order updated successfully');
-
-    // }
 
 
     public function performDriverLookup($id, Request $request){
@@ -1592,14 +1646,6 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Commande introuvable', 400);
         }
 
-        //$route_point = RoutePoint::where([
-        //    'order_id' => $order->id,
-        //    'type' => 'source'
-        //])->first();
-
-        //$driver =  $this->driverExpressAssignmentService->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 1);
-        //dd($driver);
-
         if($order->driver_id == null || $order->acceptation_time == null){
 
                 $orderInvitations = OrderInvitation::where([
@@ -1608,8 +1654,8 @@ class OrderAPIController extends AppBaseController
                 ])->get();
 
                 if(count($orderInvitations) == 0){
-                   $driver =  $this->driverExpressAssignmentService->assignNearestDriver($order, 10);
-                   //dd($driver);
+                   $expressService = app(DriverExpressAssignmentService::class);
+                   $expressService->assignNearestDriver($order, 10);
                 }
 
         }
@@ -1769,9 +1815,16 @@ class OrderAPIController extends AppBaseController
         //dd($current_distance);
 
 
+        $customer = auth('api-customers')->user();
+        $commercialDiscount = $this->getCommercialDiscount($customer);
+        $amount = PricingUtils::transport($current_distance, $delivery_type_code);
+
         return $this->sendResponse([
             'carrier_id' => $carrier->id,
-            'amount' => PricingUtils::transport($current_distance, $delivery_type_code),
+            'amount' => $amount,
+            'amount_with_discount' => max(0, $amount - $commercialDiscount['discount']),
+            'discount' => $commercialDiscount['discount'],
+            'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
             'distance' => $distance,
             'delivery_type' => $delivery_type_code
         ], 'Order saved successfully');
@@ -1931,9 +1984,16 @@ class OrderAPIController extends AppBaseController
 
 
 
+        $customer = auth('api-customers')->user();
+        $commercialDiscount = $this->getCommercialDiscount($customer);
+        $amount = PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code);
+
         return $this->sendResponse([
             'carrier' => $carrier,
-            'amount' => PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code),
+            'amount' => $amount,
+            'amount_with_discount' => max(0, $amount - $commercialDiscount['discount']),
+            'discount' => $commercialDiscount['discount'],
+            'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
             'distance' => $distance,
             'duration' => $duration,
             'delivery_type' => $delivery_type_code
@@ -2094,9 +2154,16 @@ class OrderAPIController extends AppBaseController
         }
 
 
+        $customer = auth('api-customers')->user();
+        $commercialDiscount = $this->getCommercialDiscount($customer);
+        $amount = PricingUtils::transportSable($current_distance, $delivery_type_code);
+
         return $this->sendResponse([
             'carrier' => $carrier,
-            'amount' => PricingUtils::transportSable($current_distance, $delivery_type_code),
+            'amount' => $amount,
+            'amount_with_discount' => max(0, $amount - $commercialDiscount['discount']),
+            'discount' => $commercialDiscount['discount'],
+            'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
             'distance' => $distance,
             'duration' => $duration,
             'delivery_type' => $delivery_type_code

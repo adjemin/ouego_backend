@@ -36,7 +36,8 @@ class Customer extends Authenticatable  implements JWTSubject
         'email',
         'otp',
         'otp_expires_at',
-        'profile_id'
+        'profile_id',
+        'code_commercial'
     ];
 
     protected $casts = [
@@ -60,6 +61,7 @@ class Customer extends Authenticatable  implements JWTSubject
         'email' => 'string',
         'otp' => 'string',
         'profile_id' => 'integer',
+        'code_commercial' => 'string',
     ];
 
     public static array $rules = [

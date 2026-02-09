@@ -14,9 +14,11 @@ use App\Events\OrderAssigned;
 use App\Models\Carrier;
 use App\Models\DriverCarrier;
 use Illuminate\Support\Facades\Log;
+use App\Models\Setting;
+use App\Models\DeliveryType;
 
 
-class DriverEnjourneeAssignmentService
+class DriverNuitAssignmentService
 {
 
     private int $maxUpdateTime  = 30;
@@ -186,7 +188,7 @@ class DriverEnjourneeAssignmentService
      */
     public function findCourseAndLocationNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
     {
-        $isSaturday = now()->dayOfWeekIso === 6; 
+        $isSaturday = now()->dayOfWeekIso === 6;
 
         // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
         $query = Driver::select('drivers.*')
@@ -196,23 +198,17 @@ class DriverEnjourneeAssignmentService
             ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
 
-            // Compter les files actives
+             // Compter les files actives
             ->withCount([
-                'orders as day_active_count' => fn($q) => $q->active()->day(),
                 'orders as week_active_count' => fn($q) => $q->active()->week(),
             ])
 
-            // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
-            ->having('day_active_count', '<', 3)
+            // 1) Limites chauffeur cinq cours en semaine
             ->having('week_active_count', '<', 5)
-
-            // 2) Règle spécifique du samedi (blocage total si semaine active)
-            ->when($isSaturday, function ($q) {
-                $q->having('week_active_count', '=', 0);
-            })
 
 
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
+
 
         if ($maxDistance) {
             $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
@@ -223,9 +219,6 @@ class DriverEnjourneeAssignmentService
 
     public function aggregatOrderAssignment($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): array
     {
-        // Vérification si le jour samedi
-        $isSaturday = now()->dayOfWeekIso === 6; 
-        
         $carrier = Carrier::find($carrier_id);
         if (!$carrier) {
             throw new \Exception("Carrière non trouvée");
@@ -251,21 +244,6 @@ class DriverEnjourneeAssignmentService
             ->whereRaw('is_active = true')
             ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
-
-            // Compter les files actives
-            ->withCount([
-                'orders as day_active_count' => fn($q) => $q->active()->day(),
-                'orders as week_active_count' => fn($q) => $q->active()->week(),
-            ])
-
-            // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
-            ->having('day_active_count', '<', 3)
-            ->having('week_active_count', '<', 5)
-
-            // 2) Règle spécifique du samedi (blocage total si semaine active)
-            ->when($isSaturday, function ($q) {
-                $q->having('week_active_count', '=', 0);
-            })
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
         if ($maxDistance) {

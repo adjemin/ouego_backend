@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Services\OrangeSMSService;
 use App\Models\CustomerOTP;
 use App\Models\CustomerProfile;
+use App\Models\Commercial;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
 
@@ -98,6 +99,20 @@ class CustomerAPIController extends AppBaseController
             return $this->sendError('Customer not found');
         }
 
+        // Empêcher la modification du code_commercial s'il existe déjà
+        if (array_key_exists('code_commercial', $input)) {
+            if (!empty($customer->code_commercial)) {
+                return $this->sendError('Le code commercial ne peut pas être modifié', 400);
+            }
+            // Vérifier que le code_commercial existe dans la table commercials
+            if (!empty($input['code_commercial'])) {
+                $commercial = Commercial::where('code', $input['code_commercial'])->first();
+                if ($commercial == null) {
+                    return $this->sendError('Code commercial invalide', 400);
+                }
+            }
+        }
+
         $customer = $this->customerRepository->update($input, $customer->id);
 
         // Charger la relation profile
@@ -163,6 +178,14 @@ class CustomerAPIController extends AppBaseController
             $profile = CustomerProfile::find($input['profile_id']);
             if ($profile == null) {
                 return $this->sendError('Profile not found', 404);
+            }
+        }
+
+        // Vérifier que le code_commercial existe dans la table commercials
+        if (array_key_exists('code_commercial', $input) && !empty($input['code_commercial'])) {
+            $commercial = Commercial::where('code', $input['code_commercial'])->first();
+            if ($commercial == null) {
+                return $this->sendError('Code commercial invalide', 400);
             }
         }
 

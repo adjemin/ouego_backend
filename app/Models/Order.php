@@ -318,4 +318,9 @@ class Order extends Model
         return $q->where('delivery_type_code', DeliveryType::TYPE_DE_SEMAINE);
     }
 
+    public function scopeNight($q)
+    {
+        return $q->where('delivery_type_code', DeliveryType::TYPE_DE_NUIT);
+    }
+
 }
