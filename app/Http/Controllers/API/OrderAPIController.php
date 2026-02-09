@@ -32,6 +32,7 @@ use App\Utilities\GoogleMapsAPIUtils;
 use App\Services\DriverExpressAssignmentService;
 use App\Services\DriverEnSemaineAssignmentService;
 use App\Services\DriverEnjourneeAssignmentService;
+use App\Services\DriverNuitAssignmentService;
 use App\Services\CarrierLocationService;
 /**
  * Class OrderAPIController
@@ -1631,6 +1632,20 @@ class OrderAPIController extends AppBaseController
 
             if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
                 $enSemaineService->getAggregatDriverAndNotify($order);
+            }
+       }
+
+       if($order->delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+            // Les commandes de nuit : recherche de chauffeurs lancée automatiquement à partir de 20h
+            if(now()->hour >= 20){
+                $nuitService = app(DriverNuitAssignmentService::class);
+                if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
+                    $nuitService->assignCourseAndLocationNearestDriver($order, 10);
+                }
+
+                if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
+                    $nuitService->getAggregatDriverAndNotify($order);
+                }
             }
        }
 
