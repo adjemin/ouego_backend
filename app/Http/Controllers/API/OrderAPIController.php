@@ -34,6 +34,7 @@ use App\Services\DriverEnSemaineAssignmentService;
 use App\Services\DriverEnjourneeAssignmentService;
 use App\Services\DriverNuitAssignmentService;
 use App\Services\CarrierLocationService;
+use App\Services\OrangeSMSService;
 /**
  * Class OrderAPIController
  */
@@ -41,14 +42,17 @@ class OrderAPIController extends AppBaseController
 {
     private OrderRepository $orderRepository;
     private CarrierLocationService $carrierLocationService;
+    private OrangeSMSService $orangeSMSService;
 
     public function __construct(
         OrderRepository $orderRepo, 
         CarrierLocationService $carrierLocationService,
+        OrangeSMSService $orangeSMSService
     )
     {
         $this->orderRepository = $orderRepo;
         $this->carrierLocationService = $carrierLocationService;
+        $this->orangeSMSService  = $orangeSMSService;
     }
 
     private function getCommercialDiscount($customer): array
@@ -59,7 +63,8 @@ class OrderAPIController extends AppBaseController
             $commercial = Commercial::where('code', $customer->code_commercial)->first();
 
             if ($commercial) {
-                $endDate = Setting::get('COMMERCIAL_END_DATE') ?? '2026-12-31';
+                $endDays = Setting::get('COMMERCIAL_VALIDITY_DAYS') ?? '10';
+                $endDate = Carbon::parse($customer->created_at)->addDays($endDays)->format('Y-m-d');
                 $maxOrders = intval(Setting::get('COMMERCIAL_MAX_ORDERS') ?? 5);
                 $discountAmount = doubleval(Setting::get('COMMERCIAL_DISCOUNT_AMOUNT') ?? 2500);
 
@@ -787,7 +792,8 @@ class OrderAPIController extends AppBaseController
             $commercial = Commercial::where('code', $customer->code_commercial)->first();
 
             if ($commercial) {
-                $endDate = Setting::get('COMMERCIAL_END_DATE') ?? '2026-12-31';
+                $endDays = Setting::get('COMMERCIAL_VALIDITY_DAYS') ?? '30';
+                $endDate = Carbon::parse($customer->created_at)->addDays($endDays)->format('Y-m-d');
                 $maxOrders = intval(Setting::get('COMMERCIAL_MAX_ORDERS') ?? 5);
                 $discountAmount = doubleval(Setting::get('COMMERCIAL_DISCOUNT_AMOUNT') ?? 2500);
                 $creditAmount = doubleval(Setting::get('COMMERCIAL_CREDIT_AMOUNT') ?? 2500);
@@ -802,6 +808,7 @@ class OrderAPIController extends AppBaseController
                         $invoice_total = max(0, $invoice_total - $discount);
                         $commercial->creditBalance($creditAmount);
                         $coupon = $customer->code_commercial;
+                        $this->orangeSMSService->sendSMS("+" . $commercial->phone, "OUEGO: Une nouvelle commande d'un client est arrivée. Votre compte a été credité de {$creditAmount} XOF. Votre nouveau solde est de {$commercial->current_balance} XOF.");
                     }
                 }
             }
@@ -2200,6 +2207,10 @@ class OrderAPIController extends AppBaseController
 
     if (empty($order)) {
         return $this->sendError('Order not found');
+    }
+
+    if($order->driver_id != null && $order->started){
+        return $this->sendError('Vous ne pouvez pas annuler cette commande car elle a commencé', 400);
     }
 
     $input['status'] = Order::CANCELLED;

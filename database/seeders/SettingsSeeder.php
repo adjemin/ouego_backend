@@ -54,7 +54,7 @@ class SettingsSeeder extends Seeder
             ['name' => 'COMMERCIAL_DISCOUNT_AMOUNT', 'value' => '2500'],
             ['name' => 'COMMERCIAL_CREDIT_AMOUNT', 'value' => '2500'],
             ['name' => 'COMMERCIAL_MAX_ORDERS', 'value' => '5'],
-            ['name' => 'COMMERCIAL_END_DATE', 'value' => '2026-12-31'],
+            ['name' => 'COMMERCIAL_VALIDITY_DAYS', 'value' => '30'],
         ];
 
         foreach ($settings as $setting) {
