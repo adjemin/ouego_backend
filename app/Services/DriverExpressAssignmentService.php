@@ -196,7 +196,7 @@ class DriverExpressAssignmentService
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
             ->whereRaw('is_available = true')
             ->whereRaw('is_active = true')
-            ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
+            // ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
 
             // 1) Aucune course démarrée (tous types)
@@ -209,21 +209,23 @@ class DriverExpressAssignmentService
                 $q->active()->express()->where('is_completed', false);
             })
 
-             // Compteurs
-            ->withCount([
-                'orders as day_active_count'  => fn($q) => $q->active()->day(),
-                'orders as week_active_count' => fn($q) => $q->active()->week(),
-                'orders as night_active_count' => fn($q) => $q->active()->night(),
-            ])
+            // 3) Limites chauffeur : trois courses en journée et cinq courses en semaine
+            ->where(
+                Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(),
+                '<', 3
+            )
+            ->where(
+                Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(),
+                '<', 5
+            );
 
-            // 3) Limites chauffeur trois cours en journée et cinq cours en semaine
-            ->having('day_active_count', '<', 3)
-            ->having('week_active_count', '<', 5)
 
             // 4) Règle spécifique du samedi (blocage total si semaine active)
-            ->when($isSaturday, function ($q) {
-                $q->having('week_active_count', '=', 0);
-            })
+            $query->when($isSaturday, fn($q) => $q->where(
+                Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(),
+                '=', 0
+            ))
+
 
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
@@ -277,7 +279,7 @@ class DriverExpressAssignmentService
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
             ->whereRaw('is_available = true')
             ->whereRaw('is_active = true')
-            ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
+            // ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
 
             // 1) Aucune course démarrée (tous types)
@@ -290,21 +292,22 @@ class DriverExpressAssignmentService
                 $q->active()->express()->where('is_completed', false);
             })
 
-             // Compteurs
-            ->withCount([
-                'orders as day_active_count'  => fn($q) => $q->active()->day(),
-                'orders as week_active_count' => fn($q) => $q->active()->week(),
-                'orders as night_active_count' => fn($q) => $q->active()->night(),
-            ])
+            // 3) Limites chauffeur : trois courses en journée et cinq courses en semaine
+            ->where(
+                Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(),
+                '<', 3
+            )
+            ->where(
+                Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(),
+                '<', 5
+            );
 
-            // 3) Limites chauffeur trois cours en journée et cinq cours en semaine
-            ->having('day_active_count', '<', 3)
-            ->having('week_active_count', '<', 5)
 
             // 4) Règle spécifique du samedi (blocage total si semaine active)
-            ->when($isSaturday, function ($q) {
-                $q->having('week_active_count', '=', 0);
-            })
+            $query->when($isSaturday, fn($q) => $q->where(
+                Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(),
+                '=', 0
+            ))
 
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 

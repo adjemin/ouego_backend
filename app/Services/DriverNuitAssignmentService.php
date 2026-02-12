@@ -195,16 +195,18 @@ class DriverNuitAssignmentService
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
             ->whereRaw('is_available = true')
             ->whereRaw('is_active = true')
-            ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
+            // ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
 
-             // Compter les files actives
-            ->withCount([
-                'orders as week_active_count' => fn($q) => $q->active()->week(),
-            ])
+            // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
+            ->where(Order::selectRow('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(), '<', 3)
+            ->where(Order::selectRow('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(), '<', 5)
 
-            // 1) Limites chauffeur cinq cours en semaine
-            ->having('week_active_count', '<', 5)
+            // 2) Règle spécifique du samedi (blocage total si semaine active)
+            ->when($isSaturday, fn($q) => $q->where(
+                Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(),
+                '=', 0
+            ))
 
 
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
@@ -219,6 +221,8 @@ class DriverNuitAssignmentService
 
     public function aggregatOrderAssignment($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): array
     {
+        $isSaturday = now()->dayOfWeekIso === 6;
+
         $carrier = Carrier::find($carrier_id);
         if (!$carrier) {
             throw new \Exception("Carrière non trouvée");
@@ -242,8 +246,18 @@ class DriverNuitAssignmentService
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
             ->whereRaw('is_available = true')
             ->whereRaw('is_active = true')
-            ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
+            // ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
+
+            // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
+            ->where(Order::selectRow('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(), '<', 3)
+            ->where(Order::selectRow('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(), '<', 5)
+
+            // 2) Règle spécifique du samedi (blocage total si semaine active)
+            ->when($isSaturday, fn($q) => $q->where(
+                Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(),
+                '=', 0
+            ))
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
         if ($maxDistance) {

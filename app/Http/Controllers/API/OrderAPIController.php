@@ -430,10 +430,19 @@ class OrderAPIController extends AppBaseController
                 $order->save();
 
                 $productType = ProductType::where(['slug' => $meta_data['product_type_slug']])->first();
+                if(empty($productType)) {
+                    return $this->sendError('Type de produit introuvable', 400);
+                }
 
                 $product = Product::where(['id' => $productType->product_id])->first();
+                if(empty($product)) {
+                    return $this->sendError('Produit introuvable', 400);
+                }
 
                 $carrier =  Carrier::where(['id' => $item['carrier_id']])->first();
+                if(empty($carrier)) {
+                    return $this->sendError('Carrier introuvable', 400);
+                }
 
 
                 $quantity = intval($item['quantity']);
@@ -1607,7 +1616,7 @@ class OrderAPIController extends AppBaseController
         // Register order history
         $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
 
-       if($order->delivery_type_code == DeliveryType::TYPE_EXPRESS){
+        if($order->delivery_type_code == DeliveryType::TYPE_EXPRESS){
             $expressService = app(DriverExpressAssignmentService::class);
             if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
                 $expressService->assignCourseAndLocationNearestDriver($order, 10);
