@@ -29,10 +29,7 @@ use App\Http\Controllers\AppBaseController;
 use Carbon\Carbon;
 use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
-use App\Services\DriverExpressAssignmentService;
-use App\Services\DriverEnSemaineAssignmentService;
-use App\Services\DriverEnjourneeAssignmentService;
-use App\Services\DriverNuitAssignmentService;
+use App\Services\DriverAssignmentService;
 use App\Services\CarrierLocationService;
 use App\Services\OrangeSMSService;
 /**
@@ -1616,54 +1613,9 @@ class OrderAPIController extends AppBaseController
         // Register order history
         $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
 
-        if($order->delivery_type_code == DeliveryType::TYPE_EXPRESS){
-            $expressService = app(DriverExpressAssignmentService::class);
-            if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
-                $expressService->assignCourseAndLocationNearestDriver($order, 10);
-            }
-
-            if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-                $expressService->getAggregatDriverAndNotify($order, 10);
-            }
-        }
-
-       if($order->delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
-            // Assign driver to order
-            $enjourneeService = app(DriverEnjourneeAssignmentService::class);
-            if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
-                $enjourneeService->assignCourseAndLocationNearestDriver($order, 10);
-            }
-
-            if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-                $enjourneeService->getAggregatDriverAndNotify($order, 10);
-            }
-       }
-
-       if($order->delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
-            // Assign driver to order
-            $enSemaineService = app(DriverEnSemaineAssignmentService::class);
-            if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
-                $enSemaineService->assignCourseAndLocationNearestDriver($order, 10);
-            }
-
-            if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-                $enSemaineService->getAggregatDriverAndNotify($order, 10);
-            }
-       }
-
-       if($order->delivery_type_code == DeliveryType::TYPE_DE_NUIT){
-            // Les commandes de nuit : recherche de chauffeurs lancée automatiquement à partir de 20h
-            if(now()->hour >= 20){
-                $nuitService = app(DriverNuitAssignmentService::class);
-                if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
-                    $nuitService->assignCourseAndLocationNearestDriver($order, 10);
-                }
-
-                if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-                    $nuitService->getAggregatDriverAndNotify($order, 10);
-                }
-            }
-       }
+        // Recherche de chauffeurs et envoi d'invitations
+        $expressService = app(DriverAssignmentService::class);
+        $expressService->sendInvitations($order, 10);
 
         return $this->sendResponse($order->toArray(), 'Order updated successfully');
     }
@@ -1685,8 +1637,9 @@ class OrderAPIController extends AppBaseController
                 ])->get();
 
                 if(count($orderInvitations) == 0){
-                   $expressService = app(DriverExpressAssignmentService::class);
-                   $expressService->assignNearestDriver($order, 10);
+                    // Recherche de chauffeurs et envoi d'invitations
+                    $expressService = app(DriverAssignmentService::class);
+                    $expressService->sendInvitations($order, 10);
                 }
 
         }

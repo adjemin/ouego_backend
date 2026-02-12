@@ -50,7 +50,7 @@ class AssignNightOrders extends Command
                 }
 
                 if ($order->service_slug == Service::AGREGATS_CONSTRUCTION) {
-                    $nuitService->getAggregatDriverAndNotify($order);
+                    $nuitService->getAggregatDriverAndNotify($order, 10);
                 }
 
                 $assigned++;

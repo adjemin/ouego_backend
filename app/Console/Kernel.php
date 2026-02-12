@@ -5,8 +5,6 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Jobs\ProcessPendingOrderAssignments;
-use App\Jobs\SendTestPushNotificationJob;
-use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -20,7 +18,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('firebase:clean-tokens')->daily();
 
         // Exécuter le job toutes les 2 minutes
-        $schedule->job(new ProcessPendingOrderAssignments)->everyTwoMinutes();
+        $schedule->job(new ProcessPendingOrderAssignments)->everyFiveMinutes();
 
         // Attribuer les commandes de nuit tous les jours à 20h
         $schedule->command('orders:assign-night')->dailyAt('20:00');

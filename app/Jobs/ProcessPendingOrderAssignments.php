@@ -8,13 +8,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Order;
-use App\Services\DriverExpressAssignmentService;
-use App\Events\OrderAssigned;
+use App\Services\DriverAssignmentService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-use Carbon\Carbon;
-use App\Services\TripService;
-use App\Models\Service;
 use App\Models\OrderInvitation;
 
 // class ProcessPendingOrderAssignments implements ShouldQueue
@@ -22,8 +18,8 @@ class ProcessPendingOrderAssignments
 {
     use Dispatchable, InteractsWithQueue, SerializesModels;
 
-    public $tries = 5;
-    public $backoff = [30, 60, 120, 300, 600];
+    public $tries = 3;
+    public $backoff = [30, 60, 120];
     
     // Nombre maximum d'invitations avant abandon
     private const MAX_INVITATIONS = 10;
@@ -31,8 +27,9 @@ class ProcessPendingOrderAssignments
     // Délai d'attente pour une réponse (en minutes)
     private const INVITATION_TIMEOUT = 5;
 
-    public function handle(DriverExpressAssignmentService $driverAssignmentService)
+    public function handle()
     {
+        Log::info("ProcessPendingOrderAssignments: Debut de recherche de commandes en attentes");
         // Optimisation : eager loading pour éviter N+1
         $pendingOrders = Order::with(['orderInvitations' => function($query) {
                 $query->where('is_waiting_acceptation', true);
@@ -46,28 +43,20 @@ class ProcessPendingOrderAssignments
             return;
         }
 
-        $needsRecheck = false;
 
         foreach ($pendingOrders as $order) {
             try {
-                $result = $this->processOrder($order, $driverAssignmentService);
-                
-                if ($result === 'needs_recheck') {
-                    $needsRecheck = true;
-                }
-                
+                $this->processOrder($order);
             } catch (Throwable $e) {
                 // Ne pas fail le job entier pour une seule commande
+                Log::warning("ProcessPendingOrderAssignments: erreur lors de l'execution ".$e->getMessage());
             }
         }
 
-        // ✅ Replanifier UNE SEULE FOIS après le traitement de toutes les commandes
-        if ($needsRecheck) {
-            ProcessPendingOrderAssignments::dispatch()->delay(now()->addMinutes(10));
-        }
+        Log::info("ProcessPendingOrderAssignments: Fin de recherche de commandes en attentes");
     }
 
-    private function processOrder(Order $order, DriverExpressAssignmentService $service): string
+    private function processOrder(Order $order)
     {
         $waitingInvitations = $order->orderInvitations;
         $invitationCount = $waitingInvitations->count();
@@ -75,13 +64,11 @@ class ProcessPendingOrderAssignments
         // Cas 1 : Trop de tentatives - abandon
         if ($invitationCount >= self::MAX_INVITATIONS) {
             $this->markAsNotFound($order);
-            return 'abandoned';
         }
 
         // Cas 2 : Aucune invitation - première tentative
         if ($invitationCount === 0) {
-            $this->assignDriver($order, $service);
-            return 'needs_recheck';
+            $this->assignDriver($order);
         }
 
         // Cas 3 : Vérifier si les invitations ont expiré
@@ -94,37 +81,27 @@ class ProcessPendingOrderAssignments
             OrderInvitation::whereIn('id', $expiredInvitations->pluck('id'))->delete();
             
             // Réessayer l'assignation
-            $this->assignDriver($order, $service);
-            return 'needs_recheck';
+            $this->assignDriver($order);
         }
-
-        // Cas 4 : En attente de réponse
-        return 'waiting';
     }
 
     private function markAsNotFound(Order $order): void
     {
-        $order->update(['status' => Order::PERFORMER_NOT_FOUND]);
+        $order->update([
+            'status' => Order::PERFORMER_NOT_FOUND, 
+            'is_waiting' => false,
+            'is_completed' => true,
+            'is_successful' =>false
+        ]);
         $order->newOrderHistory(Order::PERFORMER_NOT_FOUND, 'system', null);
         
     }
 
-    private function assignDriver(Order $order, DriverExpressAssignmentService $service): void
+    private function assignDriver(Order $order): void
     {
-        switch ($order->service_slug) {
-            case Service::COURSE:
-                $service->assignCourseAndLocationNearestDriver($order);
-                break;
-            case Service::LOCATION:
-                $service->assignCourseAndLocationNearestDriver($order);
-                break;
-            case Service::AGREGATS_CONSTRUCTION:
-                $service->getAggregatDriverAndNotify($order);
-                break;
-                
-            default:
-                break;
-        }
+        // Recherche de chauffeurs et envoi d'invitations
+        $expressService = app(DriverAssignmentService::class);
+        $expressService->sendInvitations($order, 10);
     }
 
     public function failed(Throwable $exception)
