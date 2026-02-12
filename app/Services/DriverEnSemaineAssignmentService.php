@@ -195,7 +195,7 @@ class DriverEnSemaineAssignmentService
             ->whereJsonContains('services', $service_slug)
 
             // 1) Limites chauffeur : trois courses en journée et cinq courses en semaine
-            ->where(
+           ->where(
                 Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(),
                 '<', 3
             )
@@ -212,11 +212,13 @@ class DriverEnSemaineAssignmentService
             ))
 
 
-            ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
-    
 
+            ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
+
+
+    
         if ($maxDistance) {
-            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
+            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance*1000]);
         }
 
         return $query->limit($limit)->get();
@@ -270,7 +272,7 @@ class DriverEnSemaineAssignmentService
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
         if ($maxDistance) {
-            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
+            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance*1000]);
         }
 
 

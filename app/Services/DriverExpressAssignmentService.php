@@ -240,12 +240,15 @@ class DriverExpressAssignmentService
 
             // 6) Limites chauffeur trois cours en nuit entre minuit et 7h
             if (now()->hour >= 0 && now()->hour < 7) {
-                $query->having('night_active_count','<', 3);
+                $query->where(
+                    Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->night(),
+                    '<', 3
+                );
             }
 
 
         if ($maxDistance) {
-            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
+            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance*1000]);
         }
 
         return $query->limit($limit)->get();
@@ -322,11 +325,14 @@ class DriverExpressAssignmentService
 
             // 6) Limites chauffeur trois cours en nuit entre minuit et 7h
             if (now()->hour >= 0 && now()->hour < 7) {
-                $query->having('night_active_count','<', 3);
+                $query->where(
+                    Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->night(),
+                    '<', 3
+                );
             }
 
         if ($maxDistance) {
-            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
+            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance*1000]);
         }
 
 

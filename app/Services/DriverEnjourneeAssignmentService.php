@@ -19,7 +19,6 @@ use Illuminate\Support\Facades\Log;
 class DriverEnjourneeAssignmentService
 {
 
-    private int $maxUpdateTime  = 30;
     private int $maxDrivers = 5;
     
 
@@ -197,8 +196,8 @@ class DriverEnjourneeAssignmentService
             ->whereJsonContains('services', $service_slug)
 
             // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
-            ->where(Order::selectRow('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(), '<', 3)
-            ->where(Order::selectRow('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(), '<', 5)
+            ->where(Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(), '<', 3)
+            ->where(Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(), '<', 5)
 
             // 2) Règle spécifique du samedi (blocage total si semaine active)
             ->when($isSaturday, fn($q) => $q->where(
@@ -209,7 +208,7 @@ class DriverEnjourneeAssignmentService
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
         if ($maxDistance) {
-            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
+            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance*1000]);
         }
 
         return $query->limit($limit)->get();
@@ -247,8 +246,8 @@ class DriverEnjourneeAssignmentService
             ->whereJsonContains('services', $service_slug)
 
             // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
-            ->where(Order::selectRow('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(), '<', 3)
-            ->where(Order::selectRow('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(), '<', 5)
+            ->where(Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(), '<', 3)
+            ->where(Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(), '<', 5)
 
             // 2) Règle spécifique du samedi (blocage total si semaine active)
             ->when($isSaturday, fn($q) => $q->where(
@@ -258,7 +257,7 @@ class DriverEnjourneeAssignmentService
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
         if ($maxDistance) {
-            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
+            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance*1000]);
         }
 
 

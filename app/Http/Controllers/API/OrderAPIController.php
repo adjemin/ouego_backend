@@ -1623,9 +1623,9 @@ class OrderAPIController extends AppBaseController
             }
 
             if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-                $expressService->getAggregatDriverAndNotify($order);
+                $expressService->getAggregatDriverAndNotify($order, 10);
             }
-       }
+        }
 
        if($order->delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
             // Assign driver to order
@@ -1635,7 +1635,7 @@ class OrderAPIController extends AppBaseController
             }
 
             if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-                $enjourneeService->getAggregatDriverAndNotify($order);
+                $enjourneeService->getAggregatDriverAndNotify($order, 10);
             }
        }
 
@@ -1647,7 +1647,7 @@ class OrderAPIController extends AppBaseController
             }
 
             if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-                $enSemaineService->getAggregatDriverAndNotify($order);
+                $enSemaineService->getAggregatDriverAndNotify($order, 10);
             }
        }
 
@@ -1660,7 +1660,7 @@ class OrderAPIController extends AppBaseController
                 }
 
                 if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
-                    $nuitService->getAggregatDriverAndNotify($order);
+                    $nuitService->getAggregatDriverAndNotify($order, 10);
                 }
             }
        }
