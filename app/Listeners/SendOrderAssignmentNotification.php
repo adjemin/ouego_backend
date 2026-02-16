@@ -61,7 +61,7 @@ class SendOrderAssignmentNotification
                 \Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $event->orderInvitation->driver_id);
             } catch (\Exception $e) {
                 // Gestion des autres exceptions
-                \Log::error("Erreur lors de l'envoi de la notification: " . $e->getMessage());
+                \Log::error("SendOrderAssignmentNotification: Erreur lors de l'envoi de la notification: " . $e->getMessage());
             }
         }
 

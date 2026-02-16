@@ -192,7 +192,7 @@ class DriverEnjourneeAssignmentService
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
             ->whereRaw('is_available = true')
             ->whereRaw('is_active = true')
-            // ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
+            ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
 
             // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
@@ -242,7 +242,7 @@ class DriverEnjourneeAssignmentService
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
             ->whereRaw('is_available = true')
             ->whereRaw('is_active = true')
-            // ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
+            ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
 
             // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
