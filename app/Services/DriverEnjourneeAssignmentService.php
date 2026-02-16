@@ -20,6 +20,7 @@ class DriverEnjourneeAssignmentService
 {
 
     private int $maxDrivers = 5;
+    private int $maxUpdateTime  = 30;
     
 
     /**
