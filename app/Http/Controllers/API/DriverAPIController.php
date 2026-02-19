@@ -251,6 +251,16 @@ class DriverAPIController extends AppBaseController
             return $this->sendError('Compte introuvable', 401);
         }
 
+        // Vérifier si le compte est bloquer
+        if($driver->is_blocked){
+            return response()->json([
+                'code' => 403,
+                'status' => 'UNAUTHORIZED',
+                'success' => false,
+                'message' => 'Votre compte a été bloqué, veuillez contacter le support'
+            ],403);
+        }
+
 
         $token = JWTAuth::fromUser($driver);
 

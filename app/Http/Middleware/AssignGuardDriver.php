@@ -24,6 +24,16 @@ class AssignGuardDriver
         if($guard != null){
             try {
                $user = auth('api-drivers')->userOrFail();
+               
+               // Gestion des compte bloque
+               if($user->is_blocked){
+                    return response()->json([
+                        'code' => 403,
+                        'status' => 'UNAUTHORIZED',
+                        'success' => false,
+                        'message' => 'Votre compte a été bloqué, veuillez contacter le support'
+                    ],403);
+                }
                 return $next($request);
             } catch (Exception $e) {
 
