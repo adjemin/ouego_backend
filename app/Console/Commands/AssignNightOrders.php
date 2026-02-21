@@ -30,6 +30,7 @@ class AssignNightOrders extends Command
      */
     public function handle()
     {
+        Log::info('Lancement de l\'attribution des commandes de nuit en attente.');
         $orders = Order::where('status', Order::PERFORMER_LOOKUP)
             ->where('delivery_type_code', DeliveryType::TYPE_DE_NUIT)
             ->whereNull('driver_id')
@@ -62,5 +63,7 @@ class AssignNightOrders extends Command
         }
 
         $this->info("Terminé. {$assigned}/{$orders->count()} commandes traitées.");
+        Log::info("Attribution des commandes de nuit en attente terminée. {$assigned}/{$orders->count()} commandes traitées.");
+
     }
 }

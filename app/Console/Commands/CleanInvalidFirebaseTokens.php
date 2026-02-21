@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\CustomerDevice;
+use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Messaging\CloudMessage;
 
 class CleanInvalidFirebaseTokens extends Command
@@ -28,6 +29,7 @@ class CleanInvalidFirebaseTokens extends Command
      */
     public function handle()
     {
+        Log::info('Début du nettoyage des tokens Firebase...');
         $this->info('Début du nettoyage des tokens Firebase...');
 
         $devices = CustomerDevice::all();
@@ -58,5 +60,6 @@ class CleanInvalidFirebaseTokens extends Command
         }
 
         $this->info('Nettoyage des tokens terminé.');
+        Log::info('Nettoyage des tokens terminé.');
     }
 }

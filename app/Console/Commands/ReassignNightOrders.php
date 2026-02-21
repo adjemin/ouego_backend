@@ -31,6 +31,7 @@ class ReassignNightOrders extends Command
      */
     public function handle()
     {
+        Log::info('Lancement de la réattribution des commandes de nuit non démarrées aux chauffeurs disponibles.');
         // Récupérer les commandes de nuit non démarrées
         $orders = Order::where('delivery_type_code', DeliveryType::TYPE_DE_NUIT)
             ->active()
@@ -78,5 +79,6 @@ class ReassignNightOrders extends Command
         }
 
         $this->info("Terminé. {$reassigned}/{$orders->count()} commandes réattribuées.");
+        Log::info("Terminé. {$reassigned}/{$orders->count()} commandes réattribuées."); 
     }
 }

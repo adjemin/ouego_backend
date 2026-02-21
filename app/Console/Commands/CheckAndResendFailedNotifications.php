@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use App\Jobs\SendPushNotification;
 use App\Models\NotificationDeliveryStatus;
 use App\Models\DriverNotification;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class CheckAndResendFailedNotifications extends Command
@@ -30,6 +31,7 @@ class CheckAndResendFailedNotifications extends Command
      */
     public function handle()
     {
+        Log::info('Lancement du contrôle et de la relance des notifications échouées.');
         // Récupère les notifications envoyées mais non confirmées depuis plus de 5 minutes
         $failedNotifications = NotificationDeliveryStatus::where('status', 'SENT')
         ->where('created_at', '<=', Carbon::now()->subMinutes(5))
@@ -50,5 +52,8 @@ class CheckAndResendFailedNotifications extends Command
 
             $this->info("Requeued notification {$notification->notification_id}");
         }
+
+        $this->info('Contrôle et relance des notifications échouées terminé.');
+        Log::info('Contrôle et relance des notifications échouées terminé.');
     }
 }
