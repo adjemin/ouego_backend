@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use App\Models\Order;
 use App\Models\DeliveryType;
 use App\Models\Service;
-use App\Services\DriverNuitAssignmentService;
+use App\Services\DriverAssignmentService;
 use Illuminate\Support\Facades\Log;
 
 class AssignNightOrders extends Command
@@ -30,30 +30,25 @@ class AssignNightOrders extends Command
      */
     public function handle()
     {
-        Log::info('Lancement de l\'attribution des commandes de nuit en attente.');
+        Log::info('AssignNightOrders: Lancement de l\'attribution des commandes de nuit en attente.');
         $orders = Order::where('status', Order::PERFORMER_LOOKUP)
             ->where('delivery_type_code', DeliveryType::TYPE_DE_NUIT)
             ->whereNull('driver_id')
             ->get();
+
+        Log::info("Nombre de commandes de nuit en attente : " . $orders->count());
 
         if ($orders->isEmpty()) {
             $this->info('Aucune commande de nuit en attente.');
             return;
         }
 
-        $nuitService = app(DriverNuitAssignmentService::class);
+        $driverService = app(DriverAssignmentService::class);
         $assigned = 0;
 
         foreach ($orders as $order) {
             try {
-                if ($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION) {
-                    $nuitService->assignCourseAndLocationNearestDriver($order, 10);
-                }
-
-                if ($order->service_slug == Service::AGREGATS_CONSTRUCTION) {
-                    $nuitService->getAggregatDriverAndNotify($order, 10);
-                }
-
+                $driverService->sendInvitations($order, 10);
                 $assigned++;
                 $this->info("Commande #{$order->id} ({$order->reference}) : recherche de chauffeurs lancée.");
             } catch (\Exception $e) {
@@ -63,7 +58,7 @@ class AssignNightOrders extends Command
         }
 
         $this->info("Terminé. {$assigned}/{$orders->count()} commandes traitées.");
-        Log::info("Attribution des commandes de nuit en attente terminée. {$assigned}/{$orders->count()} commandes traitées.");
+        Log::info("AssignNightOrders: Attribution des commandes de nuit en attente terminée. {$assigned}/{$orders->count()} commandes traitées.");
 
     }
 }

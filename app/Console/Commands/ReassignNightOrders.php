@@ -7,7 +7,7 @@ use App\Models\Order;
 use App\Models\OrderInvitation;
 use App\Models\DeliveryType;
 use App\Models\Service;
-use App\Services\DriverNuitAssignmentService;
+use App\Services\DriverAssignmentService;
 use Illuminate\Support\Facades\Log;
 
 class ReassignNightOrders extends Command
@@ -39,13 +39,14 @@ class ReassignNightOrders extends Command
             ->notStarted()
             ->whereIn('status', [Order::PERFORMER_LOOKUP, Order::PERFORMER_FOUND, Order::ACCEPTED])
             ->get();
+        Log::info("Nombre de commandes de nuit non démarrées à réattribuer : " . $orders->count());
 
         if ($orders->isEmpty()) {
             $this->info('Aucune commande de nuit non démarrée à réattribuer.');
             return;
         }
 
-        $nuitService = app(DriverNuitAssignmentService::class);
+        $driverService = app(DriverAssignmentService::class);
         $reassigned = 0;
 
         foreach ($orders as $order) {
@@ -62,14 +63,8 @@ class ReassignNightOrders extends Command
                 ]);
 
                 // Relancer la recherche de chauffeurs
-                if ($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION) {
-                    $nuitService->assignCourseAndLocationNearestDriver($order, 10);
-                }
-
-                if ($order->service_slug == Service::AGREGATS_CONSTRUCTION) {
-                    $nuitService->getAggregatDriverAndNotify($order);
-                }
-
+                $driverService->sendInvitations($order, 10);
+    
                 $reassigned++;
                 $this->info("Commande #{$order->id} ({$order->reference}) : réattribution lancée.");
             } catch (\Exception $e) {
