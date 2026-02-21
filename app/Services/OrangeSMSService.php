@@ -174,8 +174,7 @@ class OrangeSMSService
             return $result;
 
         } catch (\Exception $e) {
-            error_log('Erreur lors de l\'envoi du SMS: ' . $e->getMessage());
-            throw $e;
+            Log::error('Erreur lors de l\'envoi du SMS. Data: ' . json_encode($smsData) . ' - Erreur: ' . $e->getMessage());
         }
     }
 
