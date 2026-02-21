@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
 
         // Attribuer les commandes de nuit tous les jours à 20h
         // $schedule->command('orders:assign-night')->dailyAt('20:00');
-        $schedule->command('orders:assign-night')->everyFiveMinutes();
+        $schedule->command('orders:assign-night')->everyMinute();
 
         // Réattribuer les commandes de nuit non démarrées tous les jours à 5h
         $schedule->command('orders:reassign-night')->dailyAt('05:00');
