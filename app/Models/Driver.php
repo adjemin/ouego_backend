@@ -147,7 +147,7 @@ class Driver extends Authenticatable  implements JWTSubject
         Transaction::create([
             'user_id' => $this->id,
             'user_source' => $this->getTable(),
-            'type' => 'credit',
+            'type' => Transaction::TYPE_CREDIT,
             'currency_code' => 'XOF',
             'amount' => $amount,
             'is_in' => true,
@@ -167,10 +167,10 @@ class Driver extends Authenticatable  implements JWTSubject
         Transaction::create([
             'user_id' => $this->id,
             'user_source' => $this->getTable(),
-            'type' => 'credit',
+            'type' => Transaction::TYPE_DEBIT,
             'currency_code' => 'XOF',
             'amount' => $amount,
-            'is_in' => true,
+            'is_in' => false,
             'order_id' => $orderId
         ]);
     }

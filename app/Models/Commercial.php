@@ -51,7 +51,7 @@ class Commercial extends Model
         Transaction::create([
             'user_id' => $this->id,
             'user_source' => $this->getTable(),
-            'type' => 'credit',
+            'type' => Transaction::TYPE_CREDIT,
             'currency_code' => 'XOF',
             'amount' => $amount,
             'is_in' => true,
@@ -70,7 +70,7 @@ class Commercial extends Model
         Transaction::create([
             'user_id' => $this->id,
             'user_source' => $this->getTable(),
-            'type' => 'debit',
+            'type' => Transaction::TYPE_DEBIT,
             'currency_code' => 'XOF',
             'amount' => $amount,
             'is_in' => false,

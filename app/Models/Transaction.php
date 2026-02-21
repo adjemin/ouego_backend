@@ -16,6 +16,8 @@ class Transaction extends Model
     const TYPE_DEPOSIT = "deposit";
     const TYPE_CHARGE = "charge";
     const TYPE_WITHDRAWAL = "withdrawal";
+    const TYPE_CREDIT = "credit";
+    const TYPE_DEBIT = "debit";
 
     public $appends = ['invoice'];
 
