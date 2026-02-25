@@ -202,18 +202,21 @@ class DriverAPIController extends AppBaseController
         if ($driver != null) {
             return $this->sendError('Numéro de téléphone déjà utilisé', 400);
         }
+        $input['last_name'] = ucfirst(strtolower($input['last_name']));
+        $input['first_name'] = ucfirst(strtolower($input['first_name']));
+        $input['name'] = $input['first_name']." ".$input['last_name'];
 
         $driverDeleted = Driver::withTrashed()->where(['phone' => $input['phone']])->first();
         if ($driverDeleted == null) {
-            $input['last_name'] = ucfirst(strtolower($input['last_name']));
-            $input['first_name'] = ucfirst(strtolower($input['first_name']));
-            $input['name'] = $input['first_name']." ".$input['last_name'];
+            $input['rate'] = 5;
 
             $driver = Driver::create($input);
 
         } else {
             $driverDeleted->restore();
             $driver = $driverDeleted;
+            $driver->update($input);
+            $driver->save();
         }
 
         $token = JWTAuth::fromUser($driver);
