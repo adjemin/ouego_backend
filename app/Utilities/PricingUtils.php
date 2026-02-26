@@ -202,7 +202,7 @@ class PricingUtils{
 
         }else if($delivery_type == "de-nuit"){
 
-            $amount = $amount + $amount * 1.5 ;
+            $amount = $amount + $amount * 1.5;
 
         }else if($delivery_type == "en-semaine"){
 
