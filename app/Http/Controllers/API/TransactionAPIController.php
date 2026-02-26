@@ -38,6 +38,9 @@ class TransactionAPIController extends AppBaseController
             $request->get('limit')
         );
 
+        $transactions = $transactions->whereIn('type', [Transaction::TYPE_CREDIT, Transaction::TYPE_DEBIT]);
+
+
         $transactions = $transactions->sortByDesc('created_at');
 
         return $this->sendResponse($transactions->values()->toArray(), 'Transactions retrieved successfully');
