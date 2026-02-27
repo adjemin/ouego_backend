@@ -26,6 +26,10 @@ class TypeEnginModel extends Model
         'puissance_fiscale',
         'cylindree',
         'price',
+        'day_location_price',
+        'transport_required_vehicule',
+        'transport_km_price',
+        'transport_km_price_with_vehicule',
         'currency_code',
 
         'ride_base_pricing',
@@ -55,6 +59,10 @@ class TypeEnginModel extends Model
         'puissance_fiscale' => 'string',
         'cylindree' => 'string',
         'price' => 'double',
+        'day_location_price' => 'double',
+        'transport_required_vehicule' => 'boolean',
+        'transport_km_price' => 'double',
+        'transport_km_price_with_vehicule' => 'double',
         'currency_code'  => 'string',
 
         'ride_base_pricing' => 'integer',
