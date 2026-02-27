@@ -39,6 +39,8 @@ class ProcessPendingOrderAssignments
             ->where('is_draft', false)
             ->get();
 
+        Log::info("ProcessPendingOrderAssignments: Nombre de commandes en attentes : " . $pendingOrders->count());
+
         if ($pendingOrders->isEmpty()) {
             return;
         }
@@ -76,11 +78,14 @@ class ProcessPendingOrderAssignments
             return $invitation->created_at->addMinutes(self::INVITATION_TIMEOUT)->isPast();
         });
 
+        Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} - ". $invitationCount ." invitations en attente. ". $expiredInvitations->count() ." invitations expirées.");
+
         if ($expiredInvitations->isNotEmpty()) {
             // Supprimer SEULEMENT les invitations expirées
             OrderInvitation::whereIn('id', $expiredInvitations->pluck('id'))->delete();
             
             // Réessayer l'assignation
+            Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} - ". $expiredInvitations->count() ." invitations expirées supprimées. Nouvelle tentative d'assignation lancée.");
             $this->assignDriver($order);
         }
     }
@@ -94,18 +99,22 @@ class ProcessPendingOrderAssignments
             'is_successful' =>false
         ]);
         $order->newOrderHistory(Order::PERFORMER_NOT_FOUND, 'system', null);
+        Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} marquée comme PERFORMER_NOT_FOUND après ".self::MAX_INVITATIONS." tentatives.");
         
     }
 
     private function assignDriver(Order $order): void
     {
+        Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} - nouvelle tentative d'assignation lancée.");
+
         // Recherche de chauffeurs et envoi d'invitations
         $expressService = app(DriverAssignmentService::class);
         $expressService->sendInvitations($order, 10);
+        
     }
 
     public function failed(Throwable $exception)
     {
-        // Gérer l'échec du job si nécessaire
+        Log::error("ProcessPendingOrderAssignments: Erreur lors de l'execution : " . $exception->getMessage());
     }
 }

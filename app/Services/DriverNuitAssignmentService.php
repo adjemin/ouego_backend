@@ -50,6 +50,7 @@ class DriverNuitAssignmentService
         
         if($route_point != null){
             $nearestDrivers = $this->findCourseAndLocationNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, $this->maxDrivers, $distance);
+            Log::info("DriverNuitAssignmentService: Commande course #{$order->id} - " . $nearestDrivers->count() . " chauffeurs trouvés à proximité ($distance km) pour assignation.");
 
             if ($nearestDrivers->isEmpty()) {
                 return null;
@@ -122,6 +123,8 @@ class DriverNuitAssignmentService
                 $limit,
                 $maxDistance
             );
+
+            Log::info("DriverNuitAssignmentService: Commande course #{$order->id} - " . count($driversData) . " chauffeurs trouvés à proximité ($maxDistance km) pour assignation.");
 
     
             // Vérification que des chauffeurs ont été trouvés
