@@ -758,7 +758,7 @@ class OrderAPIController extends AppBaseController
                 $order->is_ride = true;
                 $order->save();
 
-                $order_price = $order_price + $order_item->delivery_price;
+                $order_price = $order_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
                 $manutention_pricing = $manutention_pricing + $order_item->manutention_pricing;
             }
