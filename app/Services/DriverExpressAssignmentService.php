@@ -92,7 +92,6 @@ class DriverExpressAssignmentService
     public function assignAggregatNearestDrivers(Order $order, $maxDistance = null, $limit = 5,): array
     {
         try {
-
             // Validation des données d'entrée
             if (!$order || !$order->exists) {
                 return [
@@ -265,7 +264,7 @@ class DriverExpressAssignmentService
 
     public function findAggregatNearestDrivers($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): array
     {
-
+        // Vérification si le jour samedi
         $isSaturday = now()->dayOfWeekIso === 6;
 
         $carrier = Carrier::find($carrier_id);
@@ -292,6 +291,7 @@ class DriverExpressAssignmentService
             Order::CANCELLED_BY_TAXI, Order::FAILED,
         ];
 
+
         $query = Driver::select('drivers.*')
             ->whereIn('id', $driverIds)
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
@@ -303,10 +303,10 @@ class DriverExpressAssignmentService
             // 1) Aucune course démarrée (tous types)
             ->whereDoesntHave('orders', function ($q) {
                 $q->active()->started();
-            })
-
+            });
+            
             // 2) Aucune EXPRESS non terminée (même en attente)
-            ->whereDoesntHave('orders', function ($q) {
+            $query->whereDoesntHave('orders', function ($q) {
                 $q->active()->express()->where('is_completed', false);
             })
 

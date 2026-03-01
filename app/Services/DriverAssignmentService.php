@@ -27,7 +27,7 @@ class DriverAssignmentService {
 
         if($order->delivery_type_code == DeliveryType::TYPE_EXPRESS){
             $expressService = app(DriverExpressAssignmentService::class);
-            if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
+            if($order->service_slug == Service::COURSE)  {
                 $expressService->assignCourseNearestDrivers($order, $distance, $this->maxDrivers);
             }
 
@@ -39,7 +39,7 @@ class DriverAssignmentService {
        if($order->delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
             // Assign driver to order
             $enjourneeService = app(DriverEnjourneeAssignmentService::class);
-            if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
+            if($order->service_slug == Service::COURSE)  {
                 $enjourneeService->assignCourseNearestDrivers($order, $distance, $this->maxDrivers);
             }
 
@@ -51,7 +51,7 @@ class DriverAssignmentService {
        if($order->delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
             // Assign driver to order
             $enSemaineService = app(DriverEnSemaineAssignmentService::class);
-            if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
+            if($order->service_slug == Service::COURSE)  {
                 $enSemaineService->assignCourseNearestDrivers($order, $distance, $this->maxDrivers);
             }
 
@@ -64,7 +64,7 @@ class DriverAssignmentService {
             // Les commandes de nuit : recherche de chauffeurs lancée automatiquement à partir de 20h
             if(now()->hour >= 20){
                 $nuitService = app(DriverNuitAssignmentService::class);
-                if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {
+                if($order->service_slug == Service::COURSE)  {
                     $nuitService->assignCourseNearestDrivers($order, $distance, $this->maxDrivers);
                 }
 
