@@ -1927,6 +1927,7 @@ class OrderAPIController extends AppBaseController
         
         $now = now();
         $isAvailable = true;
+        $message = null;
         if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
             // Plage Horaires interdites
             $start_morning = $now->copy()->setTime(6, 0);
@@ -2138,8 +2139,9 @@ class OrderAPIController extends AppBaseController
         $commercialDiscount = $this->getCommercialDiscount($customer);
         $amount = PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code);
 
-                $now = now();
+        $now = now();
         $isAvailable = true;
+        $message = null;
         if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
             // Plage Horaires interdites
             $start_morning = $now->copy()->setTime(6, 0);
@@ -2353,6 +2355,7 @@ class OrderAPIController extends AppBaseController
 
         $now = now();
         $isAvailable = true;
+        $message = null;
         if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
             // Plage Horaires interdites
             $start_morning = $now->copy()->setTime(6, 0);
