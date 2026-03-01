@@ -13,16 +13,13 @@ use Illuminate\Support\Facades\Log;
 class DriverLocationAssignmentService
 {
     private int $maxUpdateTime = 30;
-    private int $maxDrivers = 5;
 
     /**
      * Point d'entrée principal : trouve les chauffeurs éligibles pour une commande de location
      * et crée les invitations.
      */
-    public function findEligibleDriversForLocation(Order $order, int $limit = null): array
+    public function findEligibleDriversForLocation(Order $order, ?int $limit = null): array
     {
-        $limit = $limit ?? $this->maxDrivers;
-
         $item = $order->orderItems()->where('service_slug', 'location')->first();
 
         if (!$item) {
@@ -48,8 +45,8 @@ class DriverLocationAssignmentService
             return [];
         }
 
-        $isUrgent = Carbon::parse($startDate)->diffInHours(now(), false) > -24
-                 && Carbon::parse($startDate)->isFuture();
+        $start    = Carbon::parse($startDate);
+        $isUrgent = $start->isFuture() && $start->diffInHours(now()) < 24;
 
         $drivers = $this->queryEligibleDrivers(
             $order->service_slug,
@@ -99,7 +96,7 @@ class DriverLocationAssignmentService
         float $longitude,
         string $startDate,
         string $endDate,
-        int $limit,
+        ?int $limit,
         bool $isUrgent
     ) {
         $cancelledStatuses = [
@@ -114,9 +111,9 @@ class DriverLocationAssignmentService
                 'ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance',
                 [$longitude, $latitude]
             )
-            ->whereRaw('is_available = true')
-            ->whereRaw('is_active = true')
-            ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
+            ->where('is_available', true)
+            ->where('is_active', true)
+            ->where('updated_at', '>=', now()->subMinutes($this->maxUpdateTime))
             ->whereJsonContains('services', $serviceSlug)
             // Règle 2 : pas de location chevauchante pour ce chauffeur
             ->whereDoesntHave('orders', function ($q) use ($startDate, $endDate, $cancelledStatuses) {
@@ -130,16 +127,18 @@ class DriverLocationAssignmentService
 
         if ($isUrgent) {
             // Règle 5 : prioriser les chauffeurs sans location active aujourd'hui
-            $today = now()->toDateString();
+            $today       = now()->toDateString();
+            $inPlaceholders = implode(',', array_fill(0, count($cancelledStatuses), '?'));
+
             $query->selectRaw(
-                '(SELECT COUNT(*) FROM orders o
+                "(SELECT COUNT(*) FROM orders o
                    JOIN order_items oi ON oi.order_id = o.id
                   WHERE o.driver_id = drivers.id
                     AND o.is_location = true
-                    AND o.status NOT IN (?)
+                    AND o.status NOT IN ({$inPlaceholders})
                     AND oi.location_start_date <= ?
-                    AND oi.location_end_date >= ?) as active_rental_today',
-                [implode(',', $cancelledStatuses), $today, $today]
+                    AND oi.location_end_date >= ?) as active_rental_today",
+                [...$cancelledStatuses, $today, $today]
             )
             ->selectRaw(
                 '(SELECT COUNT(*) FROM orders o2
@@ -159,6 +158,6 @@ class DriverLocationAssignmentService
             );
         }
 
-        return $query->limit($limit)->get();
+        return $query->limit($limit ?? 5)->get();
     }
 }

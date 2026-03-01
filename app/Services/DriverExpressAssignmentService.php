@@ -21,9 +21,7 @@ use App\Models\DeliveryType;
 class DriverExpressAssignmentService
 {
 
-    private int $maxUpdateTime  = 30;
-    private int $maxDrivers = 5;
-    
+    private int $maxUpdateTime  = 30;    
 
     /**
      * Assigne une course au chauffeur le plus proche disponible.
@@ -33,7 +31,7 @@ class DriverExpressAssignmentService
      * @param int $distance mètre
      * @return Driver|null Le chauffeur assigné ou null si aucun n'est disponible
      */
-    public function assignCourseAndLocationNearestDriver($order,  $distance = null)
+    public function assignCourseNearestDrivers($order,  $distance = null, $maxDrivers = 5)
     {
 
         $route_point = RoutePoint::where([
@@ -49,7 +47,7 @@ class DriverExpressAssignmentService
 
         
         if($route_point != null){
-            $nearestDrivers = $this->findCourseAndLocationNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, $this->maxDrivers, $distance);
+            $nearestDrivers = $this->findCourseNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, $maxDrivers, $distance);
             Log::info("DriverExpressAssignmentService: Commande course #{$order->id} - " . $nearestDrivers->count() . " chauffeurs trouvés à proximité ($distance km) pour assignation.");
 
             if ($nearestDrivers->isEmpty()) {
@@ -91,7 +89,7 @@ class DriverExpressAssignmentService
 
     }
 
-    public function getAggregatDriverAndNotify(Order $order, $limit = 5, $maxDistance = null): array
+    public function assignAggregatNearestDrivers(Order $order, $maxDistance = null, $limit = 5,): array
     {
         try {
 
@@ -116,13 +114,7 @@ class DriverExpressAssignmentService
 
 
             // Recherche des chauffeurs avec l'algorithme de pondération
-            $driversData = $this->aggregatOrderAssignment(
-                $product->carrier_id,
-                $order->id,
-                $order->service_slug,
-                $limit,
-                $maxDistance
-            );
+            $driversData = $this->findAggregatNearestDrivers($product->carrier_id, $order->id, $order->service_slug, $limit, $maxDistance);
 
             Log::info("DriverExpressAssignmentService: Commande #{$order->id} - " . count($driversData) . " chauffeurs trouvés pour l'agrégat.");
     
@@ -188,7 +180,7 @@ class DriverExpressAssignmentService
      * @param float $maxDistance Distance maximum en mètres (optionnel)
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function findCourseAndLocationNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
+    public function findCourseNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
     {
         // Vérification si le jour samedi
         $isSaturday = now()->dayOfWeekIso === 6;
@@ -271,7 +263,7 @@ class DriverExpressAssignmentService
         return $query->limit($limit)->get();
     }
 
-    public function aggregatOrderAssignment($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): array
+    public function findAggregatNearestDrivers($carrier_id, $order_id, $service_slug, $limit = 5, $maxDistance = null): array
     {
 
         $isSaturday = now()->dayOfWeekIso === 6;

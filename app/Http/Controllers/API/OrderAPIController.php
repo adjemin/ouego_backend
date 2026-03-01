@@ -644,7 +644,7 @@ class OrderAPIController extends AppBaseController
 
                 $quantity = $location_start_date->diffInDays($location_end_date);
 
-                $unit_price = doubleval($typeEnginModel->price);
+                $unit_price = doubleval($typeEnginModel->day_location_price);
 
                 $order_price = $quantity * $unit_price * $coefficient_shift;
 
