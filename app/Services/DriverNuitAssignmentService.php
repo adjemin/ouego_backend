@@ -2,20 +2,15 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderInvitation;
-use App\Models\DriverNotification;
 use App\Models\RoutePoint;
-use App\Utilities\DriverNotificationsUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Events\OrderAssigned;
 use App\Models\Carrier;
 use App\Models\DriverCarrier;
 use Illuminate\Support\Facades\Log;
-use App\Models\Setting;
-use App\Models\DeliveryType;
 
 
 class DriverNuitAssignmentService
@@ -192,6 +187,11 @@ class DriverNuitAssignmentService
     public function findCourseAndLocationNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
     {
         $isSaturday = now()->dayOfWeekIso === 6;
+        $today = now()->toDateString();
+        $rentalCancelledStatuses = [
+            Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT,
+            Order::CANCELLED_BY_TAXI, Order::FAILED,
+        ];
 
         // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
         $query = Driver::select('drivers.*')
@@ -211,6 +211,15 @@ class DriverNuitAssignmentService
                 '=', 0
             ))
 
+            // 3) Règle 3 : blocage total si location active aujourd'hui (aucune exception pour courses de nuit)
+            ->whereDoesntHave('orders', function ($q) use ($today, $rentalCancelledStatuses) {
+                $q->where('is_location', true)
+                  ->whereNotIn('status', $rentalCancelledStatuses)
+                  ->whereHas('orderItems', function ($sq) use ($today) {
+                      $sq->where('location_start_date', '<=', $today)
+                         ->where('location_end_date', '>=', $today);
+                  });
+            })
 
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
@@ -244,6 +253,12 @@ class DriverNuitAssignmentService
 
         $driverIds = DriverCarrier::where('carrier_id', $carrier_id)->distinct('driver_id')->pluck('driver_id')->toArray();
 
+        $today = now()->toDateString();
+        $rentalCancelledStatuses = [
+            Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT,
+            Order::CANCELLED_BY_TAXI, Order::FAILED,
+        ];
+
         $query = Driver::select('drivers.*')
             ->whereIn('id', $driverIds)
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
@@ -261,6 +276,17 @@ class DriverNuitAssignmentService
                 Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(),
                 '=', 0
             ))
+
+            // 3) Règle 3 : blocage total si location active aujourd'hui
+            ->whereDoesntHave('orders', function ($q) use ($today, $rentalCancelledStatuses) {
+                $q->where('is_location', true)
+                  ->whereNotIn('status', $rentalCancelledStatuses)
+                  ->whereHas('orderItems', function ($sq) use ($today) {
+                      $sq->where('location_start_date', '<=', $today)
+                         ->where('location_end_date', '>=', $today);
+                  });
+            })
+
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
         if ($maxDistance) {

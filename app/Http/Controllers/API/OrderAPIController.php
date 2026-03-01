@@ -623,6 +623,12 @@ class OrderAPIController extends AppBaseController
                 $location_start_date = Carbon::parse($item["location_start_date"]);
                 $location_end_date = Carbon::parse($item["location_end_date"]);
 
+                $location_shift_type = array_key_exists('location_shift_type', $item) ? $item['location_shift_type'] : 'day';
+                if (!in_array($location_shift_type, ['day', 'night', 'double'])) {
+                    $location_shift_type = 'day';
+                }
+                $coefficient_shift = ($location_shift_type === 'double') ? 2 : 1;
+
                 $typeEngin = TypeEngin::where(['slug' => $meta_data['type_engin_slug']])->first();
                 $typeEnginModel = TypeEnginModel::where(['slug' => $meta_data['engin_model']])->first();
 
@@ -640,7 +646,7 @@ class OrderAPIController extends AppBaseController
 
                 $unit_price = doubleval($typeEnginModel->price);
 
-                $order_price = $quantity * $unit_price;
+                $order_price = $quantity * $unit_price * $coefficient_shift;
 
                 $delivery_price = array_key_exists('delivery_price', $item)?$item['delivery_price']:0;
                 $manutention_pricing = array_key_exists('manutention_pricing', $meta_data)?$meta_data['manutention_pricing']:0; 
@@ -680,7 +686,8 @@ class OrderAPIController extends AppBaseController
                     'driver_due' => $driver_due,
                     'currency' => $currency,
                     'location_start_date' => $item["location_start_date"],
-                    'location_end_date' => $item["location_end_date"]
+                    'location_end_date' => $item["location_end_date"],
+                    'location_shift_type' => $location_shift_type,
                 ]);
 
                 $order->service_slug = $service->slug;

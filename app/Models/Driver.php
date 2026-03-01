@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -191,6 +190,49 @@ class Driver extends Authenticatable  implements JWTSubject
             ->avg('rating');
     }
 
+
+    /**
+     * Vérifie si le chauffeur a une location dont la période chevauche [startDate, endDate].
+     */
+    public function hasRentalConflict(\Carbon\Carbon $startDate, \Carbon\Carbon $endDate): bool
+    {
+        return Order::where('driver_id', $this->id)
+            ->where('is_location', true)
+            ->where('is_completed', false)
+            ->whereNotIn('status', [
+                Order::CANCELLED,
+                Order::CANCELLED_WITH_PAYMENT,
+                Order::CANCELLED_BY_TAXI,
+                Order::FAILED,
+            ])
+            ->whereHas('orderItems', function ($q) use ($startDate, $endDate) {
+                $q->where('location_start_date', '<=', $endDate->toDateString())
+                  ->where('location_end_date', '>=', $startDate->toDateString());
+            })
+            ->exists();
+    }
+
+    /**
+     * Vérifie si le chauffeur est en location active aujourd'hui (pour blocage des courses normales).
+     */
+    public function hasActiveRentalToday(): bool
+    {
+        $today = now()->toDateString();
+        return Order::where('driver_id', $this->id)
+            ->where('is_location', true)
+            ->where('is_completed', false)
+            ->whereNotIn('status', [
+                Order::CANCELLED,
+                Order::CANCELLED_WITH_PAYMENT,
+                Order::CANCELLED_BY_TAXI,
+                Order::FAILED,
+            ])
+            ->whereHas('orderItems', function ($q) use ($today) {
+                $q->where('location_start_date', '<=', $today)
+                  ->where('location_end_date', '>=', $today);
+            })
+            ->exists();
+    }
 
     public function zoneBase()
     {
