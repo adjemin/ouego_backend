@@ -1978,8 +1978,8 @@ class OrderAPIController extends AppBaseController
             'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
             'distance' => $distance,
             'delivery_type' => $delivery_type_code,
-                'is_available' => $isAvailable,
-                'error_message' => $message
+            'is_available' => $isAvailable,
+            'error_message' => $message
         ], 'Order saved successfully');
 
 
