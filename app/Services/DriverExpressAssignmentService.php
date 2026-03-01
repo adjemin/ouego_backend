@@ -50,6 +50,7 @@ class DriverExpressAssignmentService
         
         if($route_point != null){
             $nearestDrivers = $this->findCourseAndLocationNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, $this->maxDrivers, $distance);
+            Log::info("DriverExpressAssignmentService: Commande course #{$order->id} - " . $nearestDrivers->count() . " chauffeurs trouvés à proximité ($distance km) pour assignation.");
 
             if ($nearestDrivers->isEmpty()) {
                 return null;
@@ -123,6 +124,7 @@ class DriverExpressAssignmentService
                 $maxDistance
             );
 
+            Log::info("DriverExpressAssignmentService: Commande #{$order->id} - " . count($driversData) . " chauffeurs trouvés pour l'agrégat.");
     
             // Vérification que des chauffeurs ont été trouvés
             if (empty($driversData)) {
@@ -190,6 +192,11 @@ class DriverExpressAssignmentService
     {
         // Vérification si le jour samedi
         $isSaturday = now()->dayOfWeekIso === 6;
+        $today = now()->toDateString();
+        $rentalCancelledStatuses = [
+            Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT,
+            Order::CANCELLED_BY_TAXI, Order::FAILED,
+        ];
 
         // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
         $query = Driver::select('drivers.*')
@@ -225,6 +232,16 @@ class DriverExpressAssignmentService
                 Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(),
                 '=', 0
             ))
+
+            // 5) Règle 3 : blocage total si location active aujourd'hui (aucune exception pour express)
+            ->whereDoesntHave('orders', function ($q) use ($today, $rentalCancelledStatuses) {
+                $q->where('is_location', true)
+                  ->whereNotIn('status', $rentalCancelledStatuses)
+                  ->whereHas('orderItems', function ($sq) use ($today) {
+                      $sq->where('location_start_date', '<=', $today)
+                         ->where('location_end_date', '>=', $today);
+                  });
+            })
 
 
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
@@ -277,6 +294,12 @@ class DriverExpressAssignmentService
 
         $driverIds = DriverCarrier::where('carrier_id', $carrier_id)->distinct('driver_id')->pluck('driver_id')->toArray();
 
+        $today = now()->toDateString();
+        $rentalCancelledStatuses = [
+            Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT,
+            Order::CANCELLED_BY_TAXI, Order::FAILED,
+        ];
+
         $query = Driver::select('drivers.*')
             ->whereIn('id', $driverIds)
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
@@ -312,9 +335,19 @@ class DriverExpressAssignmentService
                 '=', 0
             ))
 
+            // 5) Règle 3 : blocage total si location active aujourd'hui (aucune exception pour express)
+            ->whereDoesntHave('orders', function ($q) use ($today, $rentalCancelledStatuses) {
+                $q->where('is_location', true)
+                  ->whereNotIn('status', $rentalCancelledStatuses)
+                  ->whereHas('orderItems', function ($sq) use ($today) {
+                      $sq->where('location_start_date', '<=', $today)
+                         ->where('location_end_date', '>=', $today);
+                  });
+            })
+
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
-            // 5) Qui n'a pas plus de 3 en journée en cours
+            // 6) Qui n'a pas plus de 3 en journée en cours
             $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
             if (now()->hour >= $cutoffHour) {
                 $query->whereDoesntHave('orders', function ($q) {

@@ -9,13 +9,20 @@ use App\Services\DriverEnjourneeAssignmentService;
 use App\Services\DriverExpressAssignmentService;
 use App\Services\DriverEnSemaineAssignmentService;
 use App\Services\DriverNuitAssignmentService;
-
-
-
-
+use App\Services\DriverLocationAssignmentService;
+use Illuminate\Support\Facades\Log;
 class DriverAssignmentService {
 
-    function sendInvitations(Order $order, int $distance = 5){
+    function sendInvitations(Order $order, int $distance = 10){
+        Log::info("DriverAssignmentService: Commande #{$order->id} - tentative d'assignation lancée dans un rayon de {$distance}km.");
+
+        // Commandes de location : traitement dédié indépendamment du delivery_type_code
+        if ($order->is_location) {
+            Log::info("DriverAssignmentService: Commande #{$order->id} est une location — redirection vers DriverLocationAssignmentService.");
+            app(DriverLocationAssignmentService::class)->findEligibleDriversForLocation($order, $distance);
+            return;
+        }
+
         if($order->delivery_type_code == DeliveryType::TYPE_EXPRESS){
             $expressService = app(DriverExpressAssignmentService::class);
             if($order->service_slug == Service::COURSE || $order->service_slug == Service::LOCATION)  {

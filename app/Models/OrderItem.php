@@ -30,6 +30,7 @@ class OrderItem extends Model
         'driver_due',
         'location_start_date',
         'location_end_date',
+        'location_shift_type',
         'carrier_id'
     ];
 
@@ -47,7 +48,8 @@ class OrderItem extends Model
         'currency' => 'string',
         'service_due' => 'double',
         'driver_due' => 'double',
-        'carrier_id' => 'integer'
+        'carrier_id' => 'integer',
+        'location_shift_type' => 'string',
     ];
 
     public static array $rules = [

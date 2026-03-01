@@ -47,6 +47,8 @@ class DriverEnSemaineAssignmentService
         if($route_point != null){
             $nearestDrivers = $this->findCourseAndLocationNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, $this->maxDrivers, $distance);
 
+            Log::info("DriverEnSemaineAssignmentService: Commande course #{$order->id} - " . $nearestDrivers->count() . " chauffeurs trouvés à proximité ($distance km) pour assignation.");
+
             if ($nearestDrivers->isEmpty()) {
                 return null;
             }
@@ -119,6 +121,7 @@ class DriverEnSemaineAssignmentService
                 $maxDistance
             );
 
+            Log::info("DriverEnSemaineAssignmentService: Commande #{$order->id} - " . count($driversData) . " chauffeurs trouvés dans une distance de " . $maxDistance . " km pour l'agrégat.");
     
             // Vérification que des chauffeurs ont été trouvés
             if (empty($driversData)) {
@@ -184,7 +187,13 @@ class DriverEnSemaineAssignmentService
      */
     public function findCourseAndLocationNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
     {
-        $isSaturday = now()->dayOfWeekIso === 6; 
+        $isSaturday = now()->dayOfWeekIso === 6;
+        $isFridayOrAfter = now()->dayOfWeekIso >= 5;
+        $today = now()->toDateString();
+        $rentalCancelledStatuses = [
+            Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT,
+            Order::CANCELLED_BY_TAXI, Order::FAILED,
+        ];
 
         // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
         $query = Driver::select('drivers.*')
@@ -209,11 +218,33 @@ class DriverEnSemaineAssignmentService
             $query->when($isSaturday, fn($q) => $q->where(
                 Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(),
                 '=', 0
-            ))
+            ));
 
+            // 3) Règle 3 + Exception Règle 4 pour en-semaine
+            // Si vendredi ou après → blocage total (plus de courses en semaine admises)
+            // Sinon → exception dernier jour : autorisé si location_end_date = aujourd'hui (dernier jour)
+            if ($isFridayOrAfter) {
+                $query->whereDoesntHave('orders', function ($q) use ($today, $rentalCancelledStatuses) {
+                    $q->where('is_location', true)
+                      ->whereNotIn('status', $rentalCancelledStatuses)
+                      ->whereHas('orderItems', function ($sq) use ($today) {
+                          $sq->where('location_start_date', '<=', $today)
+                             ->where('location_end_date', '>=', $today);
+                      });
+                });
+            } else {
+                // Bloquer uniquement si la location n'est PAS à son dernier jour (end_date > today)
+                $query->whereDoesntHave('orders', function ($q) use ($today, $rentalCancelledStatuses) {
+                    $q->where('is_location', true)
+                      ->whereNotIn('status', $rentalCancelledStatuses)
+                      ->whereHas('orderItems', function ($sq) use ($today) {
+                          $sq->where('location_start_date', '<=', $today)
+                             ->where('location_end_date', '>', $today); // end_date > today = pas le dernier jour
+                      });
+                });
+            }
 
-
-            ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
+            $query->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
 
     
@@ -246,6 +277,13 @@ class DriverEnSemaineAssignmentService
 
         $driverIds = DriverCarrier::where('carrier_id', $carrier_id)->distinct('driver_id')->pluck('driver_id')->toArray();
 
+        $isFridayOrAfter = now()->dayOfWeekIso >= 5;
+        $today = now()->toDateString();
+        $rentalCancelledStatuses = [
+            Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT,
+            Order::CANCELLED_BY_TAXI, Order::FAILED,
+        ];
+
         $query = Driver::select('drivers.*')
             ->whereIn('id', $driverIds)
             ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
@@ -268,8 +306,30 @@ class DriverEnSemaineAssignmentService
             ->when($isSaturday, fn($q) => $q->where(
                 Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->week(),
                 '=', 0
-            ))
-            ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
+            ));
+
+        // 3) Règle 3 + Exception Règle 4 pour en-semaine
+        if ($isFridayOrAfter) {
+            $query->whereDoesntHave('orders', function ($q) use ($today, $rentalCancelledStatuses) {
+                $q->where('is_location', true)
+                  ->whereNotIn('status', $rentalCancelledStatuses)
+                  ->whereHas('orderItems', function ($sq) use ($today) {
+                      $sq->where('location_start_date', '<=', $today)
+                         ->where('location_end_date', '>=', $today);
+                  });
+            });
+        } else {
+            $query->whereDoesntHave('orders', function ($q) use ($today, $rentalCancelledStatuses) {
+                $q->where('is_location', true)
+                  ->whereNotIn('status', $rentalCancelledStatuses)
+                  ->whereHas('orderItems', function ($sq) use ($today) {
+                      $sq->where('location_start_date', '<=', $today)
+                         ->where('location_end_date', '>', $today);
+                  });
+            });
+        }
+
+        $query->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
         if ($maxDistance) {
             $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance*1000]);
