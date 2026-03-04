@@ -436,28 +436,28 @@ class CustomerAPIController extends AppBaseController
                 ],403);
             }
 
-            // Charger la relation profile
-            $customer->load('profile');
-
-            $token = JWTAuth::fromUser($customer);
-
             // Enregistrer device token
-            if (array_key_exists('firebase_id', $request->all()) && !empty($request['firebase_id'])) {
-                $customerDevice = CustomerDevice::where(['firebase_id' => $request['firebase_id']])->first();
+            if (array_key_exists('firebase_id', $request->all()) && !empty($request->firebase_id)) {
+                $customerDevice = CustomerDevice::where(['firebase_id' => $request->firebase_id])->first();
 
                 if(empty($customerDevice)){
                     CustomerDevice::create([
                         'customer_id' => $customer->id,
-                        'firebase_id' => $request['firebase_id']
+                        'firebase_id' => $request->firebase_id
                     ]);
                 }else{
                     $customerDevice->update([
                         'customer_id' => $customer->id,
-                        'firebase_id' => $request['firebase_id']
+                        'firebase_id' => $request->firebase_id
                     ]);
                 }
             }
 
+
+            // Charger la relation profile
+            $customer->load('profile');
+
+            $token = JWTAuth::fromUser($customer);
 
             return $this->sendResponse([
                 'token' => $token,

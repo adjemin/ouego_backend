@@ -283,18 +283,18 @@ class DriverAPIController extends AppBaseController
         }
 
         // Enregistrer device token
-        if (array_key_exists('firebase_id', $request->all()) && !empty($request['firebase_id'])) {
-            $customerDevice = DriverDevice::where(['firebase_id' => $request['firebase_id']])->first();
+        if (array_key_exists('firebase_id', $request->all()) && !empty($request->firebase_id)) {
+            $customerDevice = DriverDevice::where(['firebase_id' => $request->firebase_id])->first();
 
             if(empty($customerDevice)){
                 DriverDevice::create([
                     'driver_id' => $driver->id,
-                    'firebase_id' => $request['firebase_id']
+                    'firebase_id' => $request->firebase_id
                 ]);
             }else{
                 $customerDevice->update([
                     'driver_id' => $driver->id,
-                    'firebase_id' => $request['firebase_id']
+                    'firebase_id' => $request->firebase_id
                 ]);
             }
         }
