@@ -434,6 +434,15 @@ class RoutePointAPIController extends AppBaseController
                 // Register order history
                 $order->newOrderHistory(Order::DELIVERED_FINISH, $driver->table, $driver->id); 
 
+                if($order->payment_method_code == Order::PAYMENT_MODE_CASH){
+                   $invoice = $order->getInvoiceAttribute();
+                     if($invoice != null){
+                        $invoice->update([
+                            'status' => Invoice::PAID,
+                            'is_paid_by_customer' => true
+                        ]);
+                }
+
             }
         }
 
