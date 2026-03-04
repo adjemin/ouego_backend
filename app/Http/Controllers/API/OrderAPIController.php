@@ -32,6 +32,7 @@ use App\Utilities\GoogleMapsAPIUtils;
 use App\Services\DriverAssignmentService;
 use App\Services\CarrierLocationService;
 use App\Services\OrangeSMSService;
+use Illuminate\Support\Facades\DB;
 /**
  * Class OrderAPIController
  */
@@ -164,6 +165,8 @@ class OrderAPIController extends AppBaseController
                 }
             }
         }
+
+        DB::beginTransaction();
 
         $order = Order::create([
             "reference" => Order::generateReference(),
@@ -758,7 +761,7 @@ class OrderAPIController extends AppBaseController
                 $order->is_ride = true;
                 $order->save();
 
-                $order_price = $order_price;
+                $order_price = $order_price + $order_item->order_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
                 $manutention_pricing = $manutention_pricing + $order_item->manutention_pricing;
             }
@@ -845,6 +848,9 @@ class OrderAPIController extends AppBaseController
             'discount' => $discount,
             'coupon' => $coupon
         ]);
+
+        DB::commit();
+        
 
 
         /** @var Order $order */

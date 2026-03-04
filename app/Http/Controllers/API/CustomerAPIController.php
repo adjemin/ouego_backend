@@ -18,6 +18,7 @@ use App\Models\Commercial;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
 use App\Models\CustomerDevice;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class CustomerAPIController
@@ -388,7 +389,7 @@ class CustomerAPIController extends AppBaseController
                 // Envoyer l'OTP par SMS
                 $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
             } catch (\Exception $e) {
-                return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
+                Log::error("Failed to send OTP SMS: " . $e->getMessage());
             }
             
             return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');

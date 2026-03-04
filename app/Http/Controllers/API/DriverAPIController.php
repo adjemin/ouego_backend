@@ -516,7 +516,7 @@ class DriverAPIController extends AppBaseController
                 // Envoyer l'OTP par SMS
                 $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
             } catch (\Throwable $th) {
-                return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
+                Log::error("Failed to send OTP SMS: " . $th->getMessage());
             }
             
             return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
