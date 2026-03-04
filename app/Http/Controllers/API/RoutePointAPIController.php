@@ -195,24 +195,6 @@ class RoutePointAPIController extends AppBaseController
                 'status' => RoutePoint::SUCCESS
             ]);
 
-            if($routePoint->type == 'destination'){
-
-                $order = Order::where(['id' => $routePoint->order_id])->first();
-
-                if($order != null ){
-
-                    $order->update([
-                        'status' => Order::DELIVERED_FINISH,
-                        'is_running' => false,
-                        'is_completed' => true,
-                        'is_successful' => true,
-                    ]);
-
-                    // Register order history
-                    $order->newOrderHistory(Order::DELIVERED_FINISH, $driver->table, $driver->id);
-                }
-            }
-
         }
 
         if($input['status'] == RoutePoint::FAILED){
