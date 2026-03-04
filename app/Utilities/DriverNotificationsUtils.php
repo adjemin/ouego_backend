@@ -23,10 +23,8 @@ class DriverNotificationsUtils
             $subtitle = $userNotification->subtitle;
             $typeNotification = $userNotification->type;
 
-
             $userDevices = DriverDevice::where([
                 "driver_id" => $user->id,
-                "deleted_at" => null
             ])->orderBy('updated_at', 'DESC')->get();
 
             $metadata = $userNotification->toArray();
