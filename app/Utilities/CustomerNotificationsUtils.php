@@ -26,7 +26,6 @@ class CustomerNotificationsUtils
 
             $userDevices = CustomerDevice::where([
                 "customer_id" => $user->id,
-                "deleted_at" => null
             ])->orderBy('updated_at', 'DESC')->get();
 
             $metadata = $userNotification->toArray();

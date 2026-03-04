@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use App\Services\OrangeSMSService;
 use App\Models\Order;
+use App\Models\DriverDevice;
 
 
 /**
@@ -219,6 +220,23 @@ class DriverAPIController extends AppBaseController
             $driver->save();
         }
 
+        // Enregistrer device token
+        if (array_key_exists('firebase_id', $request->all()) && !empty($request->firebase_id)) {
+            $customerDevice = DriverDevice::where(['firebase_id' => $request->firebase_id])->first();
+
+            if(empty($customerDevice)){
+                DriverDevice::create([
+                    'driver_id' => $driver->id,
+                    'firebase_id' => $request->firebase_id
+                ]);
+            }else{
+                $customerDevice->update([
+                    'driver_id' => $driver->id,
+                    'firebase_id' => $request->firebase_id
+                ]);
+            }
+        }
+
         $token = JWTAuth::fromUser($driver);
 
 
@@ -262,6 +280,23 @@ class DriverAPIController extends AppBaseController
                 'success' => false,
                 'message' => 'Votre compte a été bloqué, veuillez contacter le support'
             ],403);
+        }
+
+        // Enregistrer device token
+        if (array_key_exists('firebase_id', $request->all()) && !empty($request['firebase_id'])) {
+            $customerDevice = DriverDevice::where(['firebase_id' => $request['firebase_id']])->first();
+
+            if(empty($customerDevice)){
+                DriverDevice::create([
+                    'driver_id' => $driver->id,
+                    'firebase_id' => $request['firebase_id']
+                ]);
+            }else{
+                $customerDevice->update([
+                    'driver_id' => $driver->id,
+                    'firebase_id' => $request['firebase_id']
+                ]);
+            }
         }
 
 
@@ -517,7 +552,38 @@ class DriverAPIController extends AppBaseController
             return $this->sendError('Aucun compte retrouvé pour ce numéro de téléphone',404);
 
         }else{
+
+            // Vérifier si le compte est bloquer
+            if($customer->is_blocked){
+                return response()->json([
+                    'code' => 403,
+                    'status' => 'UNAUTHORIZED',
+                    'success' => false,
+                    'message' => 'Votre compte a été bloqué, veuillez contacter le support'
+                ],403);
+            }
+
+            // Enregistrer device token
+            if (array_key_exists('firebase_id', $request->all()) && !empty($request->firebase_id)) {
+                $customerDevice = DriverDevice::where(['firebase_id' => $request->firebase_id])->first();
+
+                if(empty($customerDevice)){
+                    DriverDevice::create([
+                        'driver_id' => $customer->id,
+                        'firebase_id' => $request->firebase_id
+                    ]);
+                }else{
+                    $customerDevice->update([
+                        'driver_id' => $customer->id,
+                        'firebase_id' => $request->firebase_id
+                    ]);
+                }
+            }
+
+
             $token = JWTAuth::fromUser($customer);
+
+            
 
             return $this->sendResponse([
                 'token' => $token,

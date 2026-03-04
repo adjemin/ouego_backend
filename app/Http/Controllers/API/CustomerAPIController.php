@@ -17,6 +17,7 @@ use App\Models\CustomerProfile;
 use App\Models\Commercial;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
+use App\Models\CustomerDevice;
 
 /**
  * Class CustomerAPIController
@@ -210,6 +211,23 @@ class CustomerAPIController extends AppBaseController
             $customer = $customerDeleted;
         }
 
+        // Enregistrer device token
+        if (array_key_exists('firebase_id', $input) && !empty($input['firebase_id'])) {
+            $customerDevices = CustomerDevice::where(['firebase_id' => $input['firebase_id']])->first();
+
+            if(empty($customerDevices)){
+                CustomerDevice::create([
+                    'customer_id' => $customer->id,
+                    'firebase_id' => $input['firebase_id']
+                ]);
+            }else{
+                $customerDevices->update([
+                    'customer_id' => $customer->id,
+                    'firebase_id' => $input['firebase_id']
+                ]);
+            }
+        }
+
         // Charger la relation profile
         $customer->load('profile');
 
@@ -256,6 +274,23 @@ class CustomerAPIController extends AppBaseController
                 'success' => false,
                 'message' => 'Votre compte a été bloqué, veuillez contacter le support'
             ],403);
+        }
+
+        // Enregistrer device token
+        if (array_key_exists('firebase_id', $input) && !empty($input['firebase_id'])) {
+            $customerDevices = CustomerDevice::where(['firebase_id' => $input['firebase_id']])->first();
+
+            if(empty($customerDevices)){
+                CustomerDevice::create([
+                    'customer_id' => $customer->id,
+                    'firebase_id' => $input['firebase_id']
+                ]);
+            }else{
+                $customerDevices->update([
+                    'customer_id' => $customer->id,
+                    'firebase_id' => $input['firebase_id']
+                ]);
+            }
         }
 
         // Charger la relation profile
@@ -391,10 +426,38 @@ class CustomerAPIController extends AppBaseController
             return $this->sendResponse(true, 'OTP verified successfully');
 
         }else{
+            // Vérifier si le compte est bloquer
+            if($customer->is_blocked){
+                return response()->json([
+                    'code' => 403,
+                    'status' => 'UNAUTHORIZED',
+                    'success' => false,
+                    'message' => 'Votre compte a été bloqué, veuillez contacter le support'
+                ],403);
+            }
+
             // Charger la relation profile
             $customer->load('profile');
 
             $token = JWTAuth::fromUser($customer);
+
+            // Enregistrer device token
+            if (array_key_exists('firebase_id', $request->all()) && !empty($request['firebase_id'])) {
+                $customerDevice = CustomerDevice::where(['firebase_id' => $request['firebase_id']])->first();
+
+                if(empty($customerDevice)){
+                    CustomerDevice::create([
+                        'customer_id' => $customer->id,
+                        'firebase_id' => $request['firebase_id']
+                    ]);
+                }else{
+                    $customerDevice->update([
+                        'customer_id' => $customer->id,
+                        'firebase_id' => $request['firebase_id']
+                    ]);
+                }
+            }
+
 
             return $this->sendResponse([
                 'token' => $token,
