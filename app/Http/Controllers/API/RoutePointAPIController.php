@@ -275,16 +275,6 @@ class RoutePointAPIController extends AppBaseController
 
                 $order = Order::where(['id' => $routePoint->order_id])->first();
 
-                if($order != null){
-
-                    $order->update([
-                       'status' => Order::PICKUPED
-                    ]);
-
-                    // Register order history
-                    $order->newOrderHistory(Order::PICKUPED, $driver->table, $driver->id);
-                }
-
             }
 
         }

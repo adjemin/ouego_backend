@@ -22,7 +22,7 @@ use App\Models\Carrier;
 use App\Models\DriverNotification;
 use App\Models\DeliveryType;
 use App\Utilities\DriverNotificationsUtils;
-use App\Repositories\OrderRepository;
+use App\Repositories\OrderRepository;   
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
