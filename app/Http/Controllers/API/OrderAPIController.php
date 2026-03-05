@@ -1072,41 +1072,32 @@ class OrderAPIController extends AppBaseController
 
                 $source_point = $source_list->first();
 
-                $destination_point = $destination_list;
+                $destination_point = $destination_list->last();
 
-
-                foreach ($destination_list as $destination){
-
-                   
-                     
-                    $destination_point = $destination;
-           
-                    $result = GoogleMapsAPIUtils::getDistance([
-                        $source_point['latitude'],
-                        $source_point['longitude'],
-                    ],[
-                        $destination_point['latitude'],
-                        $destination_point['longitude'],
-                    ]);
+                $result = GoogleMapsAPIUtils::getDistance([
+                    $source_point['latitude'],
+                    $source_point['longitude'],
+                ],[
+                    $destination_point['latitude'],
+                    $destination_point['longitude'],
+                ]);
 
 
 
-                    $current_distance = 0;
+                $current_distance = 0;
 
-                    if(array_key_exists('distance',$result)){
-                        $result_distance = $result['distance']; //array
-                        $result_distance_value = $result_distance['value']; //meters
-                        $current_distance = $result_distance_value/1000; //kilometers
-                        $current_distance = $current_distance;
+                if(array_key_exists('distance',$result)){
+                    $result_distance = $result['distance']; //array
+                    $result_distance_value = $result_distance['value']; //meters
+                    $current_distance = $result_distance_value/1000; //kilometers
+                    $current_distance = $current_distance;
 
-                    }
-                    $duration = "";
+                }
+                $duration = "";
 
-                    if(array_key_exists('duration',$result)){
-                        $result_duration = $result['duration']; //array
-                        $duration = $result_duration['text'];
-                    }
-
+                if(array_key_exists('duration',$result)){
+                    $result_duration = $result['duration']; //array
+                    $duration = $result_duration['text'];
                 }
 
                 //$current_distance = 418;
