@@ -6,7 +6,9 @@ use App\Http\Requests\API\CreateOrderInvitationAPIRequest;
 use App\Http\Requests\API\UpdateOrderInvitationAPIRequest;
 use App\Models\OrderInvitation;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\RoutePoint;
+use App\Models\TypeEnginModel;
 use App\Repositories\OrderInvitationRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -224,6 +226,9 @@ class OrderInvitationAPIController extends AppBaseController
 
             /** @var Collection $route_points */
             $route_points = $order->route_points;
+            $driverLat = (float)$cdriver->last_location_latitude;
+            $driverLng = (float)$cdriver->last_location_longitude;
+
             foreach ($route_points as $route_point){
                 $order = Order::where(['id' => $route_point->order_id])->first();
                 if(!$order->is_completed){
@@ -233,13 +238,53 @@ class OrderInvitationAPIController extends AppBaseController
                     $order->save();
                 }
 
-
                 if(!$route_point->is_completed){
                     $route_point->status = RoutePoint::WAITING;
+
+                    // Calcul des frais de livraison pour les courses de location
+                    if ($order->is_location && $route_point->type === RoutePoint::POINT_TYPE_DESTINATION
+                        && $driverLat && $driverLng
+                        && $route_point->latitude && $route_point->longitude) {
+
+                        $locationItem = OrderItem::where('order_id', $order->id)
+                            ->where('service_slug', 'location')
+                            ->first();
+
+                        if ($locationItem) {
+                            $metaData = $locationItem->meta_data;
+                            if (is_array($metaData) && isset($metaData['engin_model'])) {
+                                $typeEnginModel = TypeEnginModel::where('slug', $metaData['engin_model'])->first();
+                                if ($typeEnginModel)
+
+                                     $result = GoogleMapsAPIUtils::getDistance([
+                                        $source_point['latitude'],
+                                        $source_point['longitude'],
+                                    ],[
+                                        $destination_point['latitude'],
+                                        $destination_point['longitude'],
+                                    ]);
+                                
+                                 if($typeEnginModel->transport_required_vehicule ){
+                                    $distanceKm = $this->haversineDistance(
+                                        $driverLat, $driverLng,
+                                        $route_point->latitude, $route_point->longitude
+                                    );
+                                    $route_point->delivery_fees = round($distanceKm * $typeEnginModel->transport_km_price, 2);
+                                     
+                                 }
+                                ->transport_km_price
+                                    $distanceKm = $this->haversineDistance(
+                                        $driverLat, $driverLng,
+                                        $route_point->latitude, $route_point->longitude
+                                    );
+                                    $route_point->delivery_fees = round($distanceKm * $typeEnginModel->transport_km_price, 2);
+                                }
+                            }
+                        }
+                    }
+
                     $route_point->save();
                 }
-
-
             }
 
             $orderInvitations = OrderInvitation::where([
@@ -252,6 +297,16 @@ class OrderInvitationAPIController extends AppBaseController
         }else{
             return $this->sendError('Affectation déjà traitée', 400);
         }
+    }
+
+    private function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadius = 6371; // km
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+        $a = sin($dLat / 2) ** 2
+            + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+        return $earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 
     public function  refuse($id, Request $request){
