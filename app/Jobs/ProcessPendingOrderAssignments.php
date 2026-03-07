@@ -74,7 +74,7 @@ class ProcessPendingOrderAssignments
             OrderInvitation::whereIn('id', $expiredInvitations->pluck('id'))->delete();
         }
 
-        if($order->createdAt->addMinutes(self::INVITATION_TIMEOUT)->isPast()){
+        if($order->created_at->addMinutes(self::INVITATION_TIMEOUT)->isPast()){
             // Marquer la commande comme chauffeurs non trouvés
             $this->markAsNotFound($order);
         }else{
