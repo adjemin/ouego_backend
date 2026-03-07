@@ -18,14 +18,15 @@ class ProcessPendingOrderAssignments
 {
     use Dispatchable, InteractsWithQueue, SerializesModels;
 
-    public $tries = 3;
-    public $backoff = [30, 60, 120];
+    public $tries = 1;
+    public $backoff = [30];
     
     // Nombre maximum d'invitations avant abandon
-    private const MAX_INVITATIONS = 10;
+    private const MAX_INVITATIONS = 5;
     
     // Délai d'attente pour une réponse (en minutes)
     private const INVITATION_TIMEOUT = 5;
+    private const INVITATION_RETRY = 2;
 
     public function handle()
     {
@@ -63,31 +64,27 @@ class ProcessPendingOrderAssignments
         $waitingInvitations = $order->orderInvitations;
         $invitationCount = $waitingInvitations->count();
 
-        // Cas 1 : Trop de tentatives - abandon
-        if ($invitationCount >= self::MAX_INVITATIONS) {
-            $this->markAsNotFound($order);
-        }
-
-        // Cas 2 : Aucune invitation - première tentative
-        if ($invitationCount === 0) {
-            $this->assignDriver($order);
-        }
-
-        // Cas 3 : Vérifier si les invitations ont expiré
+         // Cas 3 : Vérifier si les invitations ont expiré
         $expiredInvitations = $waitingInvitations->filter(function($invitation) {
-            return $invitation->created_at->addMinutes(self::INVITATION_TIMEOUT)->isPast();
+            return $invitation->created_at->addMinutes(self::INVITATION_RETRY)->isPast();
         });
-
-        Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} - ". $invitationCount ." invitations en attente. ". $expiredInvitations->count() ." invitations expirées.");
 
         if ($expiredInvitations->isNotEmpty()) {
             // Supprimer SEULEMENT les invitations expirées
             OrderInvitation::whereIn('id', $expiredInvitations->pluck('id'))->delete();
-            
+        }
+
+        if($order->createdAt->addMinutes(self::INVITATION_TIMEOUT)->isPast()){
+            // Marquer la commande comme chauffeurs non trouvés
+            $this->markAsNotFound($order);
+        }else{
             // Réessayer l'assignation
-            Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} - ". $expiredInvitations->count() ." invitations expirées supprimées. Nouvelle tentative d'assignation lancée.");
             $this->assignDriver($order);
         }
+
+       
+
+        Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} - ". $invitationCount ." invitations en attente. ". $expiredInvitations->count() ." invitations expirées.");
     }
 
     private function markAsNotFound(Order $order): void
@@ -99,7 +96,7 @@ class ProcessPendingOrderAssignments
             'is_successful' =>false
         ]);
         $order->newOrderHistory(Order::PERFORMER_NOT_FOUND, 'system', null);
-        Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} marquée comme PERFORMER_NOT_FOUND après ".self::MAX_INVITATIONS." tentatives.");
+        Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} marquée comme PERFORMER_NOT_FOUND.");
         
     }
 
