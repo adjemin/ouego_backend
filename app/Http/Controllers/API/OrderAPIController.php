@@ -1449,7 +1449,8 @@ class OrderAPIController extends AppBaseController
             }
         }
 
-        $duration = strval($duration). " seconds";
+        $totalMinutes = intval($duration / 60);
+        $duration = $totalMinutes . " mins";
 
 
         $delivery_type_code = "EXPRESS";
@@ -1557,11 +1558,18 @@ class OrderAPIController extends AppBaseController
             "error_message" => $enSemaineErrorMessage
         ];
 
+        $customer = auth('api-customers')->user();
+        $commercialDiscount = $this->getCommercialDiscount($customer);
+
         return $this->sendResponse([
-            $expressPricing,
-            $sameDayPricing,
-            $sameNightPricing,
-            $sameWeekPricing
+            'pricings' => [
+                $expressPricing,
+                $sameDayPricing,
+                $sameNightPricing,
+                $sameWeekPricing
+            ],
+            'discount' => $commercialDiscount['discount'],
+            'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
         ], 'Order saved successfully');
 
 
