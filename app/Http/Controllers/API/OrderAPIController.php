@@ -1457,9 +1457,9 @@ class OrderAPIController extends AppBaseController
         $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
 
         // Vérifier la disponibilité de l'option express en fonction de l'heure actuelle
-        // $now = now();
-        // $expressIsAvalable = true;
-        // $expressMessage = null;
+        $now = now();
+        $expressIsAvalable = true;
+        $expressMessage = null;
         // // Plage Horaires interdites
         // $start_morning = $now->copy()->setTime(6, 0);
         // $end_morning   = $now->copy()->setTime(8, 59);
