@@ -1224,7 +1224,7 @@ class OrderAPIController extends AppBaseController
 
     }
 
-    public function estimateRidePriceNew(Request $request){
+    public function estimateRidePriceWithArrets(Request $request){
 
         /**
          *
@@ -1336,7 +1336,7 @@ class OrderAPIController extends AppBaseController
         $destination_point = $destination_list->last();
 
         
-        if(!$route_arrets->count()){
+        if($route_arrets->count() == 0){
             $result = GoogleMapsAPIUtils::getDistance([
                 $source_point['latitude'],
                 $source_point['longitude'],
@@ -1356,14 +1356,10 @@ class OrderAPIController extends AppBaseController
                 $result_duration = $result['duration']; //array
                 $duration = intval($result_duration['value']);
             }
-        }
-        
-
-        
-        if($route_arrets->count()){
+        }else{
             
             $last_arret = null;
-            if(!is_array($route_arrets) && count($route_arrets) == 1){
+            if(count($route_arrets) == 1){
 
                 $arret_point = $route_arrets->first();
                 $result = GoogleMapsAPIUtils::getDistance([
@@ -1389,10 +1385,11 @@ class OrderAPIController extends AppBaseController
                 
                 $last_arret = $arret_point;
 
-            }elseif(!is_array($route_arrets)){
+            }else{
                 foreach ($route_arrets as $index => $route_arret){
                     
                     if($index == 0){
+                        // Calcul distance and duration from source to first arret
                         $result = GoogleMapsAPIUtils::getDistance([
                             $source_point['latitude'],
                             $source_point['longitude'],
@@ -1402,6 +1399,7 @@ class OrderAPIController extends AppBaseController
                         ]); 
                         
                     }else{
+                        // Calcul distance and duration from last arret to current arret
                         $result = GoogleMapsAPIUtils::getDistance([
                             $last_arret['latitude'],
                             $last_arret['longitude'],
@@ -1430,6 +1428,7 @@ class OrderAPIController extends AppBaseController
                 
             }
 
+            // Calcul distance and duration from last arret to destination
             $result = GoogleMapsAPIUtils::getDistance([
                 $last_arret['latitude'],
                 $last_arret['longitude'],

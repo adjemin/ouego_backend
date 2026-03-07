@@ -82,7 +82,7 @@ Route::prefix('v1/')->group(function () {
     Route::get('drivers/orders/list', [App\Http\Controllers\API\OrderAPIController::class, 'getDriverOrders'])->middleware("auth.driver:api-drivers");
 
 
-    Route::post('orders/ride/estimate_price', [App\Http\Controllers\API\OrderAPIController::class, 'estimateRidePrice'])->middleware("auth.customer:api-customers");
+    Route::post('orders/ride/estimate_price', [App\Http\Controllers\API\OrderAPIController::class, 'estimateRidePriceWithArrets'])->middleware("auth.customer:api-customers");
 
     Route::post('orders/delivery/estimate_price', [App\Http\Controllers\API\OrderAPIController::class, 'estimateDeliveryPrice'])->middleware("auth.customer:api-customers");
 
