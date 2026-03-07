@@ -1257,8 +1257,7 @@ class OrderAPIController extends AppBaseController
 
 
 
-            if(!array_key_exists('meta_data', $request->all())){
-
+        if(!array_key_exists('meta_data', $request->all())){
             return $this->sendError('meta_data is required', 400);
         }
 
