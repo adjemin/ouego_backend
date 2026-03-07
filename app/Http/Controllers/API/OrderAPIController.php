@@ -125,19 +125,19 @@ class OrderAPIController extends AppBaseController
             $meta_data = (array) $items[0]['meta_data'];
             $delivery_type_code = array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:null;
 
-            if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
-                $now = now();
-                // Plage Horaires interdites
-                $start_morning = $now->copy()->setTime(6, 0);
-                $end_morning   = $now->copy()->setTime(8, 59);
+            // if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
+            //     $now = now();
+            //     // Plage Horaires interdites
+            //     $start_morning = $now->copy()->setTime(6, 0);
+            //     $end_morning   = $now->copy()->setTime(8, 59);
 
-                $start_evening = $now->copy()->setTime(17, 0);
-                $end_envening   = $now->copy()->setTime(19, 59);
+            //     $start_evening = $now->copy()->setTime(17, 0);
+            //     $end_envening   = $now->copy()->setTime(19, 59);
 
-                if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
-                    return $this->sendError("L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.");
-                }
-            }
+            //     if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
+            //         return $this->sendError("L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.");
+            //     }
+            // }
 
             // Limiter la course en journée à partir de 12H
             if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
@@ -1457,20 +1457,20 @@ class OrderAPIController extends AppBaseController
         $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
 
         // Vérifier la disponibilité de l'option express en fonction de l'heure actuelle
-        $now = now();
-        $expressIsAvalable = true;
-        $expressMessage = null;
-        // Plage Horaires interdites
-        $start_morning = $now->copy()->setTime(6, 0);
-        $end_morning   = $now->copy()->setTime(8, 59);
+        // $now = now();
+        // $expressIsAvalable = true;
+        // $expressMessage = null;
+        // // Plage Horaires interdites
+        // $start_morning = $now->copy()->setTime(6, 0);
+        // $end_morning   = $now->copy()->setTime(8, 59);
 
-        $start_evening = $now->copy()->setTime(17, 0);
-        $end_envening   = $now->copy()->setTime(19, 59);
+        // $start_evening = $now->copy()->setTime(17, 0);
+        // $end_envening   = $now->copy()->setTime(19, 59);
 
-        if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
-            $expressIsAvalable = false;
-            $expressMessage = "L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.";
-        }
+        // if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
+        //     $expressIsAvalable = false;
+        //     $expressMessage = "L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.";
+        // }
 
         //EXPRESS
         $expressPricing = [
