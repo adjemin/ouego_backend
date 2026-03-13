@@ -12,6 +12,7 @@ use Exception;
 
 use function array_map;
 use function array_shift;
+use function array_values;
 
 /** @internal */
 final class FunctionObjectBuilder implements ObjectBuilder
@@ -49,7 +50,7 @@ final class FunctionObjectBuilder implements ObjectBuilder
         return $this->arguments;
     }
 
-    public function build(array $arguments): object
+    public function buildObject(array $arguments): object
     {
         $parameters = $this->function->definition->parameters;
 

@@ -6,6 +6,8 @@ namespace CuyZ\Valinor\Normalizer\Formatter\Exception;
 
 use RuntimeException;
 
+use function get_debug_type;
+
 /** @internal */
 final class CannotFormatInvalidTypeToJson extends RuntimeException
 {
@@ -13,9 +15,6 @@ final class CannotFormatInvalidTypeToJson extends RuntimeException
     {
         $type = get_debug_type($value);
 
-        parent::__construct(
-            "Value of type `$type` cannot be normalized to JSON.",
-            1704749897,
-        );
+        parent::__construct("Value of type `$type` cannot be normalized to JSON.");
     }
 }

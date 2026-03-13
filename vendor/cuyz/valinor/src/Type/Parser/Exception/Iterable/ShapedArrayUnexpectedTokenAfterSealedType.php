@@ -10,6 +10,7 @@ use CuyZ\Valinor\Type\Type;
 use CuyZ\Valinor\Type\Types\ShapedArrayElement;
 use RuntimeException;
 
+use function array_map;
 use function implode;
 
 /** @internal */
@@ -30,7 +31,6 @@ final class ShapedArrayUnexpectedTokenAfterSealedType extends RuntimeException i
 
         parent::__construct(
             "Unexpected `$unexpected` after sealed type in shaped array signature `$signature`, expected a `}`.",
-            1711618958,
         );
     }
 }

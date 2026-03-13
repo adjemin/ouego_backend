@@ -160,7 +160,7 @@ final class GuzzleHandler
             'providerId' => $action->provider(),
             'oauth_token_secret' => $action->oauthTokenSecret(),
             'nonce' => $action->rawNonce(),
-        ], fn($value): bool => $value !== null);
+        ], fn(?string $value): bool => $value !== null);
 
         $rawBody = array_filter([
             ...$this->prepareBody($action),

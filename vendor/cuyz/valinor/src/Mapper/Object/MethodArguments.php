@@ -8,6 +8,7 @@ use CuyZ\Valinor\Definition\Parameters;
 use IteratorAggregate;
 use Traversable;
 
+use function array_key_exists;
 use function array_values;
 
 /**
@@ -30,7 +31,7 @@ final class MethodArguments implements IteratorAggregate
 
             if ($parameter->isVariadic) {
                 $this->arguments = [...$this->arguments, ...array_values($arguments[$name])]; // @phpstan-ignore-line we know that the argument is iterable
-            } else {
+            } elseif (array_key_exists($name, $arguments)) {
                 $this->arguments[] = $arguments[$name];
             }
         }

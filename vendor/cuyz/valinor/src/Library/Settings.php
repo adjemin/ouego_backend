@@ -15,8 +15,13 @@ use ReflectionFunction;
 use Throwable;
 
 use function array_keys;
+use function array_map;
+use function array_merge;
 use function array_values;
 use function hash;
+use function implode;
+use function krsort;
+use function serialize;
 
 /** @internal */
 final class Settings
@@ -38,6 +43,7 @@ final class Settings
     /** @var list<callable> */
     public array $customConstructors = [];
 
+    /** @pure */
     public Cache $cache;
 
     /** @var non-empty-list<non-empty-string> */

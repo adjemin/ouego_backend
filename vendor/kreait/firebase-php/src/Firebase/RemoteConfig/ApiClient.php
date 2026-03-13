@@ -103,7 +103,7 @@ class ApiClient
                 'endVersionNumber' => $lastVersionNumber,
                 'pageSize' => $pageSize,
                 'pageToken' => $nextPageToken,
-            ], fn($value): bool => $value !== null),
+            ], fn(?string $value): bool => $value !== null),
         ]);
     }
 

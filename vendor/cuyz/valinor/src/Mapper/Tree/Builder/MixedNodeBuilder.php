@@ -8,17 +8,19 @@ use CuyZ\Valinor\Mapper\Tree\Exception\CannotMapToPermissiveType;
 use CuyZ\Valinor\Mapper\Tree\Shell;
 use CuyZ\Valinor\Type\Types\MixedType;
 
+use function assert;
+
 /** @internal */
 final class MixedNodeBuilder implements NodeBuilder
 {
-    public function build(Shell $shell, RootNodeBuilder $rootBuilder): Node
+    public function build(Shell $shell): Node
     {
-        assert($shell->type() instanceof MixedType);
+        assert($shell->type instanceof MixedType);
 
-        if (! $shell->allowPermissiveTypes()) {
+        if (! $shell->allowPermissiveTypes) {
             throw new CannotMapToPermissiveType($shell);
         }
 
-        return Node::new($shell->value());
+        return $shell->node($shell->value());
     }
 }

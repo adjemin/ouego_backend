@@ -9,6 +9,7 @@ use CuyZ\Valinor\Type\Type;
 use CuyZ\Valinor\Type\Types\ShapedArrayElement;
 use RuntimeException;
 
+use function array_map;
 use function implode;
 
 /** @internal */
@@ -27,9 +28,6 @@ final class ShapedArrayColonTokenMissing extends RuntimeException implements Inv
 
         $signature .= "{$type->toString()}?";
 
-        parent::__construct(
-            "A colon symbol is missing in shaped array signature `$signature`.",
-            1631283847
-        );
+        parent::__construct("A colon symbol is missing in shaped array signature `$signature`.");
     }
 }

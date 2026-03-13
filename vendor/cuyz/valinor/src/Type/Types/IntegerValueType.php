@@ -17,7 +17,6 @@ use function filter_var;
 use function is_bool;
 use function is_string;
 use function ltrim;
-use function preg_match;
 
 /** @internal */
 final class IntegerValueType implements IntegerType, FixedType
@@ -39,12 +38,15 @@ final class IntegerValueType implements IntegerType, FixedType
         return $other->accepts($this->value);
     }
 
+    public function inferGenericsFrom(Type $other, Generics $generics): Generics
+    {
+        return $generics;
+    }
+
     public function canCast(mixed $value): bool
     {
-        if (is_string($value)) {
-            $value = preg_match('/^0+$/', $value)
-                ? '0'
-                : ltrim($value, '0');
+        if (is_string($value) && $value !== '') {
+            $value = ltrim($value, '0') ?: '0';
         }
 
         return ! is_bool($value)

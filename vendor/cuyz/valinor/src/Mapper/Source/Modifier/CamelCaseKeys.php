@@ -7,7 +7,13 @@ namespace CuyZ\Valinor\Mapper\Source\Modifier;
 use IteratorAggregate;
 use Traversable;
 
+use function assert;
+use function is_int;
 use function is_iterable;
+use function is_string;
+use function lcfirst;
+use function str_replace;
+use function ucwords;
 
 /**
  * @api
@@ -35,6 +41,8 @@ final class CamelCaseKeys implements IteratorAggregate
         $result = [];
 
         foreach ($source as $key => $value) {
+            assert(is_string($key) || is_int($key));
+
             if (is_iterable($value)) {
                 $value = $this->replace($value);
             }

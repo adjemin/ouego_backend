@@ -7,41 +7,27 @@ namespace CuyZ\Valinor\Type\Types;
 use CuyZ\Valinor\Compiler\Native\ComplianceNode;
 use CuyZ\Valinor\Compiler\Node;
 use CuyZ\Valinor\Type\CompositeTraversableType;
-use CuyZ\Valinor\Type\CompositeType;
+use CuyZ\Valinor\Type\DumpableType;
 use CuyZ\Valinor\Type\Type;
 use CuyZ\Valinor\Utility\Polyfill;
 use Generator;
 
+use function function_exists;
 use function is_iterable;
 
 /** @internal */
-final class IterableType implements CompositeTraversableType
+final class IterableType implements CompositeTraversableType, DumpableType
 {
     private static self $native;
 
-    private ArrayKeyType $keyType;
-
-    private Type $subType;
-
-    private string $signature;
-
-    public function __construct(ArrayKeyType $keyType, Type $subType)
-    {
-        $this->keyType = $keyType;
-        $this->subType = $subType;
-        $this->signature = $keyType === ArrayKeyType::default()
-            ? "iterable<{$this->subType->toString()}>"
-            : "iterable<{$this->keyType->toString()}, {$this->subType->toString()}>";
-    }
+    public function __construct(
+        private ArrayKeyType $keyType,
+        private Type $subType,
+    ) {}
 
     public static function native(): self
     {
-        if (! isset(self::$native)) {
-            self::$native = new self(ArrayKeyType::default(), MixedType::get());
-            self::$native->signature = 'iterable';
-        }
-
-        return self::$native;
+        return self::$native ??= new self(ArrayKeyType::default(), MixedType::get());
     }
 
     public function accepts(mixed $value): bool
@@ -78,17 +64,8 @@ final class IterableType implements CompositeTraversableType
             return $condition;
         }
 
-        // @infection-ignore-all
-        $iteratorToArray = PHP_VERSION_ID >= 8_02_00
-            ? Node::functionCall('iterator_to_array', [$node])
-            : Node::ternary(
-                condition: Node::functionCall('is_array', [$node]),
-                ifTrue: $node,
-                ifFalse: Node::functionCall('iterator_to_array', [$node]),
-            );
-
         return $condition->and(Node::functionCall(function_exists('array_all') ? 'array_all' : Polyfill::class . '::array_all', [
-            $iteratorToArray,
+            Node::functionCall('iterator_to_array', [$node]),
             Node::shortClosure(
                 Node::logicalAnd(
                     $this->keyType->compiledAccept(Node::variable('key'))->wrap(),
@@ -111,9 +88,20 @@ final class IterableType implements CompositeTraversableType
             return $other->isMatchedBy($this);
         }
 
-        return $other instanceof CompositeTraversableType
+        return $other instanceof self
             && $this->keyType->matches($other->keyType())
             && $this->subType->matches($other->subType());
+    }
+
+    public function inferGenericsFrom(Type $other, Generics $generics): Generics
+    {
+        if (! $other instanceof CompositeTraversableType) {
+            return $generics;
+        }
+
+        $generics = $this->keyType->inferGenericsFrom($other->keyType(), $generics);
+
+        return $this->subType->inferGenericsFrom($other->subType(), $generics);
     }
 
     public function keyType(): ArrayKeyType
@@ -128,11 +116,15 @@ final class IterableType implements CompositeTraversableType
 
     public function traverse(): array
     {
-        if ($this->subType instanceof CompositeType) {
-            return [$this->subType, ...$this->subType->traverse()];
-        }
+        return [$this->keyType, $this->subType];
+    }
 
-        return [$this->subType];
+    public function replace(callable $callback): Type
+    {
+        return new self(
+            $callback($this->keyType),
+            $callback($this->subType),
+        );
     }
 
     public function nativeType(): IterableType
@@ -140,8 +132,27 @@ final class IterableType implements CompositeTraversableType
         return self::native();
     }
 
+    public function dumpParts(): iterable
+    {
+        yield 'iterable<';
+
+        if ($this->keyType !== ArrayKeyType::default()) {
+            yield $this->keyType;
+            yield ', ';
+        }
+
+        yield $this->subType;
+        yield '>';
+    }
+
     public function toString(): string
     {
-        return $this->signature;
+        if ($this === self::native()) {
+            return 'iterable';
+        }
+
+        return $this->keyType === ArrayKeyType::default()
+            ? "iterable<{$this->subType->toString()}>"
+            : "iterable<{$this->keyType->toString()}, {$this->subType->toString()}>";
     }
 }

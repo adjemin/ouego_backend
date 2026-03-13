@@ -9,6 +9,7 @@ use CuyZ\Valinor\Type\Type;
 use CuyZ\Valinor\Type\Types\ShapedArrayElement;
 use RuntimeException;
 
+use function array_map;
 use function implode;
 
 /** @internal */
@@ -27,9 +28,6 @@ final class ShapedArrayClosingBracketMissing extends RuntimeException implements
             $signature .= ', ...' . $unsealedType->toString();
         }
 
-        parent::__construct(
-            "Missing closing curly bracket in shaped array signature `$signature`.",
-            1631283658
-        );
+        parent::__construct("Missing closing curly bracket in shaped array signature `$signature`.");
     }
 }

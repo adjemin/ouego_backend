@@ -12,6 +12,11 @@ use CuyZ\Valinor\Type\IntegerType;
 use CuyZ\Valinor\Type\Type;
 use CuyZ\Valinor\Utility\IsSingleton;
 
+use function assert;
+use function filter_var;
+use function is_bool;
+use function is_int;
+
 /** @internal */
 final class NonPositiveIntegerType implements IntegerType
 {
@@ -33,10 +38,19 @@ final class NonPositiveIntegerType implements IntegerType
             return $other->isMatchedBy($this);
         }
 
+        if ($other instanceof ArrayKeyType) {
+            return $other->isMatchedBy($this);
+        }
+
         return $other instanceof self
             || $other instanceof NativeIntegerType
             || $other instanceof ScalarConcreteType
             || $other instanceof MixedType;
+    }
+
+    public function inferGenericsFrom(Type $other, Generics $generics): Generics
+    {
+        return $generics;
     }
 
     public function canCast(mixed $value): bool

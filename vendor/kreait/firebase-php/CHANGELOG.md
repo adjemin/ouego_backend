@@ -5,6 +5,37 @@ If it saves you or your team time, please consider [sponsoring its development](
 
 ## [Unreleased]
 
+## [7.24.1] - 2025-11-27
+
+* Added support for `firebase/php-jwt:^7.0.2` to remediate the vulnerabilities [PKSA-y2cr-5h3j-g3ys](https://github.com/advisories/GHSA-2x45-7fc3-mxwq) and [CVE-2025-4659](https://nvd.nist.gov/vuln/detail/CVE-2025-45769).
+
+### Changed
+
+* `Factory::withHttpLogger()` and `Factory::withHttpDebugLogger()` have been deprecated. If you're using these methods,
+  you can use `HttpClientOptions` instead.
+  ([Documentation](https://firebase-php.readthedocs.io/en/latest/setup.html#logging))
+
+### Deprecated methods
+
+* `Kreait\Firebase\Factory::withHttpLogger()`
+* `Kreait\Firebase\Factory::withHttpDebugLogger()`
+* `Kreait\Firebase\Http\Middleware::log()`
+
+## [7.24.0] - 2025-11-27
+
+### Changed
+
+* Realtime Database references are now validated by the API instead of locally. Validation rules can change at any time,
+  and the SDK can only adapt to changes in the API. While local checks could prevent obviously invalid paths, they’d
+  also require an SDK update whenever Firebase loosens a rule. Developers can be trusted not to use invalid paths 😅.
+* Removed the `#[SensitiveParameter]` attribute again, because it's supported by PHP 8.1 itself, but not in combination
+  with Valinor.
+  ([#1034](https://github.com/kreait/firebase-php/pull/1034))
+
+## [7.23.0] - 2025-10-13
+
+* Require `cuyz/valinor:^2.2.1` for better mapping.
+
 ## [7.22.0] - 2025-09-21
 
 ### Added
@@ -86,7 +117,7 @@ If it saves you or your team time, please consider [sponsoring its development](
 * You can now save on method call by passing a custom Firestore database name to
   `Kreait\Firebase\Factory::createFirestore($databaseName)` instead of having to chain
   ``::withFirestoreDatabase($databaseName)->createFirestore()``
-* It is now possible to set [live activity tokens](https://firebase.google.com/docs/cloud-messaging/ios/live-activity)
+* It is now possible to set [live activity tokens](https://firebase.google.com/docs/cloud-messaging/customize-messages/live-activity?hl=en)
   in Apns configs.
 * `Kreait\Firebase\Http\HttpClientOptions::withGuzzleMiddleware()` and
   `Kreait\Firebase\Http\HttpClientOptions::withGuzzleMiddlewares()` now accept callable strings, in addition
@@ -400,7 +431,10 @@ See **[UPGRADE-7.0](UPGRADE-7.0.md) for more details on the changes between 6.x 
 
 https://github.com/kreait/firebase-php/blob/6.9.6/CHANGELOG.md
 
-[Unreleased]: https://github.com/kreait/firebase-php/compare/7.22.0...7.x
+[Unreleased]: https://github.com/kreait/firebase-php/compare/7.24.1...7.x
+[7.24.1]: https://github.com/kreait/firebase-php/compare/7.24.0...7.24.1
+[7.24.0]: https://github.com/kreait/firebase-php/compare/7.23.0...7.24.0
+[7.23.0]: https://github.com/kreait/firebase-php/compare/7.22.0...7.23.0
 [7.22.0]: https://github.com/kreait/firebase-php/compare/7.21.2...7.22.0
 [7.21.2]: https://github.com/kreait/firebase-php/compare/7.21.1...7.21.2
 [7.21.1]: https://github.com/kreait/firebase-php/compare/7.21.0...7.21.1

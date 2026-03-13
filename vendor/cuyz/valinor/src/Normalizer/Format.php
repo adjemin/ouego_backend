@@ -15,7 +15,7 @@ final class Format
      * Allows a normalizer to format an input to a PHP array, containing only
      * scalar values.
      *
-     * ```php
+     * ```
      * namespace My\App;
      *
      * $normalizer = (new \CuyZ\Valinor\NormalizerBuilder())
@@ -32,8 +32,8 @@ final class Format
      *     )
      * );
      *
-     * // `$userAsArray` is now an array and can be manipulated much more easily, for
-     * // instance to be serialized to the wanted data format.
+     * // `$userAsArray` is now an array and can be manipulated much more
+     * // easily, for instance to be serialized to the wanted data format.
      * //
      * // [
      * //     'name' => 'John Doe',
@@ -45,6 +45,7 @@ final class Format
      * // ];
      * ```
      *
+     * @pure
      * @return self<ArrayNormalizer>
      */
     public static function array(): self
@@ -55,7 +56,7 @@ final class Format
     /**
      * Allows a normalizer to format an input to JSON syntax.
      *
-     * ```php
+     * ```
      * namespace My\App;
      *
      * $normalizer = (new \CuyZ\Valinor\NormalizerBuilder())
@@ -76,6 +77,7 @@ final class Format
      * // {"name":"John Doe","age":42,"country":{"name":"France","code":"FR"}}
      * ```
      *
+     * @pure
      * @return self<JsonNormalizer>
      */
     public static function json(): self
@@ -89,6 +91,7 @@ final class Format
     private function __construct(private string $type) {}
 
     /**
+     * @pure
      * @return class-string<T>
      */
     public function type(): string

@@ -40,15 +40,24 @@ final class NativeIntegerType implements IntegerType
             return $other->isMatchedBy($this);
         }
 
+        if ($other instanceof ArrayKeyType) {
+            return $other->isMatchedBy($this);
+        }
+
         return $other instanceof self
             || $other instanceof ScalarConcreteType
             || $other instanceof MixedType;
     }
 
+    public function inferGenericsFrom(Type $other, Generics $generics): Generics
+    {
+        return $generics;
+    }
+
     public function canCast(mixed $value): bool
     {
-        if (is_string($value)) {
-            $value = ltrim($value, '0') . '0';
+        if (is_string($value) && $value !== '') {
+            $value = ltrim($value, '0') ?: '0';
         }
 
         return ! is_bool($value) && filter_var($value, FILTER_VALIDATE_INT) !== false;

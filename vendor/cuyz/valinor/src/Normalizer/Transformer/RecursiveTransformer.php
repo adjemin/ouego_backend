@@ -21,10 +21,13 @@ use UnitEnum;
 use WeakMap;
 
 use function array_map;
+use function array_shift;
+use function call_user_func;
 use function get_object_vars;
 use function is_array;
 use function is_iterable;
 use function is_object;
+use function is_scalar;
 
 /**  @internal */
 final class RecursiveTransformer implements Transformer
@@ -179,6 +182,7 @@ final class RecursiveTransformer implements Transformer
                     $method = $attribute->class->methods->get('normalizeKey');
 
                     if ($method->parameters->count() === 0 || $method->parameters->at(0)->type->accepts($key)) {
+                        /** @var string $key */
                         $key = $attribute->instantiate()->normalizeKey($key); // @phpstan-ignore-line / We know the method exists
                     }
                 }

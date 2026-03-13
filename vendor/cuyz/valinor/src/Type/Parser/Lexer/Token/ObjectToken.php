@@ -9,22 +9,29 @@ use CuyZ\Valinor\Type\Type;
 use CuyZ\Valinor\Utility\Reflection\Reflection;
 
 /** @internal */
-final class ObjectToken implements TraversingToken
+final readonly class ObjectToken implements TraversingToken
 {
     public function __construct(
-        /** @var class-string */
-        private string $className,
+        public TraversingToken $subToken,
     ) {}
+
+    /**
+     * @param class-string $className
+     */
+    public static function from(string $className): self
+    {
+        return Reflection::enumExists($className)
+            ? new self(new EnumNameToken($className))
+            : new self(new ClassNameToken($className));
+    }
 
     public function traverse(TokenStream $stream): Type
     {
-        return Reflection::enumExists($this->className)
-            ? (new EnumNameToken($this->className))->traverse($stream)
-            : (new ClassNameToken($this->className))->traverse($stream);
+        return $this->subToken->traverse($stream);
     }
 
     public function symbol(): string
     {
-        return $this->className;
+        return $this->subToken->symbol();
     }
 }

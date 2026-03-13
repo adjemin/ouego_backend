@@ -13,30 +13,24 @@ use CuyZ\Valinor\Type\Parser\Exception\Scalar\ReversedValuesForIntegerRange;
 use CuyZ\Valinor\Type\Parser\Exception\Scalar\SameValueForIntegerRange;
 use CuyZ\Valinor\Type\Type;
 
+use function assert;
+use function filter_var;
+use function is_bool;
+use function is_int;
 use function is_string;
 use function ltrim;
-use function preg_match;
 use function sprintf;
 
 /** @internal */
 final class IntegerRangeType implements IntegerType
 {
-    private int $min;
+    public function __construct(
+        private int $min,
+        private int $max
+    ) {}
 
-    private int $max;
-
-    private string $signature;
-
-    public function __construct(int $min, int $max)
+    public static function from(int $min, int $max): self
     {
-        $this->min = $min;
-        $this->max = $max;
-        $this->signature = sprintf(
-            'int<%s, %s>',
-            $min > PHP_INT_MIN ? $min : 'min',
-            $max < PHP_INT_MAX ? $max : 'max'
-        );
-
         if ($min > $max) {
             throw new ReversedValuesForIntegerRange($min, $max);
         }
@@ -44,6 +38,8 @@ final class IntegerRangeType implements IntegerType
         if ($min === $max) {
             throw new SameValueForIntegerRange($min);
         }
+
+        return new self($min, $max);
     }
 
     public function accepts(mixed $value): bool
@@ -82,6 +78,10 @@ final class IntegerRangeType implements IntegerType
             return true;
         }
 
+        if ($other instanceof ArrayKeyType) {
+            return $other->isMatchedBy($this);
+        }
+
         if ($other instanceof self) {
             return $other->min === $this->min && $other->max === $this->max;
         }
@@ -89,12 +89,15 @@ final class IntegerRangeType implements IntegerType
         return false;
     }
 
+    public function inferGenericsFrom(Type $other, Generics $generics): Generics
+    {
+        return $generics;
+    }
+
     public function canCast(mixed $value): bool
     {
-        if (is_string($value)) {
-            $value = preg_match('/^0+$/', $value)
-                ? '0'
-                : ltrim($value, '0');
+        if (is_string($value) && $value !== '') {
+            $value = ltrim($value, '0') ?: '0';
         }
 
         return ! is_bool($value)
@@ -136,6 +139,10 @@ final class IntegerRangeType implements IntegerType
 
     public function toString(): string
     {
-        return $this->signature;
+        return sprintf(
+            'int<%s, %s>',
+            $this->min > PHP_INT_MIN ? $this->min : 'min',
+            $this->max < PHP_INT_MAX ? $this->max : 'max'
+        );
     }
 }

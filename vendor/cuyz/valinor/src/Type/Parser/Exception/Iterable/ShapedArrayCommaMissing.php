@@ -8,6 +8,7 @@ use CuyZ\Valinor\Type\Parser\Exception\InvalidType;
 use CuyZ\Valinor\Type\Types\ShapedArrayElement;
 use RuntimeException;
 
+use function array_map;
 use function implode;
 
 /** @internal */
@@ -20,9 +21,6 @@ final class ShapedArrayCommaMissing extends RuntimeException implements InvalidT
     {
         $signature = 'array{' . implode(', ', array_map(fn (ShapedArrayElement $element) => $element->toString(), $elements));
 
-        parent::__construct(
-            "Comma missing in shaped array signature `$signature`.",
-            1631286589
-        );
+        parent::__construct("Comma missing in shaped array signature `$signature`.");
     }
 }

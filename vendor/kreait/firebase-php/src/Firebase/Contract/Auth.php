@@ -437,7 +437,7 @@ interface Auth
     public function signInAnonymously(): SignInResult;
 
     /**
-     * @see https://cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/signInWithIdp
+     * @see https://docs.cloud.google.com/identity-platform/docs/reference/rest/v1/accounts/signInWithIdp
      *
      * @param Stringable|non-empty-string $provider
      * @param non-empty-string $accessToken

@@ -10,7 +10,7 @@ use Throwable;
 /**
  * Can be used to easily create an instance of (error) message.
  *
- * ```php
+ * ```
  * $message = MessageBuilder::newError('Some message with {some_parameter}.')
  *     ->withCode('some_code')
  *     ->withParameter('some_parameter', 'some_value')
@@ -33,6 +33,7 @@ final class MessageBuilder
     private function __construct(private string $body) {}
 
     /**
+     * @pure
      * @return self<Message>
      */
     public static function new(string $body): self
@@ -41,6 +42,7 @@ final class MessageBuilder
     }
 
     /**
+     * @pure
      * @return self<ErrorMessage&Throwable>
      */
     public static function newError(string $body): self
@@ -52,6 +54,7 @@ final class MessageBuilder
         return $instance;
     }
 
+    /** @pure */
     public static function from(Throwable $error): ErrorMessage
     {
         if ($error instanceof ErrorMessage) {
@@ -59,11 +62,12 @@ final class MessageBuilder
         }
 
         return self::newError($error->getMessage())
-            ->withCode((string)$error->getCode())
+            ->withCode($error->getCode() === 0 ? 'unknown' : (string)$error->getCode())
             ->build();
     }
 
     /**
+     * @pure
      * @return self<MessageType>
      */
     public function withBody(string $body): self
@@ -74,12 +78,14 @@ final class MessageBuilder
         return $clone;
     }
 
+    /** @pure */
     public function body(): string
     {
         return $this->body;
     }
 
     /**
+     * @pure
      * @return self<MessageType>
      */
     public function withCode(string $code): self
@@ -90,12 +96,14 @@ final class MessageBuilder
         return $clone;
     }
 
+    /** @pure */
     public function code(): string
     {
         return $this->code;
     }
 
     /**
+     * @pure
      * @return self<MessageType>
      */
     public function withParameter(string $name, string $value): self
@@ -107,6 +115,7 @@ final class MessageBuilder
     }
 
     /**
+     * @pure
      * @return array<string, string>
      */
     public function parameters(): array
@@ -115,6 +124,7 @@ final class MessageBuilder
     }
 
     /**
+     * @pure
      * @return MessageType&HasCode&HasParameters
      */
     public function build(): Message&HasCode&HasParameters

@@ -9,6 +9,8 @@ use ReflectionFunction;
 use ReflectionMethod;
 use SplFileObject;
 
+use function is_file;
+
 /**
  * @internal
  *
@@ -21,7 +23,7 @@ final class PhpParser
     private static array $statements = [];
 
     /**
-     * @param ReflectionClass<object>|ReflectionFunction|ReflectionMethod $reflection
+     * @param ReflectionClass<covariant object>|ReflectionFunction|ReflectionMethod $reflection
      * @return array<string, string>
      */
     public static function parseUseStatements(ReflectionClass|ReflectionFunction|ReflectionMethod $reflection): array
@@ -44,31 +46,34 @@ final class PhpParser
     }
 
     /**
-     * @param ReflectionClass<object>|ReflectionFunction|ReflectionMethod $reflection
+     * @param ReflectionClass<covariant object>|ReflectionFunction|ReflectionMethod $reflection
      * @return array<string, string>
      */
     private static function fetchUseStatements(ReflectionClass|ReflectionFunction|ReflectionMethod $reflection): array
     {
-        if ($reflection instanceof ReflectionMethod) {
-            $namespaceName = $reflection->getDeclaringClass()->getNamespaceName();
-        } elseif ($reflection instanceof ReflectionFunction && $reflection->getClosureScopeClass()) {
-            $namespaceName = $reflection->getClosureScopeClass()->getNamespaceName();
-        } else {
-            $namespaceName = $reflection->getNamespaceName();
-        }
-
         $content = self::getFileContent($reflection);
 
         if ($content === null) {
             return [];
         }
 
-        return (new TokenParser($content))->parseUseStatements($namespaceName);
+        $tokenParser = new TokenParser($content);
+
+        if ($reflection instanceof ReflectionMethod) {
+            $namespaceName = $reflection->getDeclaringClass()->getNamespaceName();
+        } elseif ($reflection instanceof ReflectionFunction) {
+            $namespaceName = $tokenParser->getNamespace();
+        } else {
+            $namespaceName = $reflection->getNamespaceName();
+        }
+
+        return $tokenParser->parseUseStatements($namespaceName);
     }
 
     /**
-     * @param ReflectionClass<object>|ReflectionFunction|ReflectionMethod $reflection
-     */    private static function getFileContent(ReflectionClass|ReflectionFunction|ReflectionMethod $reflection): ?string
+     * @param ReflectionClass<covariant object>|ReflectionFunction|ReflectionMethod $reflection
+     */
+    private static function getFileContent(ReflectionClass|ReflectionFunction|ReflectionMethod $reflection): ?string
     {
         $filename = $reflection->getFileName();
         $startLine = $reflection->getStartLine();

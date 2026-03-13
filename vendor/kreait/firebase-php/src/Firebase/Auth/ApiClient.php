@@ -135,7 +135,7 @@ class ApiClient
         $urlParams = array_filter([
             'maxResults' => (string) $batchSize,
             'nextPageToken' => (string) $nextPageToken,
-        ], fn($value): bool => $value !== '');
+        ], fn(string $value): bool => $value !== '');
 
         $url = $this->awareAuthResourceUrlBuilder->getUrl('/accounts:batchGet', $urlParams);
 

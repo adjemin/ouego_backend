@@ -7,6 +7,8 @@ namespace CuyZ\Valinor\Type\Parser\Exception\Constant;
 use CuyZ\Valinor\Type\Parser\Exception\InvalidType;
 use RuntimeException;
 
+use function str_contains;
+
 /** @internal */
 final class ClassConstantCaseNotFound extends RuntimeException implements InvalidType
 {
@@ -19,6 +21,6 @@ final class ClassConstantCaseNotFound extends RuntimeException implements Invali
             ? "Cannot find class constant case with pattern `$className::$case`."
             : "Unknown class constant case `$className::$case`.";
 
-        parent::__construct($message, 1652189140);
+        parent::__construct($message);
     }
 }

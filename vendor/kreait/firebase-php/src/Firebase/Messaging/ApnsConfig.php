@@ -11,8 +11,8 @@ use function array_filter;
 use function array_key_exists;
 
 /**
- * @see https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/generating_a_remote_notification
- * @see https://developer.apple.com/documentation/usernotifications/setting_up_a_remote_notification_server/sending_notification_requests_to_apns
+ * @see https://developer.apple.com/documentation/usernotifications/generating-a-remote-notification
+ * @see https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns
  * @see https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#apnsconfig
  *
  * @phpstan-type ApnsConfigShape array{
@@ -163,7 +163,7 @@ final class ApnsConfig implements JsonSerializable
     }
 
     /**
-     * @see https://firebase.google.com/docs/cloud-messaging/ios/live-activity
+     * @see https://firebase.google.com/docs/cloud-messaging/customize-messages/live-activity?hl=en
      * @param non-empty-string $liveActivityToken
     */
     public function withLiveActivityToken(string $liveActivityToken): self

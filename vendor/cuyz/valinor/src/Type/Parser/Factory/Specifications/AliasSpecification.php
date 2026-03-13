@@ -14,6 +14,7 @@ use Reflector;
 
 use function array_shift;
 use function explode;
+use function implode;
 use function in_array;
 use function strtolower;
 
@@ -21,7 +22,7 @@ use function strtolower;
 final class AliasSpecification implements TypeParserSpecification
 {
     public function __construct(
-        /** @var ReflectionClass<object>|ReflectionFunction */
+        /** @var ReflectionClass<covariant object>|ReflectionFunction */
         private Reflector $reflection,
     ) {}
 
@@ -39,14 +40,14 @@ final class AliasSpecification implements TypeParserSpecification
 
         if (strtolower($alias) !== strtolower($symbol)) {
             /** @var class-string $alias */
-            return new ObjectToken($alias);
+            return ObjectToken::from($alias);
         }
 
         $namespaced = $this->resolveNamespaced($symbol);
 
         if ($namespaced !== $symbol) {
             /** @var class-string $namespaced */
-            return new ObjectToken($namespaced);
+            return ObjectToken::from($namespaced);
         }
 
         return $token;

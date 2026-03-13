@@ -7,9 +7,9 @@ namespace CuyZ\Valinor\Type\Types\Factory;
 use CuyZ\Valinor\Type\Type;
 use CuyZ\Valinor\Type\Types\BooleanValueType;
 use CuyZ\Valinor\Type\Types\ClassStringType;
+use CuyZ\Valinor\Type\Types\EnumType;
 use CuyZ\Valinor\Type\Types\FloatValueType;
 use CuyZ\Valinor\Type\Types\IntegerValueType;
-use CuyZ\Valinor\Type\Types\EnumType;
 use CuyZ\Valinor\Type\Types\NativeClassType;
 use CuyZ\Valinor\Type\Types\ShapedArrayElement;
 use CuyZ\Valinor\Type\Types\ShapedArrayType;
@@ -22,6 +22,7 @@ use function is_bool;
 use function is_float;
 use function is_int;
 use function is_string;
+use function str_contains;
 use function str_replace;
 
 /** @internal */
@@ -47,7 +48,7 @@ final class ValueTypeFactory
 
         if (is_string($value)) {
             if (Reflection::classOrInterfaceExists($value)) {
-                return new ClassStringType(new NativeClassType($value));
+                return new ClassStringType([new NativeClassType($value)]);
             }
 
             if (str_contains($value, "'") && str_contains($value, '"')) {
@@ -67,10 +68,10 @@ final class ValueTypeFactory
             foreach ($value as $key => $child) {
                 $keyType = is_string($key) ? new StringValueType($key) : new IntegerValueType($key);
 
-                $elements[] = new ShapedArrayElement($keyType, self::from($child));
+                $elements[$key] = new ShapedArrayElement($keyType, self::from($child));
             }
 
-            return new ShapedArrayType(...$elements);
+            return new ShapedArrayType($elements);
         }
 
         throw new CannotBuildTypeFromValue($value);

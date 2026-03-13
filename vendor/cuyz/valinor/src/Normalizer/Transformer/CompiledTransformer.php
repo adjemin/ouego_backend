@@ -34,10 +34,17 @@ use IteratorAggregate;
 use UnitEnum;
 
 use function array_is_list;
+use function assert;
 use function is_array;
+use function is_bool;
+use function is_float;
+use function is_int;
 use function is_iterable;
+use function is_null;
 use function is_object;
 use function is_scalar;
+use function is_string;
+use function reset;
 
 /** @internal */
 final class CompiledTransformer implements Transformer
@@ -90,7 +97,6 @@ final class CompiledTransformer implements Transformer
 
     private function inferType(mixed $value, bool $isSure = false): Type
     {
-        // @infection-ignore-all (mutation from `true` to `false` is useless)
         return match (true) {
             $value instanceof UnitEnum => EnumType::native($value::class),
             is_object($value) && ! $value instanceof Closure && ! $value instanceof Generator => $this->inferObjectType($value),
@@ -110,7 +116,7 @@ final class CompiledTransformer implements Transformer
         if (is_iterable($value)) {
             $iterableType = $this->inferIterableType($value);
 
-            return new NativeClassType($value::class, ['SubType' => $iterableType->subType()]);
+            return new NativeClassType($value::class, [$iterableType->subType()]);
         }
 
         return new NativeClassType($value::class);

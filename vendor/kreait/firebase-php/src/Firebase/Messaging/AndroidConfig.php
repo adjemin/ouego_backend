@@ -8,15 +8,13 @@ use JsonSerializable;
 use Kreait\Firebase\Exception\Messaging\InvalidArgument;
 
 use function array_filter;
-use function array_key_exists;
 use function is_int;
-use function is_string;
 use function preg_match;
 use function sprintf;
 
 /**
  * @see https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#androidconfig
- * @see https://firebase.google.com/docs/cloud-messaging/concept-options#setting-the-priority-of-a-message
+ * @see https://firebase.google.com/docs/cloud-messaging/customize-messages/setting-message-priority
  * @see https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#androidmessagepriority Android Message Priorities
  * @see https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#androidfcmoptions Android FCM Options Syntax
  *
@@ -122,8 +120,9 @@ final class AndroidConfig implements JsonSerializable
      */
     public static function fromArray(array $config): self
     {
-        if (array_key_exists('ttl', $config) && $config['ttl'] !== null) {
-            $config['ttl'] = self::ensureValidTtl($config['ttl']);
+        $ttl = $config['ttl'] ?? null;
+        if ($ttl !== null) {
+            $config['ttl'] = self::ensureValidTtl($ttl);
         }
 
         return new self($config);
@@ -248,27 +247,30 @@ final class AndroidConfig implements JsonSerializable
     }
 
     /**
-     * @param int|string $value
-     *
      * @throws InvalidArgument
-     *
      * @return non-empty-string
      */
-    private static function ensureValidTtl($value): string
+    private static function ensureValidTtl(int|string $value): string
     {
         $expectedPattern = '/^\d+s$/';
         $errorMessage = "The TTL of an AndroidConfig must be an positive integer or string matching {$expectedPattern}";
 
-        if (is_int($value) && $value >= 0) {
-            return sprintf('%ds', $value);
+        if (is_numeric($value)) {
+            $value = (int) $value;
         }
 
-        if (!is_string($value) || $value === '') {
+        if (is_int($value)) {
+            $value = sprintf('%ds', $value);
+        }
+
+        $value = trim($value);
+
+        if ($value === '') {
             throw new InvalidArgument($errorMessage);
         }
 
         if (preg_match('/^\d+$/', $value) === 1) {
-            return sprintf('%ds', $value);
+            return sprintf('%ss', $value);
         }
 
         if (preg_match($expectedPattern, $value) === 1) {

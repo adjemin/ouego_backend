@@ -124,7 +124,7 @@ final class ValidatedActionCodeSettings implements ActionCodeSettings
             'androidMinimumVersion' => $this->androidMinimumVersion,
             'androidInstallApp' => $this->androidInstallApp,
             'iOSBundleId' => $this->iOSBundleId,
-        ], static fn($value): bool => is_bool($value) || (is_string($value) && $value !== ''));
+        ], static fn(string|bool|null $value): bool => is_bool($value) || (is_string($value) && $value !== ''));
     }
 
     /**

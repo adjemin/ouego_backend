@@ -13,6 +13,7 @@ use CuyZ\Valinor\Type\FloatType;
 use CuyZ\Valinor\Type\Type;
 
 use function assert;
+use function is_numeric;
 
 /** @internal */
 final class FloatValueType implements FloatType, FixedType
@@ -31,17 +32,12 @@ final class FloatValueType implements FloatType, FixedType
 
     public function matches(Type $other): bool
     {
-        if ($other instanceof UnionType) {
-            return $other->isMatchedBy($this);
-        }
+        return $other->accepts($this->value);
+    }
 
-        if ($other instanceof self) {
-            return $this->value === $other->value;
-        }
-
-        return $other instanceof NativeFloatType
-            || $other instanceof ScalarConcreteType
-            || $other instanceof MixedType;
+    public function inferGenericsFrom(Type $other, Generics $generics): Generics
+    {
+        return $generics;
     }
 
     public function canCast(mixed $value): bool

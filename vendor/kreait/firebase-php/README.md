@@ -66,6 +66,12 @@ $cloudStorage = $factory->createStorage();
 $firestore = $factory->createFirestore();
 ```
 
+## Powered by
+
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSourceSupport)
+
+Thanks to [JetBrains](https://www.jetbrains.com/) credits for providing [a free PhpStorm license](https://jb.gg/OpenSourceSupport) for the development of this open-source package.
+
 ## License
 
 Firebase Admin PHP SDK is licensed under the [MIT License](LICENSE).

@@ -13,19 +13,21 @@ use Traversable;
  */
 final class SnakeCaseToCamelCaseConverter
 {
-    public function __invoke(mixed $values, callable $next): object
+    /**
+     * @template T of object
+     * @param iterable<mixed> $values
+     * @param callable(iterable<mixed>): T $next
+     * @return T
+     */
+    public function __invoke(iterable $values, callable $next): object
     {
         if ($values instanceof Traversable) {
             $values = iterator_to_array($values);
         }
 
-        if (!is_array($values)) {
-            return $next($values);
-        }
-
         $camelCaseConverted = array_combine(
             array_map(
-                fn($key): string => lcfirst(str_replace('_', '', ucwords((string) $key, '_'))),
+                fn(int|string $key): string => lcfirst(str_replace('_', '', ucwords((string) $key, '_'))),
                 array_keys($values),
             ),
             $values,

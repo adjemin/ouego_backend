@@ -10,6 +10,7 @@ use CuyZ\Valinor\Type\Types\ShapedArrayElement;
 use CuyZ\Valinor\Type\Types\StringValueType;
 use RuntimeException;
 
+use function array_map;
 use function implode;
 
 /** @internal */
@@ -34,9 +35,6 @@ final class ShapedArrayElementTypeMissing extends RuntimeException implements In
 
         $signature .= ':';
 
-        parent::__construct(
-            "Missing element type in shaped array signature `$signature`.",
-            1631286250
-        );
+        parent::__construct("Missing element type in shaped array signature `$signature`.");
     }
 }
