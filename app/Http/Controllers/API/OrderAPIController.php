@@ -444,6 +444,11 @@ class OrderAPIController extends AppBaseController
                     return $this->sendError('Carrier introuvable', 400);
                 }
 
+                if($product->slug == Product::SABLE_SLUG && !array_key_exists('pricing', $meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('pricing est requis pour le sable', 400);
+                }
+
 
                 $quantity = intval($item['quantity']);
 
@@ -645,7 +650,7 @@ class OrderAPIController extends AppBaseController
                     return $this->sendError('engin_model not found', 400);
                 }
 
-                $quantity = $location_start_date->diffInDays($location_end_date);
+                $quantity = max(1, $location_start_date->diffInDays($location_end_date));
 
                 $unit_price = doubleval($typeEnginModel->day_location_price);
 
@@ -794,12 +799,9 @@ class OrderAPIController extends AppBaseController
         $subtotal = $order->order_price;
         $tax = 0;
         $fees_delivery = $order->delivery_price;
-        $invoice_total = 0;
-        // if($order->service_slug == Service::COURSE){
-        //     $invoice_total = $subtotal + $tax ;
-        // }else{
+        
+
         $invoice_total = $subtotal + $fees_delivery + $tax + $manutention_pricing;
-        // }
 
         $discount = 0;
         $coupon = null;
