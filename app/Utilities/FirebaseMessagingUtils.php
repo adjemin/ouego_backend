@@ -64,6 +64,7 @@ class FirebaseMessagingUtils{
 
         }catch (Exception $e){
             // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
+            Log::error($e);
             return  false;
         }
     }
