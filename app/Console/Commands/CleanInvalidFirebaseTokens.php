@@ -32,8 +32,12 @@ class CleanInvalidFirebaseTokens extends Command
         Log::info('Début du nettoyage des tokens Firebase...');
         $this->info('Début du nettoyage des tokens Firebase...');
 
+        $serviceAccount = config('services.firebase');
+        // $serviceAccount = base_path('storage/app/firebase/ouego-44587-firebase-adminsdk-fbsvc-e862305a22.json');
+        
+
         $devices = CustomerDevice::all();
-        $factory = (new \Kreait\Firebase\Factory)->withServiceAccount(base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json'));
+        $factory = (new \Kreait\Firebase\Factory)->withServiceAccount($serviceAccount);
         $messaging = $factory->createMessaging();
 
         // Regrouper les tokens par lots de 1000 (limite de Firebase)

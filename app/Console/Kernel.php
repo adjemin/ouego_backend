@@ -15,7 +15,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
 
-        $schedule->command('firebase:clean-tokens')->daily();
+        // $schedule->command('firebase:clean-tokens')->daily();
 
         // Exécuter le job toutes les 2 minutes
         $schedule->job(new ProcessPendingOrderAssignments)->everyTwoMinutes();

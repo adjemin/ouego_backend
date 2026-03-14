@@ -27,6 +27,7 @@ class DriverNotificationsUtils
                 "driver_id" => $user->id,
             ])->orderBy('updated_at', 'DESC')->get();
 
+
             $metadata = $userNotification->toArray();
 
             if($userDevices != null){
