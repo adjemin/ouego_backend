@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Jobs\SendPushNotification;
+use App\Jobs\SendPushNotificationDriver;
 use App\Models\NotificationDeliveryStatus;
 use App\Models\DriverNotification;
 use Illuminate\Support\Facades\Log;
@@ -45,7 +45,7 @@ class CheckAndResendFailedNotifications extends Command
             $driverNotification = DriverNotification::find($notification->notification_id);
 
             // Relance la notification
-            SendPushNotification::dispatch(
+            SendPushNotificationDriver::dispatch(
                 $notification->fcm_token,
                 $driverNotification
             )->delay(now()->addSeconds(30 * $notification->attempt_count));

@@ -8,7 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use App\Models\DriverNotification;
 use App\Models\DriverDevice;
 use App\Models\NotificationDeliveryStatus;
-use App\Jobs\SendPushNotification;
+use App\Jobs\SendPushNotificationDriver;
 use App\Utilities\TwilioUtils;
 use Illuminate\Support\Facades\Log;
 
@@ -54,7 +54,7 @@ class SendOrderAssignmentNotification
 
             try {
                 // Tentative d'envoi de la notification
-                SendPushNotification::dispatch($device->firebase_id, $notification);
+                SendPushNotificationDriver::dispatch($device->firebase_id, $notification);
             } catch (Kreait\Firebase\Exception\Messaging\NotFound $e) {
                 // Le token n'est plus valide, nous le supprimons
                 $device->forceDelete();

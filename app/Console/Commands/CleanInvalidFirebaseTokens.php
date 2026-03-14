@@ -32,10 +32,8 @@ class CleanInvalidFirebaseTokens extends Command
         Log::info('Début du nettoyage des tokens Firebase...');
         $this->info('Début du nettoyage des tokens Firebase...');
 
-        $serviceAccount = config('services.firebase');
-        // $serviceAccount = base_path('storage/app/firebase/ouego-44587-firebase-adminsdk-fbsvc-e862305a22.json');
+        $serviceAccount = base_path('storage/app/firebase/ouego-44587-firebase-adminsdk-fbsvc-e862305a22.json');
         
-
         $devices = CustomerDevice::all();
         $factory = (new \Kreait\Firebase\Factory)->withServiceAccount($serviceAccount);
         $messaging = $factory->createMessaging();

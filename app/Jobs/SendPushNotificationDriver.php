@@ -15,7 +15,7 @@ use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
 
 
-class SendPushNotification
+class SendPushNotificationDriver
 {
     use Dispatchable, InteractsWithQueue, SerializesModels;
 
@@ -52,7 +52,7 @@ class SendPushNotification
                 'status' => 'PENDING'
             ]);
             //
-            $jsonPath = config('services.firebase');
+            $jsonPath = base_path('storage/app/firebase/ouego-pro-firebase-adminsdk-fbsvc-346d746dfe.json');
 
                 $factory = (new Factory)
                 ->withServiceAccount($jsonPath);

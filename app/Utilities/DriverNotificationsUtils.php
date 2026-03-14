@@ -27,7 +27,6 @@ class DriverNotificationsUtils
                 "driver_id" => $user->id,
             ])->orderBy('updated_at', 'DESC')->get();
 
-
             $metadata = $userNotification->toArray();
 
             if($userDevices != null){
@@ -36,7 +35,7 @@ class DriverNotificationsUtils
 
                 foreach($userDevices as $userDevice){
                     $deviceFirebaseId = "".$userDevice->firebase_id;
-                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId);
+                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId, true);
 
                     if($result == false){
                         $userDevice->forceDelete();

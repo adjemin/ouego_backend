@@ -36,7 +36,7 @@ class CustomerNotificationsUtils
 
                 foreach($userDevices as $userDevice){
                     $deviceFirebaseId = "".$userDevice->firebase_id;
-                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId);
+                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId, false);
                     array_push($messages_sent, $result);
                 }
 
