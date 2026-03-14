@@ -294,7 +294,13 @@ class DriverEnjourneeAssignmentService
 
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
-        if ($maxDistance) {
+        // Pas de restriction de distance pour le gravier
+        $orderItem = \App\Models\OrderItem::where('order_id', $order_id)->first();
+        $isGravier = $orderItem
+            && isset($orderItem->meta_data['product_slug'])
+            && $orderItem->meta_data['product_slug'] === \App\Models\Product::GRAVIER_SLUG;
+
+        if ($maxDistance && !$isGravier) {
             $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance*1000]);
         }
 
