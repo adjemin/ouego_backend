@@ -13,7 +13,7 @@ class FirebaseMessagingUtils{
 
     public static function sendNotification($title, $body, $type, $customerNotification, $firebaseId, $isPro = true) {
 
-        // try {
+        try {
 
             if($isPro){
                 $serviceAccount = base_path('storage/app/firebase/ouego-pro-firebase-adminsdk-fbsvc-346d746dfe.json');
@@ -55,12 +55,11 @@ class FirebaseMessagingUtils{
 
              return true;
 
-        // }catch (Exception $e){
-        //     dd($e->getMessage());
-        //     // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
-        //     Log::error($e);
-        //     return  false;
-        // }
+        }catch (Exception $e){
+            // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
+            Log::error($e);
+            return  false;
+        }
     }
 
     public static function sendData($metadata, $id) {
