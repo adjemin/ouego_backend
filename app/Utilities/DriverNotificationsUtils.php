@@ -16,7 +16,6 @@ class DriverNotificationsUtils
      */
     public static function notify(DriverNotification $userNotification){
         $user = Driver::where(["id" => $userNotification->driver_id])->first();
-
         if(!empty($user)){
 
             $title = $userNotification->title;

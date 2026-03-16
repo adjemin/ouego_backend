@@ -13,12 +13,12 @@ class FirebaseMessagingUtils{
 
     public static function sendNotification($title, $body, $type, $customerNotification, $firebaseId, $isPro = true) {
 
-        try {
+        // try {
 
             if($isPro){
                 $serviceAccount = base_path('storage/app/firebase/ouego-pro-firebase-adminsdk-fbsvc-346d746dfe.json');
             }else{
-                $serviceAccount = base_path('storage/app/firebase/ouego-44587-firebase-adminsdk-fbsvc-e862305a22.json');
+                $serviceAccount = base_path('storage/app/firebase/ouego-44587-firebase-adminsdk-fbsvc-bfc72b0d4b.json');
             }
             
 
@@ -36,15 +36,15 @@ class FirebaseMessagingUtils{
                     'sound' => 'notification_sound',
                     'badge' => '1',
                     'type' => "".$customerNotification["type"],
-                    'id' => "".$customerNotification["id"],
+                    'id' => "".($customerNotification["id"]??""),
                 ]))
                 ->withHighestPossiblePriority()
                 ->withData(array(
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'id' => $customerNotification["id"],
+                    'id' => "".($customerNotification["id"]??""),
                     'status' => 'done',
                     'notification_type' => "".$customerNotification["type"],
-                    'notification_id' => "".$customerNotification["id"],
+                    'notification_id' => "".($customerNotification["id"]??""),
                     'meta_data_id' => "".$customerNotification["data_id"],
                     //'notification' => json_encode($customerNotification),
                     "title" => $title,
@@ -55,12 +55,12 @@ class FirebaseMessagingUtils{
 
              return true;
 
-        }catch (Exception $e){
-            dd($e->getMessage());
-            // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
-            Log::error($e);
-            return  false;
-        }
+        // }catch (Exception $e){
+        //     dd($e->getMessage());
+        //     // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
+        //     Log::error($e);
+        //     return  false;
+        // }
     }
 
     public static function sendData($metadata, $id) {
