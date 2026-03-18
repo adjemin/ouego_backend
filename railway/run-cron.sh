@@ -1,5 +1,14 @@
-#!/bin/sh
+#!/bin/bash
+
 set -e
 
-php artisan config:cache || true
-php artisan schedule:run 
+echo "Starting Laravel scheduler..."
+
+while true
+do
+    echo "[$(date)] Running scheduler..."
+    
+    php artisan schedule:run --verbose --no-interaction || true
+    
+    sleep 60
+done
