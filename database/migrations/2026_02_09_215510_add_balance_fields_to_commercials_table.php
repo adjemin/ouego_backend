@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('commercials', function (Blueprint $table) {
-            $table->double('current_balance')->nullable()->default(0)->after('code');
-            $table->double('old_balance')->nullable()->default(0)->after('current_balance');
+            if (!Schema::hasColumn('commercials', 'current_balance')) {
+                $table->double('current_balance')->nullable()->default(0)->after('code');
+            }
+            if (!Schema::hasColumn('commercials', 'old_balance')) {
+                $table->double('old_balance')->nullable()->default(0)->after('current_balance');
+            }
         });
     }
 

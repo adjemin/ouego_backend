@@ -11,6 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('zone_mapping');
+
         Schema::create('zone_mapping', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->foreignId('zone_id')->constrained('zones')->cascadeOnDelete();

@@ -12,6 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('zone_mapping')) {
+            DB::statement('ALTER TABLE zone_mapping DROP CONSTRAINT IF EXISTS zone_mapping_zone_id_foreign');
+        }
+        Schema::dropIfExists('zones');
+
         Schema::create('zones', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -31,6 +36,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('zone_mapping', function (Blueprint $table) {
+            $table->dropForeign(['zone_id']);
+        });
         Schema::dropIfExists('zones');
     }
 };
