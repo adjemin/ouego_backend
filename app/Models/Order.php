@@ -66,6 +66,10 @@ class Order extends Model
     //cancelled_with_payment //Final status for paid cancellation
     const CANCELLED_WITH_PAYMENT = "cancelled_with_payment";
 
+
+   CONST PAYMENT_MODE_CASH = "cash";
+   CONST PAYMENT_MODE_ONLINE = "online";
+
     protected $appends = ['customer','driver', 'service','items', 'invoice', 'route_points'];
 
     public $fillable = [
@@ -75,6 +79,7 @@ class Order extends Model
         'service_slug',
         'status',
         'comment',
+        'order_object',
         'order_date',
         'is_started',
         'is_running',
@@ -93,6 +98,7 @@ class Order extends Model
         'payment_method_code',
         'delivery_type_code',
         'delivery_price',
+        'manutention_pricing',
         'is_location',
         'is_product',
         'is_ride',
@@ -118,6 +124,7 @@ class Order extends Model
         'rating_note' => 'string',
         'order_price' => 'double',
         'delivery_price'=> 'double',
+        'manutention_pricing' => 'double',
         'currency_code' => 'string',
         'payment_method_code' => 'string',
         'delivery_type_code' => 'string',
@@ -167,6 +174,10 @@ class Order extends Model
         return OrderItem::where('order_id', $this->id)->get();
     }
 
+    public function invoice(){
+        return $this->hasOne(Invoice::class, 'order_id', 'id');
+    }
+
     public function getInvoiceAttribute(){
         return Invoice::where('order_id', $this->id)->first();
     }
@@ -174,6 +185,10 @@ class Order extends Model
     public function getRoutePointsAttribute()
     {
         return RoutePoint::where(['order_id' => $this->id])->orderBy('visit_order', 'ASC')->get();
+    }
+
+    public function customer(){
+        return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
 
     public function getCustomerAttribute()
@@ -218,15 +233,13 @@ class Order extends Model
             $driver = Driver::where(['id' => $this->driver_id])->first();
 
             if($driver != null){
-
                 if($this->getInvoiceAttribute() != null){
-
-                    if($this->payment_method_code == 'cash'){
+                    if($this->payment_method_code == Order::PAYMENT_MODE_CASH){
                         $amount = $this->getInvoiceAttribute()->service_due;
-                        $driver->debit($amount, $this->id);
+                        $driver->debitBalance($amount, $this->id);
                     }else{
                         $amount = $this->getInvoiceAttribute()->driver_due;
-                        $driver->credit($amount, $this->id);
+                        $driver->creditBalance($amount, $this->id);
                     }
                 }
 
@@ -241,6 +254,8 @@ class Order extends Model
     {
         return $this->hasMany(OrderInvitation::class, 'order_id');
     }
+
+    
 
     public function orderHistories(): HasMany
     {
@@ -257,6 +272,55 @@ class Order extends Model
         ]);
     }
 
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class, 'order_id', 'id');
+    }
 
+
+    // Order scops for driver
+   
+    public function scopeActive($q)
+    {
+        return $q->where('is_draft', false)
+                ->where('is_completed', false);
+    }
+
+    public function scopeStarted($q)
+    {
+        return $q->where(function ($qq) {
+            $qq->where('is_started', true)
+            ->orWhere('is_running', true);
+        });
+    }
+
+    public function scopeNotStarted($q)
+    {
+        // "reçue mais non démarrée"
+        return $q->where('is_started', false)
+                ->where('is_running', false);
+        // si chez vous "non démarrée" = is_waiting=true, tu peux ajouter:
+        // ->where('is_waiting', true);
+    }
+
+    public function scopeExpress($q)
+    {
+        return $q->where('delivery_type_code', DeliveryType::TYPE_EXPRESS);
+    }
+
+    public function scopeDay($q)
+    {
+        return $q->where('delivery_type_code', DeliveryType::TYPE_EN_JOURNEE);
+    }
+
+    public function scopeWeek($q)
+    {
+        return $q->where('delivery_type_code', DeliveryType::TYPE_DE_SEMAINE);
+    }
+
+    public function scopeNight($q)
+    {
+        return $q->where('delivery_type_code', DeliveryType::TYPE_DE_NUIT);
+    }
 
 }

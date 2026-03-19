@@ -3,39 +3,42 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Zone extends Model
 {
-
-    use SoftDeletes;
-
     public $table = 'zones';
 
     public $fillable = [
         'name',
         'description',
         'zone_base_id',
-        'geometry',
+        'geometry'
     ];
 
     protected $casts = [
         'name' => 'string',
         'description' => 'string',
-        'zone_base_id'=> 'integer',
+        'zone_base_id' => 'integer',
         'geometry' => 'string'
     ];
 
     public static array $rules = [
-
+        
     ];
 
-    public function getModelsAttribute(){
+    public $hidden = [
+        'geometry',
+    ];
 
-        return TypeEnginModel::where('type_engin_slug', $this->slug)->get();
-
+    /**
+     * Get all of the comments for the Zone
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     */
+    public function carriers()
+    {
+        return $this->hasManyThrough(Carrier::class, ZoneMapping::class, 'zone_id', 'id', 'id', 'carrier_id')->orderBy('name', 'asc');
     }
 
-
-
+    
 }

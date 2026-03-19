@@ -11,14 +11,19 @@ use Kreait\Firebase\Factory;
 
 class FirebaseMessagingUtils{
 
-    public static function sendNotification($title, $body, $type, $customerNotification, $firebaseId) {
+    public static function sendNotification($title, $body, $type, $customerNotification, $firebaseId, $isPro = true) {
 
         try {
 
-            $jsonPath = base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
+            if($isPro){
+                $serviceAccount = base_path('storage/app/firebase/ouego-pro-firebase-adminsdk-fbsvc-346d746dfe.json');
+            }else{
+                $serviceAccount = base_path('storage/app/firebase/ouego-44587-firebase-adminsdk-fbsvc-bfc72b0d4b.json');
+            }
+            
 
             $factory = (new Factory)
-             ->withServiceAccount($jsonPath);
+             ->withServiceAccount($serviceAccount);
 
              $messaging = $factory->createMessaging();
             /** @var  $messaging */
@@ -31,15 +36,15 @@ class FirebaseMessagingUtils{
                     'sound' => 'notification_sound',
                     'badge' => '1',
                     'type' => "".$customerNotification["type"],
-                    'id' => "".$customerNotification["id"],
+                    'id' => "".($customerNotification["id"]??""),
                 ]))
                 ->withHighestPossiblePriority()
                 ->withData(array(
                     'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'id' => $customerNotification["id"],
+                    'id' => "".($customerNotification["id"]??""),
                     'status' => 'done',
                     'notification_type' => "".$customerNotification["type"],
-                    'notification_id' => "".$customerNotification["id"],
+                    'notification_id' => "".($customerNotification["id"]??""),
                     'meta_data_id' => "".$customerNotification["data_id"],
                     //'notification' => json_encode($customerNotification),
                     "title" => $title,
@@ -52,10 +57,7 @@ class FirebaseMessagingUtils{
 
         }catch (Exception $e){
             // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
-            Log::error('Erreur lors de la soumission de la notification.', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error($e);
             return  false;
         }
     }
@@ -81,10 +83,6 @@ class FirebaseMessagingUtils{
 
         }catch (Exception $e){
             // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
-            Log::error('Erreur lors de la soumission de la notification.', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             return  false;
         }
 

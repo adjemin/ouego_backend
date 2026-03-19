@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\CustomerDevice;
+use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Messaging\CloudMessage;
 
 class CleanInvalidFirebaseTokens extends Command
@@ -28,10 +29,13 @@ class CleanInvalidFirebaseTokens extends Command
      */
     public function handle()
     {
+        Log::info('Début du nettoyage des tokens Firebase...');
         $this->info('Début du nettoyage des tokens Firebase...');
 
+        $serviceAccount = base_path('storage/app/firebase/ouego-44587-firebase-adminsdk-fbsvc-bfc72b0d4b.json');
+        
         $devices = CustomerDevice::all();
-        $factory = (new \Kreait\Firebase\Factory)->withServiceAccount(base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json'));
+        $factory = (new \Kreait\Firebase\Factory)->withServiceAccount($serviceAccount);
         $messaging = $factory->createMessaging();
 
         // Regrouper les tokens par lots de 1000 (limite de Firebase)
@@ -58,5 +62,6 @@ class CleanInvalidFirebaseTokens extends Command
         }
 
         $this->info('Nettoyage des tokens terminé.');
+        Log::info('Nettoyage des tokens terminé.');
     }
 }

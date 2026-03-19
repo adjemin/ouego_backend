@@ -54,7 +54,7 @@ class SendTestPushNotificationJob
 
             foreach ($driverDevices as $device) {
 
-                $jsonPath = base_path('ouego-dev-firebase-adminsdk-9z99b-48b56e20fd.json');
+                $jsonPath = base_path('storage/app/firebase/ouego-pro-firebase-adminsdk-fbsvc-346d746dfe.json');
 
                 $factory = (new Factory)
                 ->withServiceAccount($jsonPath);
@@ -94,16 +94,8 @@ class SendTestPushNotificationJob
 
                 $deliveryStatus->save();
 
-                Log::info("FCM Notification sent successfully", [
-                    'notification_id' => $notification['id'],
-                    'fcm_message_id' => $messageId
-                ]);
             }
         } catch (\Exception $e) {
-            Log::error('Erreur lors de l\'envoi des notifications push de test', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
 
             throw $e; // Relance l'exception pour que le job soit réessayé
         }

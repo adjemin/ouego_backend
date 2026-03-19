@@ -8,12 +8,14 @@ use Illuminate\Queue\InteractsWithQueue;
 use App\Models\DriverNotification;
 use App\Models\DriverDevice;
 use App\Models\NotificationDeliveryStatus;
-use App\Jobs\SendPushNotification;
+use App\Jobs\SendPushNotificationDriver;
 use App\Utilities\TwilioUtils;
 use Illuminate\Support\Facades\Log;
 
 class SendOrderAssignmentNotification
 {
+
+    
     /**
      * Create the event listener.
      */
@@ -28,12 +30,11 @@ class SendOrderAssignmentNotification
     public function handle(OrderAssigned $event): void
     {
 
-        $driver = \App\Models\Driver::find($event->orderInvitation->driver_id);
-        $client_phone = $driver->phone;
+        // $driver = \App\Models\Driver::find($event->orderInvitation->driver_id);
+        // $client_phone = $driver->phone;
         //$message = "Course #".$event->orderInvitation->order_id." vous a été affectée | +". $client_phone." | Acceptez ou Refusez la course";
         //TwilioUtils::sendSMS($client_phone, $message);
 
-        Log::info("SendOrderAssignmentNotification started");
 
         //Push Notification
         $notification = DriverNotification::create([
@@ -53,14 +54,14 @@ class SendOrderAssignmentNotification
 
             try {
                 // Tentative d'envoi de la notification
-                SendPushNotification::dispatch($device->firebase_id, $notification);
+                SendPushNotificationDriver::dispatch($device->firebase_id, $notification);
             } catch (Kreait\Firebase\Exception\Messaging\NotFound $e) {
                 // Le token n'est plus valide, nous le supprimons
                 $device->forceDelete();
                 \Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $event->orderInvitation->driver_id);
             } catch (\Exception $e) {
                 // Gestion des autres exceptions
-                \Log::error("Erreur lors de l'envoi de la notification: " . $e->getMessage());
+                \Log::error("SendOrderAssignmentNotification: Erreur lors de l'envoi de la notification: " . $e->getMessage());
             }
         }
 

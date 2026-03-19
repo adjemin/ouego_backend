@@ -164,6 +164,16 @@ class OrderInvitationAPIController extends AppBaseController
             $orderInvitation->longitude = $request->input('longitude');
             $orderInvitation->save();
 
+            // TODO Vérifier s'il y a d'autres invitations et marquer comme rejeter
+            OrderInvitation::where([
+                "order_id" => $orderInvitation->order_id,
+                "is_waiting_acceptation" => true
+            ])
+            ->update([
+                "is_waiting_acceptation" => false,
+                "rejection_time" => now()
+            ]);
+
             /** @var Order $order */
             $order = $orderInvitation->getOrderAttribute();
 

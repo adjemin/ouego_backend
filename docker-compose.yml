@@ -1,0 +1,23 @@
+services:
+  db-postgres:
+    container_name: ouego-db-postgres
+    image: postgres:alpine
+    ports:
+      - 5434:5434
+    volumes:
+      - 'ouego_psql_data:/var/lib/postgresql/data'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ouego
+    networks:
+      - ouego-network
+    restart: always
+
+volumes:
+  ouego_psql_data:
+    driver: local
+  
+networks:
+  ouego-network:
+    driver: bridge

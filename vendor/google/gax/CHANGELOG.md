@@ -1,5 +1,123 @@
 # Changelog
 
+## [1.42.1](https://github.com/googleapis/gax-php/compare/v1.42.0...v1.42.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* **deps:** Update dependency google/protobuf to v5 ([#655](https://github.com/googleapis/gax-php/issues/655)) ([1d89f50](https://github.com/googleapis/gax-php/commit/1d89f50510794e220fb036042612336717e8fedd))
+* Suppress unpack exceptions ([#656](https://github.com/googleapis/gax-php/issues/656)) ([989cf37](https://github.com/googleapis/gax-php/commit/989cf3710c6285b3eb71b6fc0c83d2b50508f456))
+
+## [1.42.0](https://github.com/googleapis/gax-php/compare/v1.41.0...v1.42.0) (2026-01-22)
+
+
+### Features
+
+* Support grpc-status-details-bin for ApiException::getErrorDetails ([#614](https://github.com/googleapis/gax-php/issues/614)) ([c44ad0c](https://github.com/googleapis/gax-php/commit/c44ad0c068586b635a3f6b325e157c116f68065e))
+
+## [1.41.0](https://github.com/googleapis/gax-php/compare/v1.40.1...v1.41.0) (2026-01-16)
+
+
+### Features
+
+* Add ApiException::getErrorDetails() for retrieval of additional exception info ([#611](https://github.com/googleapis/gax-php/issues/611)) ([be7402a](https://github.com/googleapis/gax-php/commit/be7402a94d1c4201e1ca03cdd3bab6c01adb0c24))
+
+## [1.40.1](https://github.com/googleapis/gax-php/compare/v1.40.0...v1.40.1) (2026-01-16)
+
+
+### Bug Fixes
+
+* Use self:: instead of $this-&gt; for static validation methods in GapicClientTrait validation  ([#643](https://github.com/googleapis/gax-php/issues/643)) ([5ba2b20](https://github.com/googleapis/gax-php/commit/5ba2b200c16b78b10e3dddf5ac6a2c5cd7eb8641))
+
+## [1.40.0](https://github.com/googleapis/gax-php/compare/v1.39.0...v1.40.0) (2025-12-04)
+
+
+### Features
+
+* Add TransportCallMiddleware ([#640](https://github.com/googleapis/gax-php/issues/640)) ([a0f9d37](https://github.com/googleapis/gax-php/commit/a0f9d3740d62f6a776ac701631aa734046ceeb77))
+
+## [1.39.0](https://github.com/googleapis/gax-php/compare/v1.38.2...v1.39.0) (2025-12-02)
+
+
+### Features
+
+* Add GapicClientTrait::prependMiddleware ([#638](https://github.com/googleapis/gax-php/issues/638)) ([d46c06d](https://github.com/googleapis/gax-php/commit/d46c06d3bb551d9f7848bceebcfd78f80ec7890f))
+
+## [1.38.2](https://github.com/googleapis/gax-php/compare/v1.38.1...v1.38.2) (2025-11-14)
+
+
+### Bug Fixes
+
+* Don't override ApiException::__toString ([#388](https://github.com/googleapis/gax-php/issues/388)) ([db7cd2e](https://github.com/googleapis/gax-php/commit/db7cd2e55219463aa0f7d0bcc989f35d008d174b))
+
+## [1.38.1](https://github.com/googleapis/gax-php/compare/v1.38.0...v1.38.1) (2025-11-06)
+
+
+### Bug Fixes
+
+* Add return type to `offsetGet` ([#633](https://github.com/googleapis/gax-php/issues/633)) ([b77c12d](https://github.com/googleapis/gax-php/commit/b77c12dc959e8434fcd1f7f08cedaa84cdfb00a4))
+
+## [1.38.0](https://github.com/googleapis/gax-php/compare/v1.37.0...v1.38.0) (2025-09-17)
+
+
+### Features
+
+* Add the rpcName to the BIDI stream opening request ([#630](https://github.com/googleapis/gax-php/issues/630)) ([9c61d8f](https://github.com/googleapis/gax-php/commit/9c61d8f2bd09731d5f22c22eb81895eaf4db2031))
+* Make options classes fluid ([#618](https://github.com/googleapis/gax-php/issues/618)) ([427b46e](https://github.com/googleapis/gax-php/commit/427b46e91b3881fd0da361b5b351c6dda47e640a))
+
+
+### Bug Fixes
+
+* Update protobuf RepeatedField to new namespace ([#624](https://github.com/googleapis/gax-php/issues/624)) ([3558cc4](https://github.com/googleapis/gax-php/commit/3558cc49139861fa411c77b33f457467ec8daa97))
+
+## [1.37.0](https://github.com/googleapis/gax-php/compare/v1.36.1...v1.37.0) (2025-09-10)
+
+
+### Features
+
+* Support client options in ClientOptionsTrait::buildClientOptions ([#621](https://github.com/googleapis/gax-php/issues/621)) ([68e2336](https://github.com/googleapis/gax-php/commit/68e23369657b1740fffe480f96d9d7b04e3e38c2))
+
+
+### Bug Fixes
+
+* Ensure compute request build parameters have the operation ID last ([#625](https://github.com/googleapis/gax-php/issues/625)) ([f90ab28](https://github.com/googleapis/gax-php/commit/f90ab28cea6bbbd00f2a652a6d77babb69b2ada8))
+
+## [1.36.1](https://github.com/googleapis/gax-php/compare/v1.36.0...v1.36.1) (2025-05-20)
+
+
+### Bug Fixes
+
+* Protobuf 4.31 deprecations ([#616](https://github.com/googleapis/gax-php/issues/616)) ([b06048b](https://github.com/googleapis/gax-php/commit/b06048be5c29a2534ba1c908642c69798e145d99))
+
+## [1.36.0](https://github.com/googleapis/gax-php/compare/v1.35.1...v1.36.0) (2024-12-11)
+
+
+### Features
+
+* Add logging to the supported transports ([#585](https://github.com/googleapis/gax-php/issues/585)) ([819a677](https://github.com/googleapis/gax-php/commit/819a677e0d89d75662b30a1dbdd45f6a610d9f0c))
+
+## [1.35.1](https://github.com/googleapis/gax-php/compare/v1.35.0...v1.35.1) (2024-12-04)
+
+
+### Bug Fixes
+
+* Ensure hasEmulator client option is passed to createTransport ([#594](https://github.com/googleapis/gax-php/issues/594)) ([13bbe8a](https://github.com/googleapis/gax-php/commit/13bbe8a2e6df2bfd6c5febba735113f1abcba201))
+* Remove implicit null, add php 8.4 ([#599](https://github.com/googleapis/gax-php/issues/599)) ([af0a0e7](https://github.com/googleapis/gax-php/commit/af0a0e708dfbea46de627965db0f63114fcfb67f))
+
+## [1.35.0](https://github.com/googleapis/gax-php/compare/v1.34.1...v1.35.0) (2024-11-06)
+
+
+### Features
+
+* Add `InsecureRequestBuilder` for emulator ([#582](https://github.com/googleapis/gax-php/issues/582)) ([cc1d047](https://github.com/googleapis/gax-php/commit/cc1d0472a1caf31bb3ecd98da1d6b8588f95b63a))
+* **docs:** Use doctum shared workflow for reference docs ([#578](https://github.com/googleapis/gax-php/issues/578)) ([021763f](https://github.com/googleapis/gax-php/commit/021763f255acaffda6ebe34a9d1a01c2bd187326))
+* Support for API Key client option ([#351](https://github.com/googleapis/gax-php/issues/351)) ([ab7f04f](https://github.com/googleapis/gax-php/commit/ab7f04fd8c9f7ed33a58155ae6b9e740f365ac2a))
+
+
+### Bug Fixes
+
+* **tests:** Skip docs tests from forks ([#591](https://github.com/googleapis/gax-php/issues/591)) ([35ae9f7](https://github.com/googleapis/gax-php/commit/35ae9f708d3ef937308d266e3a012296ce8606fc))
+
 ## [1.34.1](https://github.com/googleapis/gax-php/compare/v1.34.0...v1.34.1) (2024-08-13)
 
 

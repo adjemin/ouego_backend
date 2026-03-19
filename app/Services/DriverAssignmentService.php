@@ -2,158 +2,76 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
-use App\Models\Driver;
+use App\Models\Service;
 use App\Models\Order;
-use App\Models\OrderInvitation;
-use App\Models\DriverNotification;
-use App\Models\RoutePoint;
-use App\Utilities\DriverNotificationsUtils;
-use App\Events\OrderAssigned;
+use App\Models\DeliveryType;
+use App\Services\DriverEnjourneeAssignmentService;
+use App\Services\DriverExpressAssignmentService;
+use App\Services\DriverEnSemaineAssignmentService;
+use App\Services\DriverNuitAssignmentService;
+use App\Services\DriverLocationAssignmentService;
+use Illuminate\Support\Facades\Log;
+class DriverAssignmentService {
 
-class DriverAssignmentService
-{
-    /**
-     * Trouve les chauffeurs les plus proches d'une localisation donnée.
-     *
-     * @param string $service_slug
-     * @param float $latitude Latitude de la localisation de départ
-     * @param float $longitude Longitude de la localisation de départ
-     * @param int $limit Nombre maximum de chauffeurs à retourner
-     * @param float $maxDistance Distance maximum en mètres (optionnel)
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function findNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
-    {
-        $maxUpdateTime  = 30;
-        // Utilisation de l'index R-Tree de PostgreSQL pour une recherche efficace
-        $query = Driver::select('drivers.*')
-        ->selectRaw('ST_Distance(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography) as distance', [$longitude, $latitude])
-        ->whereRaw('is_available = true')
-        ->whereRaw('is_active = true')
-        ->whereRaw("updated_at >= NOW() - INTERVAL '{$maxUpdateTime} MINUTE'")
-        ->whereJsonContains('services', $service_slug)
-        ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
+    private int $maxDrivers = 5;    // nombre maximum de chauffeurs à inviter
 
-        if ($maxDistance) {
-            $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance]);
+    function sendInvitations(Order $order, int $distance = 10){
+        Log::info("DriverAssignmentService: Commande #{$order->id} - tentative d'assignation lancée dans un rayon de {$distance}km.");
+
+        // Commandes de location : traitement dédié indépendamment du delivery_type_code
+        if ($order->is_location) {
+            Log::info("DriverAssignmentService: Commande #{$order->id} est une location — redirection vers DriverLocationAssignmentService.");
+            app(DriverLocationAssignmentService::class)->findEligibleDriversForLocation($order, $this->maxDrivers);
+            return;
         }
 
-        return $query->limit($limit)->get();
-    }
-
-    // Fonction ameliorée pour assigner un chauffeur le plus proche disponible
-    // public function findNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
-    // {
-    //     $maxUpdateTime = 30;
-
-    //     // Casts explicites en double precision pour éviter l'erreur PostgreSQL
-    //     $pointExpression = 'ST_SetSRID(ST_MakePoint(?::double precision, ?::double precision), 4326)';
-
-    //     $query = Driver::select('drivers.*')
-    //         ->selectRaw(
-    //             "ST_Distance(last_location, $pointExpression) as distance",
-    //             [$longitude, $latitude]
-    //         )
-    //         ->where('is_available', true)
-    //         ->where('is_active', true)
-    //         ->whereRaw("updated_at >= NOW() - INTERVAL '{$maxUpdateTime} MINUTE'")
-    //         ->whereJsonContains('services', $service_slug)
-    //         ->orderByRaw("last_location <-> $pointExpression", [$longitude, $latitude]);
-
-    //     if ($maxDistance) {
-    //         $query->whereRaw(
-    //             "ST_DWithin(last_location, $pointExpression, ?)",
-    //             [$longitude, $latitude, $maxDistance]
-    //         );
-    //     }
-
-    //     return $query->limit($limit)->get();
-    // }
-
-
-    /**
-     * Assigne une course au chauffeur le plus proche disponible.
-     *
-
-     * @param Order $order
-     * @param int $distance mètre
-     * @return Driver|null Le chauffeur assigné ou null si aucun n'est disponible
-     */
-    public function assignNearestDriver($order,  $distance = null)
-    {
-
-        $route_point = RoutePoint::where([
-            'order_id' => $order->id,
-            'type' => 'source'
-        ])->first();
-
-        if($route_point != null){
-            $nearestDrivers = $this->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 1, $distance);
-
-            if ($nearestDrivers->isEmpty()) {
-                return null;
+        if($order->delivery_type_code == DeliveryType::TYPE_EXPRESS){
+            $expressService = app(DriverExpressAssignmentService::class);
+            if($order->service_slug == Service::COURSE)  {
+                $expressService->assignCourseNearestDrivers($order, $distance, $this->maxDrivers);
             }
 
-            $driver = $nearestDrivers->first();
+            if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
+                $expressService->assignAggregatNearestDrivers($order, $distance, $this->maxDrivers);
+            }
+        }
 
-            // Ici, vous pouvez ajouter la logique pour assigner effectivement la course au chauffeur
-            // Par exemple, mettre à jour le statut du chauffeur, créer un enregistrement de course, etc.
+       if($order->delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+            // Assign driver to order
+            $enjourneeService = app(DriverEnjourneeAssignmentService::class);
+            if($order->service_slug == Service::COURSE)  {
+                $enjourneeService->assignCourseNearestDrivers($order, $distance, $this->maxDrivers);
+            }
 
-            $orderInvitation = OrderInvitation::where([
-                'driver_id' => $driver->id,
-                'order_id' => $order->id,
-            ])->first();
+            if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
+                $enjourneeService->assignAggregatNearestDrivers($order, $distance, $this->maxDrivers);
+            }
+       }
 
+       if($order->delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            // Assign driver to order
+            $enSemaineService = app(DriverEnSemaineAssignmentService::class);
+            if($order->service_slug == Service::COURSE)  {
+                $enSemaineService->assignCourseNearestDrivers($order, $distance, $this->maxDrivers);
+            }
 
-            if($orderInvitation != null && $orderInvitation->is_waiting_acceptation == false && $orderInvitation->rejection_time != null){
-                //Retirer le driver concerné de $nearestDrivers et retourner un autre driver
-                $nearestDrivers = $nearestDrivers->filter(function ($driver) use ($orderInvitation) {
-                    return $driver->id !== $orderInvitation->driver_id;
-                });
+            if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
+                $enSemaineService->assignAggregatNearestDrivers($order, $distance, $this->maxDrivers);
+            }
+       }
 
-                if ($nearestDrivers->isEmpty()) {
-                    return null;
+       if($order->delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+            // Les commandes de nuit : recherche de chauffeurs lancée automatiquement à partir de 20h
+            if(now()->hour >= 20){
+                $nuitService = app(DriverNuitAssignmentService::class);
+                if($order->service_slug == Service::COURSE)  {
+                    $nuitService->assignCourseNearestDrivers($order, $distance, $this->maxDrivers);
                 }
 
-                $driver = $nearestDrivers->first();
-
-                $orderInvitation = OrderInvitation::where([
-                    'driver_id' => $driver->id,
-                    'order_id' => $order->id,
-                ])->first();
-
+                if($order->service_slug == Service::AGREGATS_CONSTRUCTION)  {
+                    $nuitService->assignAggregatNearestDrivers($order, $distance, $this->maxDrivers);
+                }
             }
-
-            if($orderInvitation == null){
-                $orderInvitation = OrderInvitation::create([
-                    'driver_id' => $driver->id,
-                    'order_id' => $order->id,
-                    'is_waiting_acceptation' => true,
-                    'acceptation_time' => null,
-                    'rejection_time' => null,
-                    'latitude' => null,
-                    'longitude' => null
-                ]);
-
-            }
-
-            if($orderInvitation->is_waiting_acceptation == true){
-                // Déclencher l'événement d'assignation de commande
-                event(new OrderAssigned($orderInvitation));
-            }
-
-
-
-
-            return $driver;
-
-
-        }else{
-
-            return null;
-
-        }
-
+       }
     }
 }

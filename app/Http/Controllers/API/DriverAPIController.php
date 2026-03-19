@@ -10,6 +10,9 @@ use App\Models\EnginPicture;
 use App\Models\Invoice;
 use App\Models\Transaction;
 use App\Models\Payment;
+use App\Models\Zone;
+use App\Models\DriverCarrier;
+use App\Models\OrderInvitation;
 use App\Repositories\DriverRepository;
 use App\Repositories\EnginRepository;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +27,11 @@ use MtnSmsCloud\MTNSMSApi;
 use App\Models\DriverOtp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use App\Services\OrangeSMSService;
+use App\Models\Order;
+use App\Models\DriverDevice;
+
 
 /**
  * Class DriverAPIController
@@ -34,10 +42,13 @@ class DriverAPIController extends AppBaseController
 
     private EnginRepository $enginRepository;
 
-    public function __construct(DriverRepository $driverRepo, EnginRepository $enginRepo)
+    private OrangeSMSService $orangeSMSService;
+
+    public function __construct(DriverRepository $driverRepo, EnginRepository $enginRepo, OrangeSMSService $orangeSMSService)
     {
         $this->driverRepository = $driverRepo;
         $this->enginRepository = $enginRepo;
+        $this->orangeSMSService = $orangeSMSService;
     }
 
     /**
@@ -192,18 +203,38 @@ class DriverAPIController extends AppBaseController
         if ($driver != null) {
             return $this->sendError('Numéro de téléphone déjà utilisé', 400);
         }
+        $input['last_name'] = ucfirst(strtolower($input['last_name']));
+        $input['first_name'] = ucfirst(strtolower($input['first_name']));
+        $input['name'] = $input['first_name']." ".$input['last_name'];
 
         $driverDeleted = Driver::withTrashed()->where(['phone' => $input['phone']])->first();
         if ($driverDeleted == null) {
-            $input['last_name'] = ucfirst(strtolower($input['last_name']));
-            $input['first_name'] = ucfirst(strtolower($input['first_name']));
-            $input['name'] = $input['first_name']." ".$input['last_name'];
+            $input['rate'] = 5;
 
             $driver = Driver::create($input);
 
         } else {
             $driverDeleted->restore();
             $driver = $driverDeleted;
+            $driver->update($input);
+            $driver->save();
+        }
+
+        // Enregistrer device token
+        if (array_key_exists('firebase_id', $request->all()) && !empty($request->firebase_id)) {
+            $customerDevice = DriverDevice::where(['firebase_id' => $request->firebase_id])->first();
+
+            if(empty($customerDevice)){
+                DriverDevice::create([
+                    'driver_id' => $driver->id,
+                    'firebase_id' => $request->firebase_id
+                ]);
+            }else{
+                $customerDevice->update([
+                    'driver_id' => $driver->id,
+                    'firebase_id' => $request->firebase_id
+                ]);
+            }
         }
 
         $token = JWTAuth::fromUser($driver);
@@ -239,6 +270,33 @@ class DriverAPIController extends AppBaseController
         $driver = Driver::where('phone', '=', $input['phone'])->first();
         if ($driver == null) {
             return $this->sendError('Compte introuvable', 401);
+        }
+
+        // Vérifier si le compte est bloquer
+        if($driver->is_blocked){
+            return response()->json([
+                'code' => 403,
+                'status' => 'UNAUTHORIZED',
+                'success' => false,
+                'message' => 'Votre compte a été bloqué, veuillez contacter le support'
+            ],403);
+        }
+
+        // Enregistrer device token
+        if (array_key_exists('firebase_id', $request->all()) && !empty($request->firebase_id)) {
+            $customerDevice = DriverDevice::where(['firebase_id' => $request->firebase_id])->first();
+
+            if(empty($customerDevice)){
+                DriverDevice::create([
+                    'driver_id' => $driver->id,
+                    'firebase_id' => $request->firebase_id
+                ]);
+            }else{
+                $customerDevice->update([
+                    'driver_id' => $driver->id,
+                    'firebase_id' => $request->firebase_id
+                ]);
+            }
         }
 
 
@@ -426,37 +484,45 @@ class DriverAPIController extends AppBaseController
 
     public function sendOTP(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'phone' => 'required|string',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'phone' => 'required|string',
+            ]);
 
-        if ($validator->fails()) {
-            return $this->sendError(json_encode($validator->errors()),422);
+            if ($validator->fails()) {
+                return $this->sendError(json_encode($validator->errors()),422);
+            }
+
+            // Vérifier si le numéro de téléphone est déjà enregistré
+            $driver = Driver::where('phone', $request->phone)->first();
+            if ($driver && $driver->is_blocked) {
+                return $this->sendError('Votre compte été bloqué, veuillez contacter le support', 403);
+            }
+
+            // Générer un OTP à 6 chiffres
+            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Créer ou mettre à jour l'entrée DriverOtp
+            $customerOTP = DriverOtp::updateOrCreate(
+                ['phone' => $request->phone],
+                [
+                    'otp' => $otp,
+                    'otp_expires_at' => Carbon::now()->addMinutes(5),
+                    'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
+                ]
+            );
+
+            try {
+                // Envoyer l'OTP par SMS
+                $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
+            } catch (\Throwable $th) {
+                Log::error("Failed to send OTP SMS: " . $th->getMessage());
+            }
+            
+            return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
+        } catch (\Throwable $th) {
+            return $this->sendError($th->getMessage(),500);
         }
-
-        // Vérifier si le numéro de téléphone est déjà enregistré
-        $driver = Driver::where('phone', $request->phone)->first();
-        if ($driver && $driver->is_blocked) {
-            return $this->sendError('Votre compte été bloqué, veuillez contacter le support', 403);
-        }
-
-        // Générer un OTP à 6 chiffres
-        $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        // Créer ou mettre à jour l'entrée DriverOtp
-        $customerOTP = DriverOtp::updateOrCreate(
-            ['phone' => $request->phone],
-            [
-                'otp' => $otp,
-                'otp_expires_at' => Carbon::now()->addMinutes(5),
-                'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
-            ]
-        );
-
-        // Envoyer l'OTP par SMS
-        $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
-
-        return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
     }
 
     public function verifyOTP(Request $request)
@@ -486,7 +552,38 @@ class DriverAPIController extends AppBaseController
             return $this->sendError('Aucun compte retrouvé pour ce numéro de téléphone',404);
 
         }else{
+
+            // Vérifier si le compte est bloquer
+            if($customer->is_blocked){
+                return response()->json([
+                    'code' => 403,
+                    'status' => 'UNAUTHORIZED',
+                    'success' => false,
+                    'message' => 'Votre compte a été bloqué, veuillez contacter le support'
+                ],403);
+            }
+
+            // Enregistrer device token
+            if (array_key_exists('firebase_id', $request->all()) && !empty($request->firebase_id)) {
+                $customerDevice = DriverDevice::where(['firebase_id' => $request->firebase_id])->first();
+
+                if(empty($customerDevice)){
+                    DriverDevice::create([
+                        'driver_id' => $customer->id,
+                        'firebase_id' => $request->firebase_id
+                    ]);
+                }else{
+                    $customerDevice->update([
+                        'driver_id' => $customer->id,
+                        'firebase_id' => $request->firebase_id
+                    ]);
+                }
+            }
+
+
             $token = JWTAuth::fromUser($customer);
+
+            
 
             return $this->sendResponse([
                 'token' => $token,
@@ -557,7 +654,7 @@ class DriverAPIController extends AppBaseController
             ]);
 
             if ($validator->fails()) {
-                return $this->sendError('Validation Error', $validator->errors());
+                return $this->sendError('Validation Error', 422);
             }
 
             // Récupération des données
@@ -615,10 +712,236 @@ class DriverAPIController extends AppBaseController
 
             return $this->sendResponse($payment->toArray(), 'Payment created successfully');
         }catch (\Exception $e) {
-            \Log::error('Deposit error: ' . $e->getMessage());
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
 
 
+    }
+
+
+     public function withdrawBalance(Request $request){
+
+        try{
+            // Validation des données d'entrée
+            $validator = Validator::make($request->all(), [
+                'driver_id' => 'required|exists:drivers,id',
+                'amount' => 'required|numeric|min:100'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError('Validation Error', 422);
+            }
+
+
+            // Récupération des données
+            $input = $request->all();
+            $amount = intval($input['amount']);
+
+            // Récupérer le chauffeur
+            $driver = Driver::findOrFail($input['driver_id']);
+
+            if(intval($driver->current_balance) < $amount){
+                return $this->sendError('Solde insuffisant',400);
+            }
+
+            DB::beginTransaction();
+
+            $transaction = Transaction::create([
+                'user_id' => $driver->id,
+                'status' => Transaction::CREATED,
+                'type' => Transaction::TYPE_WITHDRAWAL,
+                'user_source' => $driver->getTable(),
+                'currency_code' => 'XOF',
+                'amount' => $amount,
+                'is_in' => false
+            ]);
+
+            $invoice = Invoice::create([
+                'order_id' => $transaction->id,
+                'customer_id' => $driver->id,
+                'order_source' => $transaction->getTable(),
+                'reference' => Invoice::generateID("WALLET", $transaction->id, $driver->id),
+                'subtotal' => $amount,
+                'tax' => 0,
+                'fees_delivery' => 0,
+                'total' => $amount,
+                'status' => Invoice::UNPAID,
+                'is_paid_by_customer' => false,
+                'currency_code' => 'XOF',
+                'driver_due' => 0,
+                'service_due' => 0
+            ]);
+
+            $payment = Payment::create([
+                'invoice_id' => $invoice->id,
+                'payment_method_code' => 'online',
+                'payment_reference' => Payment::generateReference(),
+                'amount' => $invoice->total,
+                'currency_code' => $invoice->currency_code,
+                'user_id' => $driver->id,
+                'status' => Payment::STATUS_INITIATED,
+                'is_waiting' => true,
+                'is_completed' => false
+            ]);
+
+            $payment = Payment::where(['id' => $payment->id])->first();
+
+            DB::commit();
+
+            return $this->sendResponse($payment->toArray(), 'Payment created successfully');
+        }catch (\Exception $e) {
+            return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
+        }
+
+
+    }
+
+    public function getDailyEarnings(Request $request): JsonResponse
+    {
+        try {
+            $driver = auth('api-drivers')->user();
+
+            if (!$driver) {
+                return $this->sendError('Driver not authenticated', 401);
+            }
+
+            $today = Carbon::now();
+
+            
+
+            $dailyEarnings = DB::table('orders')
+                ->join('invoices', function($join) {
+                    $join->on('orders.id', '=', 'invoices.order_id');
+                })
+                ->where('orders.driver_id', $driver->id)
+                ->whereIn('orders.status', [Order::DELIVERED, Order::DELIVERED_FINISH])
+                ->where('invoices.driver_due', '>', 0)
+                ->whereDate('orders.created_at', $today->toDateString())
+                ->sum('invoices.driver_due');
+
+            
+
+            return $this->sendResponse([
+                'daily_earnings' => floatval($dailyEarnings ?? 0),
+                'date' => $today->format('Y-m-d'),
+                'driver_id' => $driver->id
+            ], 'Daily earnings retrieved successfully');
+
+        } catch (\Exception $e) {
+            return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
+        }
+    }
+
+    public function updateZoneBase(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'zone_base_id' => 'required|exists:zones,id'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError('Validation Error', 422);
+            }
+
+            $driver = auth('api-drivers')->user();
+            
+            if (!$driver) {
+                return $this->sendError('Driver not authenticated', 401);
+            }
+
+            $zoneId = $request->zone_base_id;
+            $zone = Zone::with('carriers')->findOrFail($zoneId);
+
+            DB::beginTransaction();
+
+            $driver->zone_base_id = $zoneId;
+            $driver->save();
+
+            DriverCarrier::where('driver_id', $driver->id)->delete();
+
+            $carriersInZone = $zone->carriers;
+            
+            foreach ($carriersInZone as $carrier) {
+                DriverCarrier::create([
+                    'driver_id' => $driver->id,
+                    'carrier_id' => $carrier->id
+                ]);
+            }
+
+            DB::commit();
+
+            return $this->sendResponse([
+                'driver' => $driver->fresh()->load('zoneBase'),
+                'assigned_carriers' => $carriersInZone,
+                'zone' => $zone
+            ], 'Zone de base mise à jour avec succès. Carriers assignés automatiquement.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
+        }
+    }
+
+    public function getPendingOrderInvitations(): JsonResponse
+    {
+        try {
+            $driver = auth('api-drivers')->user();
+            
+            if (!$driver) {
+                return $this->sendError('Driver not authenticated', 401);
+            }
+
+            $pendingInvitations = OrderInvitation::where('driver_id', $driver->id)
+                ->where('is_waiting_acceptation', true)
+                ->with(['order' => function($query) {
+                    $query->with(['customer', 'orderItems']);
+                }])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $formattedInvitations = $pendingInvitations->map(function($invitation) {
+                return [
+                    'id' => $invitation->id,
+                    'order_id' => $invitation->order_id,
+                    'status' => $invitation->status,
+                    'is_waiting_acceptation' => $invitation->is_waiting_acceptation,
+                    'latitude' => $invitation->latitude,
+                    'longitude' => $invitation->longitude,
+                    'attempt_number' => $invitation->attempt_number,
+                    'created_at' => $invitation->created_at,
+                    'order' => $invitation->order ? [
+                        'id' => $invitation->order->id,
+                        'pickup_address' => $invitation->order->pickup_address,
+                        'delivery_address' => $invitation->order->delivery_address,
+                        'pickup_latitude' => $invitation->order->pickup_latitude,
+                        'pickup_longitude' => $invitation->order->pickup_longitude,
+                        'delivery_latitude' => $invitation->order->delivery_latitude,
+                        'delivery_longitude' => $invitation->order->delivery_longitude,
+                        'status' => $invitation->order->status,
+                        'customer' => $invitation->order->customer ? [
+                            'id' => $invitation->order->customer->id,
+                            'name' => $invitation->order->customer->name,
+                            'phone' => $invitation->order->customer->phone
+                        ] : null,
+                        'order_items' => $invitation->order->orderItems ? $invitation->order->orderItems->map(function($item) {
+                            return [
+                                'id' => $item->id,
+                                'quantity' => $item->quantity,
+                                'service_slug' => $item->service_slug,
+                                'meta_data' => $item->meta_data,
+                            ];
+                        }) : []
+                    ] : null
+                ];
+            });
+
+            return $this->sendResponse([
+                'pending_invitations' => $formattedInvitations,
+                'count' => $formattedInvitations->count()
+            ], 'Demandes de course en attente récupérées avec succès');
+
+        } catch (\Exception $e) {
+            return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
+        }
     }
 }

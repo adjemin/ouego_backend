@@ -30,7 +30,7 @@ class ServiceAPIController extends AppBaseController
     public function index(Request $request): JsonResponse
     {
 
-        $request->merge(['is_active' => true]);
+        // $request->merge(['is_active' => true]);
 
         $services = $this->serviceRepository->all(
             $request->except(['skip', 'limit']),

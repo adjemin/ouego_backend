@@ -16,17 +16,14 @@ class DriverNotificationsUtils
      */
     public static function notify(DriverNotification $userNotification){
         $user = Driver::where(["id" => $userNotification->driver_id])->first();
-
         if(!empty($user)){
 
             $title = $userNotification->title;
             $subtitle = $userNotification->subtitle;
             $typeNotification = $userNotification->type;
 
-
             $userDevices = DriverDevice::where([
                 "driver_id" => $user->id,
-                "deleted_at" => null
             ])->orderBy('updated_at', 'DESC')->get();
 
             $metadata = $userNotification->toArray();
@@ -37,7 +34,7 @@ class DriverNotificationsUtils
 
                 foreach($userDevices as $userDevice){
                     $deviceFirebaseId = "".$userDevice->firebase_id;
-                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId);
+                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId, true);
 
                     if($result == false){
                         $userDevice->forceDelete();

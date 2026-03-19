@@ -5,11 +5,16 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateDriverNotificationAPIRequest;
 use App\Http\Requests\API\UpdateDriverNotificationAPIRequest;
 use App\Models\DriverNotification;
+use App\Models\CustomerNotification;
+use App\Models\Driver;
+use App\Models\Customer;
 use App\Repositories\DriverNotificationRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Utilities\DriverNotificationsUtils;
+use App\Utilities\CustomerNotificationsUtils;
+
 
 /**
  * Class DriverNotificationAPIController
@@ -116,12 +121,48 @@ class DriverNotificationAPIController extends AppBaseController
     public function submitTestNotification($id, Request $request): JsonResponse
     {
         try {
-            // Récupérer la notification avec l'ID 100
-            $notification = DriverNotification::findOrFail($id);
 
-            // Envoyer la notification au driver
-            $data = DriverNotificationsUtils::notify($notification);
+            if($request->get('is_driver') == true){
+                $driver = Driver::find($id);
+                if($driver == null){
+                    return $this->sendError('Driver not found');
+                }
+                $notification = new DriverNotification([
+                    "id" => 100,
+                    'driver_id' => $driver->id,
+                    'title' => 'Test Notification',
+                    'subtitle' => 'This is a test notification',
+                    'data_id' => 0,
+                    'type' => 'test',
+                    'is_read' => false,
+                    'is_received' => false,
+                    'meta_data' => '{"title": "Test Notification", "subtitle": "This is a test notification"}'
+                ]);
 
+                $data = DriverNotificationsUtils::notify($notification);
+
+            }else{
+                $customer = Customer::find($id);
+                if($customer == null){
+                    return $this->sendError('Customer not found');
+                }
+
+                $notification = new CustomerNotification([
+                    "id" => 100,
+                    'customer_id' => $customer->id,
+                    'title' => 'Test Notification',
+                    'subtitle' => 'This is a test notification',
+                    'data_id' => 0,
+                    'type' => 'test',
+                    'is_read' => false,
+                    'is_received' => false,
+                    'meta_data' => '{"title": "Test Notification", "subtitle": "This is a test notification"}'
+                ]);
+
+                $data = CustomerNotificationsUtils::notify($notification);
+
+            }
+        
             // Retourner une réponse de succès
             return response()->json([
                 'success' => true,

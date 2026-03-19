@@ -26,7 +26,6 @@ class CustomerNotificationsUtils
 
             $userDevices = CustomerDevice::where([
                 "customer_id" => $user->id,
-                "deleted_at" => null
             ])->orderBy('updated_at', 'DESC')->get();
 
             $metadata = $userNotification->toArray();
@@ -37,7 +36,7 @@ class CustomerNotificationsUtils
 
                 foreach($userDevices as $userDevice){
                     $deviceFirebaseId = "".$userDevice->firebase_id;
-                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId);
+                    $result = FirebaseMessagingUtils::sendNotification($title, $subtitle,$typeNotification, $metadata, $deviceFirebaseId, false);
                     array_push($messages_sent, $result);
                 }
 

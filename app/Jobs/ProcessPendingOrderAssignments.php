@@ -9,88 +9,109 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Order;
 use App\Services\DriverAssignmentService;
-use App\Events\OrderAssigned;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-use Carbon\Carbon;
+use App\Models\OrderInvitation;
 
+// class ProcessPendingOrderAssignments implements ShouldQueue
 class ProcessPendingOrderAssignments
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, SerializesModels;
 
-    // Nombre maximum de tentatives de notification
-    public $tries = 5;
+    public $tries = 1;
+    public $backoff = [30];
+    
+    // Nombre maximum d'invitations avant abandon
+    private const MAX_INVITATIONS = 5;
+    
+    // Délai d'attente pour une réponse (en minutes)
+    private const INVITATION_TIMEOUT = 5;
+    private const INVITATION_RETRY = 2;
 
-    // Délai entre les tentatives (en secondes) - commence à 30s
-    public $backoff = [30, 60, 120, 300, 600];
-
-    /**
-     * Create a new job instance.
-     */
-    public function __construct()
+    public function handle()
     {
-        //
-    }
-
-    public function handle(DriverAssignmentService $driverAssignmentService)
-    {
-
-       // Log::info("ProcessPendingOrderAssignments started");
-        // Récupérer toutes les commandes en attente d'assignation
-        $pendingOrders = Order::where('status', Order::PERFORMER_LOOKUP)
-            ->where('driver_id', null)
+        Log::info("ProcessPendingOrderAssignments: Debut de recherche de commandes en attentes");
+        // Optimisation : eager loading pour éviter N+1
+        $pendingOrders = Order::with(['orderInvitations' => function($query) {
+                $query->where('is_waiting_acceptation', true);
+            }])
+            ->where('status', Order::PERFORMER_LOOKUP)
+            ->whereNull('driver_id')
             ->where('is_draft', false)
             ->get();
 
+        Log::info("ProcessPendingOrderAssignments: Nombre de commandes en attentes : " . $pendingOrders->count());
+
+        if ($pendingOrders->isEmpty()) {
+            return;
+        }
+
+
         foreach ($pendingOrders as $order) {
             try {
-                // Vérifier les tentatives d'invitation précédentes
-                $previousInvitations = $order->orderInvitations()
-                    ->where('is_waiting_acceptation', false)
-                    ->count();
-
-                // Si trop de tentatives, marquer comme "PERFORMER_NOT_FOUND"
-                if ($previousInvitations >= 10) {
-                    $order->update([
-                        'status' => Order::PERFORMER_NOT_FOUND
-                    ]);
-
-                    Log::warning("Order {$order->id} failed to find driver after 10 attempts");
-
-                    // Enregistrer l'historique de la commande
-                    $order->newOrderHistory(Order::PERFORMER_NOT_FOUND, 'system', null);
-                    continue;
-                }
-
-                // Vérifier les tentatives d'invitation précédentes
-                $waitingInvitations = $order->orderInvitations()
-                    ->where('is_waiting_acceptation', true)
-                    ->where('created_at', '>', Carbon::parse($order->created_at)->subMinutes(5))
-                    ->count();
-
-                if($waitingInvitations == 0){
-                    // Tenter d'assigner un nouveau driver
-                    $driver = $driverAssignmentService->assignNearestDriver($order);
-
-                    if ($driver) {
-                        //Log::info("Driver {$driver->id} assigned to order {$order->id}");
-                    } else {
-                        // Replanifier le job pour plus tard si aucun driver trouvé
-                        ProcessPendingOrderAssignments::dispatch()->delay(now()->addMinutes(5));
-                    }
-                }
-
-
-
+                $this->processOrder($order);
             } catch (Throwable $e) {
-                Log::error("Error processing order {$order->id}: " . $e->getMessage());
-                $this->fail($e);
+                // Ne pas fail le job entier pour une seule commande
+                Log::warning("ProcessPendingOrderAssignments: erreur lors de l'execution ".$e->getMessage());
             }
         }
+
+        Log::info("ProcessPendingOrderAssignments: Fin de recherche de commandes en attentes");
+    }
+
+    private function processOrder(Order $order)
+    {
+        $waitingInvitations = $order->orderInvitations;
+        $invitationCount = $waitingInvitations->count();
+
+         // Cas 3 : Vérifier si les invitations ont expiré
+        $expiredInvitations = $waitingInvitations->filter(function($invitation) {
+            return $invitation->created_at->addMinutes(self::INVITATION_RETRY)->isPast();
+        });
+
+        if ($expiredInvitations->isNotEmpty()) {
+            // Supprimer SEULEMENT les invitations expirées
+            OrderInvitation::whereIn('id', $expiredInvitations->pluck('id'))->delete();
+        }
+
+        if($order->created_at->addMinutes(self::INVITATION_TIMEOUT)->isPast()){
+            // Marquer la commande comme chauffeurs non trouvés
+            $this->markAsNotFound($order);
+        }else{
+            // Réessayer l'assignation
+            $this->assignDriver($order);
+        }
+
+       
+
+        Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} - ". $invitationCount ." invitations en attente. ". $expiredInvitations->count() ." invitations expirées.");
+    }
+
+    private function markAsNotFound(Order $order): void
+    {
+        $order->update([
+            'status' => Order::PERFORMER_NOT_FOUND, 
+            'is_waiting' => false,
+            'is_completed' => true,
+            'is_successful' =>false
+        ]);
+        $order->newOrderHistory(Order::PERFORMER_NOT_FOUND, 'system', null);
+        Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} marquée comme PERFORMER_NOT_FOUND.");
+        
+    }
+
+    private function assignDriver(Order $order): void
+    {
+        Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} - nouvelle tentative d'assignation lancée.");
+
+        // Recherche de chauffeurs et envoi d'invitations
+        $expressService = app(DriverAssignmentService::class);
+        $expressService->sendInvitations($order, 10);
+        
     }
 
     public function failed(Throwable $exception)
     {
-        Log::error('ProcessPendingOrderAssignments job failed: ' . $exception->getMessage());
+        Log::error("ProcessPendingOrderAssignments: Erreur lors de l'execution : " . $exception->getMessage());
     }
 }

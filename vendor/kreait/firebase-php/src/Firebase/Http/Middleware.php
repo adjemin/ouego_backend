@@ -28,6 +28,8 @@ final class Middleware
 {
     /**
      * Ensures that the ".json" suffix is added to URIs and that the content type is set correctly.
+     *
+     * @return callable(callable): Closure
      */
     public static function ensureJsonSuffix(): callable
     {
@@ -40,12 +42,14 @@ final class Middleware
                 $request = $request->withUri($uri);
             }
 
-            return $handler($request, $options ?: []);
+            return $handler($request, $options);
         };
     }
 
     /**
      * @param array<string, mixed>|null $override
+     *
+     * @return callable(callable): Closure
      */
     public static function addDatabaseAuthVariableOverride(?array $override): callable
     {
@@ -56,13 +60,18 @@ final class Middleware
                 array_merge(Query::parse($uri->getQuery()), ['auth_variable_override' => Json::encode($override)]),
             ));
 
-            return $handler($request->withUri($uri), $options ?: []);
+            return $handler($request->withUri($uri), $options);
         };
     }
 
+    /**
+     * @deprecated 7.25.0 Use the Log Middleware provided by the GuzzleHTTP library instead
+     *
+     * @return callable(callable): Closure
+     */
     public static function log(LoggerInterface $logger, MessageFormatter $formatter, string $logLevel, string $errorLogLevel): callable
     {
-        return static fn(callable $handler): Closure => static fn($request, array $options) => $handler($request, $options)->then(
+        return static fn(callable $handler): Closure => static fn(RequestInterface $request, array $options) => $handler($request, $options)->then(
             static function (ResponseInterface $response) use ($logger, $request, $formatter, $logLevel, $errorLogLevel): ResponseInterface {
                 $message = $formatter->format($request, $response);
                 $messageLogLevel = $response->getStatusCode() >= StatusCode::STATUS_BAD_REQUEST ? $errorLogLevel : $logLevel;

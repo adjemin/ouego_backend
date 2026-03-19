@@ -11,9 +11,14 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Validator;
+use App\Services\OrangeSMSService;
 use App\Models\CustomerOTP;
+use App\Models\CustomerProfile;
+use App\Models\Commercial;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
+use App\Models\CustomerDevice;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class CustomerAPIController
@@ -21,10 +26,12 @@ use MtnSmsCloud\MTNSMSApi;
 class CustomerAPIController extends AppBaseController
 {
     private CustomerRepository $customerRepository;
+    private OrangeSMSService $orangeSMSService;
 
-    public function __construct(CustomerRepository $customerRepo)
+    public function __construct(CustomerRepository $customerRepo, OrangeSMSService $orangeSMSService)
     {
         $this->customerRepository = $customerRepo;
+        $this->orangeSMSService = $orangeSMSService;
     }
 
     /**
@@ -94,7 +101,24 @@ class CustomerAPIController extends AppBaseController
             return $this->sendError('Customer not found');
         }
 
+        // Empêcher la modification du code_commercial s'il existe déjà
+        if (array_key_exists('code_commercial', $input)) {
+            if (!empty($customer->code_commercial)) {
+                return $this->sendError('Le code commercial ne peut pas être modifié', 400);
+            }
+            // Vérifier que le code_commercial existe dans la table commercials
+            if (!empty($input['code_commercial'])) {
+                $commercial = Commercial::where('code', $input['code_commercial'])->first();
+                if ($commercial == null) {
+                    return $this->sendError('Code commercial invalide', 400);
+                }
+            }
+        }
+
         $customer = $this->customerRepository->update($input, $customer->id);
+
+        // Charger la relation profile
+        $customer->load('profile');
 
         $token = JWTAuth::fromUser($customer);
 
@@ -151,6 +175,22 @@ class CustomerAPIController extends AppBaseController
             return $this->sendError('phone_number is required');
         }
 
+        // Vérifier que le profile_id existe
+        if (array_key_exists('profile_id', $input)) {
+            $profile = CustomerProfile::find($input['profile_id']);
+            if ($profile == null) {
+                return $this->sendError('Profile not found', 404);
+            }
+        }
+
+        // Vérifier que le code_commercial existe dans la table commercials
+        if (array_key_exists('code_commercial', $input) && !empty($input['code_commercial'])) {
+            $commercial = Commercial::where('code', $input['code_commercial'])->first();
+            if ($commercial == null) {
+                return $this->sendError('Code commercial invalide', 400);
+            }
+        }
+
         $input['phone'] = $input['dialing_code'].''.$input['phone_number'];
 
         $customer = Customer::where('phone', '=', $input['phone'])->first();
@@ -168,8 +208,29 @@ class CustomerAPIController extends AppBaseController
 
         } else {
             $customerDeleted->restore();
+            $customerDeleted->update(['profile_id' => $input['profile_id']]);
             $customer = $customerDeleted;
         }
+
+        // Enregistrer device token
+        if (array_key_exists('firebase_id', $input) && !empty($input['firebase_id'])) {
+            $customerDevices = CustomerDevice::where(['firebase_id' => $input['firebase_id']])->first();
+
+            if(empty($customerDevices)){
+                CustomerDevice::create([
+                    'customer_id' => $customer->id,
+                    'firebase_id' => $input['firebase_id']
+                ]);
+            }else{
+                $customerDevices->update([
+                    'customer_id' => $customer->id,
+                    'firebase_id' => $input['firebase_id']
+                ]);
+            }
+        }
+
+        // Charger la relation profile
+        $customer->load('profile');
 
         $token = JWTAuth::fromUser($customer);
 
@@ -206,6 +267,35 @@ class CustomerAPIController extends AppBaseController
             return $this->sendError('Compte introuvable', 401);
         }
 
+        // Vérifier si le compte est bloquer
+        if($customer->is_blocked){
+            return response()->json([
+                'code' => 403,
+                'status' => 'UNAUTHORIZED',
+                'success' => false,
+                'message' => 'Votre compte a été bloqué, veuillez contacter le support'
+            ],403);
+        }
+
+        // Enregistrer device token
+        if (array_key_exists('firebase_id', $input) && !empty($input['firebase_id'])) {
+            $customerDevices = CustomerDevice::where(['firebase_id' => $input['firebase_id']])->first();
+
+            if(empty($customerDevices)){
+                CustomerDevice::create([
+                    'customer_id' => $customer->id,
+                    'firebase_id' => $input['firebase_id']
+                ]);
+            }else{
+                $customerDevices->update([
+                    'customer_id' => $customer->id,
+                    'firebase_id' => $input['firebase_id']
+                ]);
+            }
+        }
+
+        // Charger la relation profile
+        $customer->load('profile');
 
         $token = JWTAuth::fromUser($customer);
 
@@ -233,19 +323,24 @@ class CustomerAPIController extends AppBaseController
 
     public function refresh()
     {
+        $customer = auth('api-customers')->user();
+        $customer->load('profile');
 
         return $this->sendResponse([
             'token' => auth('api-customers')->refresh(),
             'token_type' => 'bearer',
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
-            'user' => auth('api-customers')->user()
+            'user' => $customer
         ], 'Token refreshed successfully');
     }
 
     public function getProfil(Request $request){
 
         $customer = auth('api-customers')->user();
+
+        // Charger la relation profile
+        $customer->load('profile');
 
         $token = JWTAuth::fromUser($customer);
 
@@ -262,37 +357,47 @@ class CustomerAPIController extends AppBaseController
 
     public function sendOTP(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'phone' => 'required|string',
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'phone' => 'required|string',
+            ]);
 
-        if ($validator->fails()) {
-            return $this->sendError(json_encode($validator->errors()),422);
+            if ($validator->fails()) {
+                return $this->sendError(json_encode($validator->errors()),422);
+            }
+
+            // Vérifier si le numéro de téléphone est déjà enregistré
+            $customer = Customer::where('phone', $request->phone)->first();
+            if ($customer && $customer->is_blocked) {
+                return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
+            }
+
+            // Générer un OTP à 6 chiffres
+            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Créer ou mettre à jour l'entrée CustomerOTP
+            $customerOTP = CustomerOTP::updateOrCreate(
+                ['phone' => $request->phone],
+                [
+                    'otp' => $otp,
+                    'otp_expires_at' => Carbon::now()->addMinutes(5),
+                    'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
+                ]
+            );
+
+            try{
+                // Envoyer l'OTP par SMS
+                $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
+            } catch (\Exception $e) {
+                Log::error("Failed to send OTP SMS: " . $e->getMessage());
+            }
+            
+            return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), $e->getCode());
         }
 
-        // Vérifier si le numéro de téléphone est déjà enregistré
-        $customer = Customer::where('phone', $request->phone)->first();
-        if ($customer && $customer->is_blocked) {
-            return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
-        }
-
-        // Générer un OTP à 6 chiffres
-        $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        // Créer ou mettre à jour l'entrée CustomerOTP
-        $customerOTP = CustomerOTP::updateOrCreate(
-            ['phone' => $request->phone],
-            [
-                'otp' => $otp,
-                'otp_expires_at' => Carbon::now()->addMinutes(5),
-                'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
-            ]
-        );
-
-        // Envoyer l'OTP par SMS
-        $this->sendSMS($request->phone, "Votre code OTP est: {$otp}");
-
-        return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
     }
 
     public function verifyOTP(Request $request)
@@ -322,6 +427,37 @@ class CustomerAPIController extends AppBaseController
             return $this->sendResponse(true, 'OTP verified successfully');
 
         }else{
+            // Vérifier si le compte est bloquer
+            if($customer->is_blocked){
+                return response()->json([
+                    'code' => 403,
+                    'status' => 'UNAUTHORIZED',
+                    'success' => false,
+                    'message' => 'Votre compte a été bloqué, veuillez contacter le support'
+                ],403);
+            }
+
+            // Enregistrer device token
+            if (array_key_exists('firebase_id', $request->all()) && !empty($request->firebase_id)) {
+                $customerDevice = CustomerDevice::where(['firebase_id' => $request->firebase_id])->first();
+
+                if(empty($customerDevice)){
+                    CustomerDevice::create([
+                        'customer_id' => $customer->id,
+                        'firebase_id' => $request->firebase_id
+                    ]);
+                }else{
+                    $customerDevice->update([
+                        'customer_id' => $customer->id,
+                        'firebase_id' => $request->firebase_id
+                    ]);
+                }
+            }
+
+
+            // Charger la relation profile
+            $customer->load('profile');
+
             $token = JWTAuth::fromUser($customer);
 
             return $this->sendResponse([

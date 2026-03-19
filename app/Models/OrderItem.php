@@ -12,7 +12,7 @@ class OrderItem extends Model
 
     public $table = 'order_items';
 
-    protected $appends = ['service','route_points'];
+    protected $appends = ['service','route_points','carrier'];
 
     public $fillable = [
         'order_id',
@@ -23,12 +23,14 @@ class OrderItem extends Model
         'unit_price',
         'order_price',
         'delivery_price',
+        'manutention_pricing',
         'total_amount',
         'currency',
         'service_due',
         'driver_due',
         'location_start_date',
         'location_end_date',
+        'location_shift_type',
         'carrier_id'
     ];
 
@@ -40,12 +42,14 @@ class OrderItem extends Model
         'quantity_unity' => 'string',
         'unit_price' => 'double',
         'order_price'=> 'double',
+        'manutention_pricing' => 'double',
         'delivery_price'=> 'double',
         'total_amount' => 'double',
         'currency' => 'string',
         'service_due' => 'double',
         'driver_due' => 'double',
-        'carrier_id' => 'integer'
+        'carrier_id' => 'integer',
+        'location_shift_type' => 'string',
     ];
 
     public static array $rules = [
@@ -56,6 +60,7 @@ class OrderItem extends Model
     {
         return RoutePoint::where(['order_id' => $this->order_id])->orderBy('visit_order', 'ASC')->get();
     }
+
 
     public function getServiceAttribute()
     {
@@ -129,5 +134,17 @@ class OrderItem extends Model
         ])->get();
     }
 
+    public function getCarrierAttribute()
+    {
+        if ($this->carrier_id) {
+            return Carrier::where('id', $this->carrier_id)->first();
+        }
+        return null;
+    }
+
+    public function carrier()
+    {
+        return $this->belongsTo(Carrier::class, 'carrier_id', 'id');
+    }
 
 }

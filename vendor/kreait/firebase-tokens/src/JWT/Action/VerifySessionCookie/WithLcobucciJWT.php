@@ -40,9 +40,13 @@ use function is_string;
  */
 final class WithLcobucciJWT implements Handler
 {
-    private Parser $parser;
+    private readonly Parser $parser;
+
     private Signer $signer;
-    private Validator $validator;
+
+    private readonly Validator $validator;
+
+    private readonly bool $isRunOnEmulator;
 
     /**
      * @param non-empty-string $projectId
@@ -54,12 +58,9 @@ final class WithLcobucciJWT implements Handler
     ) {
         $this->parser = new Parser(new JoseEncoder());
 
-        if (Util::authEmulatorHost() !== '') {
-            $this->signer = new None();
-        } else {
-            $this->signer = new Sha256();
-        }
+        $this->isRunOnEmulator = Util::authEmulatorHost() !== '';
 
+        $this->signer = $this->isRunOnEmulator ? new None() : new Sha256();
         $this->validator = new Validator();
     }
 
@@ -76,7 +77,7 @@ final class WithLcobucciJWT implements Handler
 
         $key = $this->getKey($token);
         $clock = FrozenClock::at($this->clock->now());
-        $leeway = new DateInterval('PT' . $action->leewayInSeconds() . 'S');
+        $leeway = new DateInterval('PT'.$action->leewayInSeconds().'S');
         $errors = [];
         $constraints = [
             new LooseValidAt($clock, $leeway),
@@ -98,7 +99,7 @@ final class WithLcobucciJWT implements Handler
             }
         } catch (RequiredConstraintsViolated $e) {
             $errors = array_map(
-                static fn(ConstraintViolation $violation): string => '- ' . $violation->getMessage(),
+                static fn(ConstraintViolation $violation): string => '- '.$violation->getMessage(),
                 $e->violations(),
             );
         }
@@ -134,25 +135,27 @@ final class WithLcobucciJWT implements Handler
 
     private function getKey(UnencryptedToken $token): string
     {
-        if (empty($keys = $this->keys->all())) {
+        $keys = $this->keys->all();
+        if ($keys === []) {
             throw SessionCookieVerificationFailed::withSessionCookieAndReasons($token->toString(), ["No keys are available to verify the token's signature."]);
         }
 
-        $keyId = $token->headers()->get('kid');
-
-        if ($key = $keys[$keyId] ?? null) {
-            return $key;
-        }
-
-        if ($this->signer instanceof None) {
+        if ($this->isRunOnEmulator && ($this->signer instanceof None)) {
             return '';
         }
 
-        if (is_string($keyId)) {
-            throw SessionCookieVerificationFailed::withSessionCookieAndReasons($token->toString(), ["No public key matching the key ID `{$keyId}` was found to verify the signature of this session cookie."]);
+        $keyId = $token->headers()->get('kid');
+        if (!is_string($keyId) || $keyId === '') {
+            throw SessionCookieVerificationFailed::withSessionCookieAndReasons($token->toString(), ["The session cookie doesn't include a `kid` header."]);
         }
 
-        throw SessionCookieVerificationFailed::withSessionCookieAndReasons($token->toString(), ["The session cookie doesn't include a `kid` header."]);
+        $key = $keys[$keyId] ?? null;
+
+        if ($key === null) {
+            throw SessionCookieVerificationFailed::withSessionCookieAndReasons($token->toString(), ["The `kid` header of the given token is missing or empty.No public key matching the key ID `{$keyId}` was found to verify the signature of this session cookie."]);
+        }
+
+        return $key;
     }
 
     private function assertUserAuthedAt(UnencryptedToken $token, DateTimeInterface $now): void
@@ -167,7 +170,7 @@ final class WithLcobucciJWT implements Handler
         }
 
         if (is_numeric($authTime)) {
-            $authTime = new DateTimeImmutable('@' . ((int) $authTime));
+            $authTime = new DateTimeImmutable('@'.((int) $authTime));
         }
 
         if ($now < $authTime) {

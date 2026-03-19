@@ -4,15 +4,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-You can find and compare releases at the GitHub release page.
+You can find and compare releases at the [GitHub release page](https://github.com/PHP-Open-Source-Saver/jwt-auth/releases).
 
 ## [Unreleased]
+### Fixed
+ - Fixed the return type of getMinutesUntilExpired in BlackList, which returned a float instead of an int when using Carbon v2.
+ - Fixed PHPStan issue in JWTGenerateSecretCommand by ensuring displayKey($key); is called before returning, avoiding returning a void method.  
+ - Fixed missing return true; statements in validatePayload() and validateRefresh() methods of Expiration.php, IssuedAt.php, and NotBefore.php to resolve PHPStan errors.  
+ - Fixed PHPStan error related to new static() by refactoring hasAllClaims method in Collection class.
+
+
+## [2.8.0] 2025-02-11
+Please see (https://github.com/PHP-Open-Source-Saver/jwt-auth/releases/tag/2.8.0)
 
 ### Added
-- Fixes #259 - Can't logout with an expired token
-- Add `cookie_key_name` config to customize cookie name for authentication
+- #268 Implement config variable to allow iat to remain unchanged claim when refreshing a token
+- Adds support for Laravel 12
+- Adds CI testing for PHP 8.4
+- Don't show jwt secret if show option is false even if the key is updated
+- Casts config ints to int by default in new config file publishes
+- Override "id" method in JWTGuard
 
 ### Removed
+
+- Dropping support for PHP 8.1, if you are still on this version, please update your PHP version in order to use the latest version of this package.
+
+## [2.7.2] 2024-09-28
+
+### Added
+- Add `cookie_key_name` config to customize cookie name for authentication
+- Delegate `Auth::id()` calls to the newly added `getUserId` method
+
+## [2.7.0] 2024-07-24
+
+### Fixed
+- Support for Carbon 3 alongside Carbon 2
 
 ## [2.6.0] 2024-07-11
 

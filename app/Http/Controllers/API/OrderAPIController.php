@@ -9,6 +9,7 @@ use App\Models\OrderInvitation;
 use App\Models\OrderItem;
 use App\Models\Service;
 use App\Models\Setting;
+use App\Models\Commercial;
 use App\Models\Product;
 use App\Models\Payment;
 use App\Models\ProductType;
@@ -21,7 +22,7 @@ use App\Models\Carrier;
 use App\Models\DriverNotification;
 use App\Models\DeliveryType;
 use App\Utilities\DriverNotificationsUtils;
-use App\Repositories\OrderRepository;
+use App\Repositories\OrderRepository;   
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -30,22 +31,57 @@ use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Services\DriverAssignmentService;
 use App\Services\CarrierLocationService;
-
+use App\Services\OrangeSMSService;
+use Illuminate\Support\Facades\DB;
 /**
  * Class OrderAPIController
  */
 class OrderAPIController extends AppBaseController
 {
     private OrderRepository $orderRepository;
-
-    private DriverAssignmentService $driverAssignmentService;
     private CarrierLocationService $carrierLocationService;
+    private OrangeSMSService $orangeSMSService;
 
-    public function __construct(OrderRepository $orderRepo, DriverAssignmentService $driverAssignmentService, CarrierLocationService $carrierLocationService)
+    public function __construct(
+        OrderRepository $orderRepo, 
+        CarrierLocationService $carrierLocationService,
+        OrangeSMSService $orangeSMSService
+    )
     {
         $this->orderRepository = $orderRepo;
-        $this->driverAssignmentService = $driverAssignmentService;
         $this->carrierLocationService = $carrierLocationService;
+        $this->orangeSMSService  = $orangeSMSService;
+    }
+
+    private function getCommercialDiscount($customer): array
+    {
+        $discount = 0;
+
+        if (!empty($customer->code_commercial)) {
+            $commercial = Commercial::where('code', $customer->code_commercial)->first();
+
+            if ($commercial) {
+                $endDays = Setting::get('COMMERCIAL_VALIDITY_DAYS') ?? '10';
+                $endDate = Carbon::parse($customer->created_at)->addDays($endDays)->format('Y-m-d');
+                $maxOrders = intval(Setting::get('COMMERCIAL_MAX_ORDERS') ?? 5);
+                $discountAmount = doubleval(Setting::get('COMMERCIAL_DISCOUNT_AMOUNT') ?? 2500);
+
+                if (Carbon::now()->lte(Carbon::parse($endDate))) {
+                    $discountedOrdersCount = Invoice::where('customer_id', $customer->id)
+                        ->where('coupon', $customer->code_commercial)
+                        ->count();
+
+                    if ($discountedOrdersCount < $maxOrders) {
+                        $discount = $discountAmount;
+                    }
+                }
+            }
+        }
+
+        return [
+            'discount' => $discount,
+            'has_commercial_discount' => $discount > 0,
+        ];
     }
 
     /**
@@ -84,11 +120,59 @@ class OrderAPIController extends AppBaseController
 
         $items = (array) $request->input('items');
 
+        // Verifier la disponibilité de la course le type de livraison
+        if(count($items)){
+            $meta_data = (array) $items[0]['meta_data'];
+            $delivery_type_code = array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:null;
+
+            // if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
+            //     $now = now();
+            //     // Plage Horaires interdites
+            //     $start_morning = $now->copy()->setTime(6, 0);
+            //     $end_morning   = $now->copy()->setTime(8, 59);
+
+            //     $start_evening = $now->copy()->setTime(17, 0);
+            //     $end_envening   = $now->copy()->setTime(19, 59);
+
+            //     if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
+            //         return $this->sendError("L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.");
+            //     }
+            // }
+
+            // Limiter la course en journée à partir de 12H
+            if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+                $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+                if(now()->hour < 6 || now()->hour > $cutoffHour){
+                    return $this->sendError("Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.");
+                }
+            }
+
+            // Limiter la course en semaine uniquement du lundi au jeudi
+            if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+                $dayOfWeekIso = now()->dayOfWeekIso;
+                if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                    return $this->sendError("Les courses en semaine ne peuvent être lancées que du lundi au jeudi.");
+                }
+            }
+
+            if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+                $now = now();
+                $start = $now->copy()->setTime(7, 0);
+                $end   = $now->copy()->setTime(19, 30);
+
+                if ($now->lt($start) || $now->gt($end)) {
+                    return $this->sendError("L’option Course De nuit est disponible uniquement de 07H00 à 19H30.");
+                }
+            }
+        }
+
+        DB::beginTransaction();
 
         $order = Order::create([
             "reference" => Order::generateReference(),
             "customer_id" => $customer->id,
             "status" => Order::INITIATED,
+            'order_object' => $request->input('order_object'),
             "is_started" => false,
             "is_running" => false,
             "is_waiting" => true,
@@ -201,27 +285,23 @@ class OrderAPIController extends AppBaseController
                     $delivery_fees = $this->getDeliveryFeesForCourse((array)$item['route_points'], $meta_data['engin_model'], $delivery_type_code);
                 }
 
+                $manutention_pricing = array_key_exists('manutention_pricing', $meta_data)?$meta_data['manutention_pricing']:0; 
+
                 $order->delivery_type_code = $delivery_type_code;
                 $order->save();
 
+                $commission_min = doubleval(Setting::get('OUEGO_COMMISSION_COURSE_MIN'));
+                $commission = doubleval(Setting::get('COURSE_COMMISSION_OUEGO'));
 
-                $total_amount = $delivery_fees;
-
-                $commission_min = doubleval(Setting::get('COMMISSION_COURSE_MIN'));
-                $commission = doubleval(Setting::get('COMMISSION_COURSE'))/100;
-
-                $commission_min = 0;
-                $commission = 0;
-
-
-                $service_due = $total_amount * $commission;
-
-                $service_due = $total_amount * $commission;
+    
+                $service_due = $commission;
                 if($service_due < $commission_min){
                     $service_due = $commission_min;
                 }
 
-                $driver_due = $total_amount - $service_due;
+                $driver_due = ($delivery_fees - $service_due) + $manutention_pricing;
+
+                $total_amount = $delivery_fees + $manutention_pricing;
 
 
                 $orderItem = OrderItem::create([
@@ -237,7 +317,8 @@ class OrderAPIController extends AppBaseController
                     'unit_price' => 0,
                     'order_price' => 0,
                     'delivery_price' => $delivery_fees,
-                    'total_amount' => $delivery_fees,
+                    'manutention_pricing' => $manutention_pricing,
+                    'total_amount' => $total_amount,
                     'service_due' => $service_due,
                     'driver_due' => $driver_due,
                     'currency' => "XOF"
@@ -349,10 +430,24 @@ class OrderAPIController extends AppBaseController
                 $order->save();
 
                 $productType = ProductType::where(['slug' => $meta_data['product_type_slug']])->first();
+                if(empty($productType)) {
+                    return $this->sendError('Type de produit introuvable', 400);
+                }
 
                 $product = Product::where(['id' => $productType->product_id])->first();
+                if(empty($product)) {
+                    return $this->sendError('Produit introuvable', 400);
+                }
 
                 $carrier =  Carrier::where(['id' => $item['carrier_id']])->first();
+                if(empty($carrier)) {
+                    return $this->sendError('Carrier introuvable', 400);
+                }
+
+                if($product->slug == Product::SABLE_SLUG && !array_key_exists('pricing', $meta_data)){
+                    $order->forceDelete();
+                    return $this->sendError('pricing est requis pour le sable', 400);
+                }
 
 
                 $quantity = intval($item['quantity']);
@@ -360,18 +455,19 @@ class OrderAPIController extends AppBaseController
                 $order_price = 0;
 
                 $delivery_price = array_key_exists('delivery_price', $item)?$item['delivery_price']:0;
+                $manutention_pricing = array_key_exists('manutention_pricing', $meta_data)?$meta_data['manutention_pricing']:0; 
 
                 $total_amount = 0;
                 $unit_price = 0;
 
-                if($product->slug == "gravier"){
+                if($product->slug == Product::GRAVIER_SLUG){
                     $unit_price = doubleval($productType->price);
 
                     $order_price = $quantity * $unit_price;
                 }
 
 
-                if($product->slug == "sable" && array_key_exists('pricing', $meta_data)){
+                if($product->slug == Product::SABLE_SLUG && array_key_exists('pricing', $meta_data)){
                     $pricing = $meta_data['pricing'];
 
                     if(!is_array($pricing)){
@@ -385,18 +481,18 @@ class OrderAPIController extends AppBaseController
                 }
 
 
-                $total_amount = $order_price + $delivery_price;
+                $total_amount = $order_price + $delivery_price + $manutention_pricing;
 
                 $commission_min = 0;
                 $commission = 0;
 
-                if($product->slug == "gravier"){
-                   // $commission_min = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO_MIN'));
+                if($product->slug == Product::GRAVIER_SLUG){
+                    $commission_min = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO_MIN'));
                     $commission = doubleval(Setting::get('GRAVIER_COMMISSION_OUEGO'));
                 }
 
-                if($product->slug == "sable"){
-                    //$commission_min = doubleval(Setting::get('SABLE_COMMISSION_OUEGO_MIN'));
+                if($product->slug == Product::SABLE_SLUG){
+                    $commission_min = doubleval(Setting::get('SABLE_COMMISSION_OUEGO_MIN'));
                     $commission = doubleval(Setting::get('SABLE_COMMISSION_OUEGO'));
                 }
 
@@ -423,6 +519,7 @@ class OrderAPIController extends AppBaseController
                     'unit_price' => $unit_price,
                     'order_price' => $order_price,
                     'delivery_price' => $delivery_price,
+                    'manutention_pricing' => $manutention_pricing,
                     'total_amount' => $total_amount,
                     'service_due' => $service_due,
                     'driver_due' => $driver_due,
@@ -461,7 +558,6 @@ class OrderAPIController extends AppBaseController
                     'apartment' => null
                 ]);
 
-                //dd($sourceRoutePoint);
 
 
             }
@@ -535,6 +631,12 @@ class OrderAPIController extends AppBaseController
                 $location_start_date = Carbon::parse($item["location_start_date"]);
                 $location_end_date = Carbon::parse($item["location_end_date"]);
 
+                $location_shift_type = array_key_exists('location_shift_type', $item) ? $item['location_shift_type'] : 'day';
+                if (!in_array($location_shift_type, ['day', 'night', 'double'])) {
+                    $location_shift_type = 'day';
+                }
+                $coefficient_shift = ($location_shift_type === 'double') ? 2 : 1;
+
                 $typeEngin = TypeEngin::where(['slug' => $meta_data['type_engin_slug']])->first();
                 $typeEnginModel = TypeEnginModel::where(['slug' => $meta_data['engin_model']])->first();
 
@@ -548,33 +650,30 @@ class OrderAPIController extends AppBaseController
                     return $this->sendError('engin_model not found', 400);
                 }
 
-                $quantity = $location_start_date->diffInDays($location_end_date);
+                $quantity = max(1, $location_start_date->diffInDays($location_end_date));
 
-                $unit_price = doubleval($typeEnginModel->price);
+                $unit_price = doubleval($typeEnginModel->day_location_price);
 
-                $order_price = $quantity * $unit_price;
+                $order_price = $quantity * $unit_price * $coefficient_shift;
 
                 $delivery_price = array_key_exists('delivery_price', $item)?$item['delivery_price']:0;
+                $manutention_pricing = array_key_exists('manutention_pricing', $meta_data)?$meta_data['manutention_pricing']:0; 
 
                 $total_amount = $order_price + $delivery_price;
 
                 $currency = $typeEnginModel->currency_code;
 
-                //$commission_min = doubleval(Setting::get('SABLE_COMMISSION_OUEGO_MIN'));
-                //$commission = doubleval(Setting::get('SABLE_COMMISSION_OUEGO'))/100;
+                $commission_min = doubleval(Setting::get('LOCATION_COMMISSION_OUEGO_MIN'));
+                $commission = doubleval(Setting::get('LOCATION_COMMISSION_OUEGO'));
+                $service_due = $commission;
 
-                $commission_min = 0;
-                $commission = 0;
-
-
-                $service_due = $total_amount * $commission;
-
-                $service_due = $total_amount * $commission;
                 if($service_due < $commission_min){
                     $service_due = $commission_min;
                 }
 
                 $driver_due = $total_amount - $service_due;
+
+                $total_amount = $total_amount + $manutention_pricing;
 
 
                 $orderItem = OrderItem::create([
@@ -589,12 +688,14 @@ class OrderAPIController extends AppBaseController
                     'unit_price' => $unit_price,
                     'order_price' => $order_price,
                     'delivery_price' => $delivery_price,
+                    'manutention_pricing' => $manutention_pricing,
                     'total_amount' => $total_amount,
                     'service_due' => $service_due,
                     'driver_due' => $driver_due,
                     'currency' => $currency,
                     'location_start_date' => $item["location_start_date"],
-                    'location_end_date' => $item["location_end_date"]
+                    'location_end_date' => $item["location_end_date"],
+                    'location_shift_type' => $location_shift_type,
                 ]);
 
                 $order->service_slug = $service->slug;
@@ -608,6 +709,8 @@ class OrderAPIController extends AppBaseController
             if(!is_array($route_points)){
                 $route_points = (array)$route_points;
             }
+
+
 
             foreach ($route_points as $route_point) {
 
@@ -640,7 +743,6 @@ class OrderAPIController extends AppBaseController
                         'apartment' => array_key_exists('apartment', $route_point)?$route_point['apartment']:null,
                         'has_handling' => array_key_exists('has_handling', $route_point)?$route_point['has_handling']:null
                     ]);
-
                 }
 
             }
@@ -651,6 +753,7 @@ class OrderAPIController extends AppBaseController
 
         $order_price = 0;
         $delivery_price = 0;
+        $manutention_pricing = 0;
         $driver_due = 0;
         $service_due = 0;
 
@@ -663,8 +766,9 @@ class OrderAPIController extends AppBaseController
                 $order->is_ride = true;
                 $order->save();
 
-                $order_price = $order_price + $order_item->delivery_price;
+                $order_price = $order_price + $order_item->order_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
+                $manutention_pricing = $manutention_pricing + $order_item->manutention_pricing;
             }
 
             if($order_item->service_slug == Service::AGREGATS_CONSTRUCTION){
@@ -673,6 +777,7 @@ class OrderAPIController extends AppBaseController
 
                 $order_price = $order_price + $order_item->order_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
+                $manutention_pricing = $manutention_pricing + $order_item->manutention_pricing;
             }
 
             if($order_item->service_slug == Service::LOCATION){
@@ -681,26 +786,51 @@ class OrderAPIController extends AppBaseController
 
                 $order_price = $order_price + $order_item->order_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
+                $manutention_pricing = $manutention_pricing + $order_item->manutention_pricing;
             }
 
         }
 
         $order->order_price = $order_price;
         $order->delivery_price = $delivery_price;
+        $order->manutention_pricing = $manutention_pricing;
         $order->save();
 
         $subtotal = $order->order_price;
         $tax = 0;
         $fees_delivery = $order->delivery_price;
-        $invoice_total = 0;
-        if($order->service_slug == Service::COURSE){
-            $invoice_total = $subtotal + $tax ;
-        }else{
-            $invoice_total = $subtotal + $fees_delivery+ $tax;
-        }
+        
+
+        $invoice_total = $subtotal + $fees_delivery + $tax + $manutention_pricing;
 
         $discount = 0;
+        $coupon = null;
 
+        if (!empty($customer->code_commercial)) {
+            $commercial = Commercial::where('code', $customer->code_commercial)->first();
+
+            if ($commercial) {
+                $endDays = Setting::get('COMMERCIAL_VALIDITY_DAYS') ?? '30';
+                $endDate = Carbon::parse($customer->created_at)->addDays($endDays)->format('Y-m-d');
+                $maxOrders = intval(Setting::get('COMMERCIAL_MAX_ORDERS') ?? 5);
+                $discountAmount = doubleval(Setting::get('COMMERCIAL_DISCOUNT_AMOUNT') ?? 2500);
+                $creditAmount = doubleval(Setting::get('COMMERCIAL_CREDIT_AMOUNT') ?? 2500);
+
+                if (Carbon::now()->lte(Carbon::parse($endDate))) {
+                    $discountedOrdersCount = Invoice::where('customer_id', $customer->id)
+                        ->where('coupon', $customer->code_commercial)
+                        ->count();
+
+                    if ($discountedOrdersCount < $maxOrders) {
+                        $discount = $discountAmount;
+                        $invoice_total = max(0, $invoice_total - $discount);
+                        $commercial->creditBalance($creditAmount);
+                        $coupon = $customer->code_commercial;
+                        $this->orangeSMSService->sendSMS("+" . $commercial->phone, "OUEGO: Une nouvelle commande d'un client est arrivée. Votre compte a été credité de {$creditAmount} XOF. Votre nouveau solde est de {$commercial->current_balance} XOF.");
+                    }
+                }
+            }
+        }
 
         $invoice = Invoice::create([
             'order_id' => $order->id,
@@ -709,6 +839,7 @@ class OrderAPIController extends AppBaseController
             'subtotal' => $subtotal,
             'tax' => $tax,
             'fees_delivery' => $fees_delivery,
+            'fees_manutention' => $manutention_pricing,
             'total' => $invoice_total,
             'status' => Invoice::UNPAID,
             'is_paid_by_customer' => false,
@@ -717,8 +848,11 @@ class OrderAPIController extends AppBaseController
             'driver_due' => $driver_due,
             'service_due' => $service_due,
             'discount' => $discount,
-            'coupon' => null
+            'coupon' => $coupon
         ]);
+
+        DB::commit();
+        
 
 
         /** @var Order $order */
@@ -824,7 +958,7 @@ class OrderAPIController extends AppBaseController
 
         $customer = auth('api-customers')->user();
 
-        $orders = Order::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->get();
+        $orders = Order::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->take(10)->get();
 
         return $this->sendResponse($orders->toArray(), 'Orders retrieved successfully');
 
@@ -936,7 +1070,6 @@ class OrderAPIController extends AppBaseController
                         $destination_list->push($route_point_item);
                     }
 
-
                 }
 
                 $source_point = $source_list->first();
@@ -952,13 +1085,14 @@ class OrderAPIController extends AppBaseController
                 ]);
 
 
+
                 $current_distance = 0;
 
                 if(array_key_exists('distance',$result)){
                     $result_distance = $result['distance']; //array
                     $result_distance_value = $result_distance['value']; //meters
                     $current_distance = $result_distance_value/1000; //kilometers
-                    $current_distance = intval($current_distance);
+                    $current_distance = $current_distance;
 
                 }
                 $duration = "";
@@ -973,12 +1107,30 @@ class OrderAPIController extends AppBaseController
                 $delivery_type_code = "EXPRESS";
                 $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
 
+                // Vérifier la disponibilité de l'option express en fonction de l'heure actuelle
+                $now = now();
+                $expressIsAvalable = true;
+                $expressMessage = null;
+                // Plage Horaires interdites
+                $start_morning = $now->copy()->setTime(6, 0);
+                $end_morning   = $now->copy()->setTime(8, 59);
+
+                $start_evening = $now->copy()->setTime(17, 0);
+                $end_envening   = $now->copy()->setTime(19, 59);
+
+                if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
+                    $expressIsAvalable = false;
+                    $expressMessage = "L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.";
+                }
+
                 //EXPRESS
                 $expressPricing = [
                     "distance" => $current_distance,
                     "duration" => $duration,
                     "amount" => $amount,
-                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+                    "is_available" => $expressIsAvalable,
+                    "error_message" => $expressMessage
                 ];
 
 
@@ -986,44 +1138,95 @@ class OrderAPIController extends AppBaseController
                 //En journée
                 $delivery_type_code = "en-journee";
                 $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+                
+                // Limiter la course en journée à partir de 12H
+                $isJourneeAvailable = true;
+                $journeeErrorMessage = null;
+                if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+                    $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+                    if(now()->hour < 6 || now()->hour > $cutoffHour){
+                        $isJourneeAvailable = false;
+                        $journeeErrorMessage = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+                    }
+                }
+
                 $sameDayPricing = [
                     "distance" => $current_distance,
                     "duration" => $duration,
                     "amount" => $amount,
-                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+                    "is_available" => $isJourneeAvailable,
+                    "error_message" => $journeeErrorMessage
                 ];
 
                 //De nuit
                 $delivery_type_code = "de-nuit";
                 $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+
+                // Limiter la course de nuit uniquement de 07H00 à 19H30
+                $isDeNuitAvailable = true;
+                $deNuitErrorMessage = null;
+                if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+                    $now = now();
+                    $start = $now->copy()->setTime(7, 0);
+                    $end   = $now->copy()->setTime(19, 30);
+
+                    if ($now->lt($start) || $now->gt($end)) {
+                        $isDeNuitAvailable = false;
+                        $deNuitErrorMessage = "L’option Course De nuit est disponible uniquement de 07H00 à 19H30.";
+                    }
+                }
+
                 $sameNightPricing = [
                     "distance" => $current_distance,
                     "duration" => $duration,
                     "amount" => $amount,
-                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+                    "is_available" => $isDeNuitAvailable,
+                    "error_message" => $deNuitErrorMessage
                 ];
 
                 //En semaine
                 $delivery_type_code = "en-semaine";
                 $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+
+                // Limiter la course en semaine uniquement du lundi au jeudi
+                $isEnSemaineAvailable = true;
+                $enSemaineErrorMessage = null;
+                if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+                    $dayOfWeekIso = now()->dayOfWeekIso;
+                    if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                        $isEnSemaineAvailable = false;
+                        $enSemaineErrorMessage = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+                    }
+                }
                 $sameWeekPricing = [
                     "distance" => $current_distance,
                     "duration" => $duration,
                     "amount" => $amount,
-                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+                    "is_available" => $isEnSemaineAvailable,
+                    "error_message" => $enSemaineErrorMessage
                 ];
 
+                $customer = auth('api-customers')->user();
+                $commercialDiscount = $this->getCommercialDiscount($customer);
+
                 return $this->sendResponse([
-                    $expressPricing,
-                    $sameDayPricing,
-                    $sameNightPricing,
-                    $sameWeekPricing
+                    'pricings' => [
+                        $expressPricing,
+                        $sameDayPricing,
+                        $sameNightPricing,
+                        $sameWeekPricing
+                    ],
+                    'discount' => $commercialDiscount['discount'],
+                    'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
                 ], 'Order saved successfully');
 
 
     }
 
-    public function estimateRidePriceNew(Request $request){
+    public function estimateRidePriceWithArrets(Request $request){
 
         /**
          *
@@ -1056,8 +1259,7 @@ class OrderAPIController extends AppBaseController
 
 
 
-            if(!array_key_exists('meta_data', $request->all())){
-
+        if(!array_key_exists('meta_data', $request->all())){
             return $this->sendError('meta_data is required', 400);
         }
 
@@ -1135,7 +1337,7 @@ class OrderAPIController extends AppBaseController
         $destination_point = $destination_list->last();
 
         
-        if(!$route_arrets->count()){
+        if($route_arrets->count() == 0){
             $result = GoogleMapsAPIUtils::getDistance([
                 $source_point['latitude'],
                 $source_point['longitude'],
@@ -1148,21 +1350,17 @@ class OrderAPIController extends AppBaseController
                 $result_distance = $result['distance']; //array
                 $result_distance_value = $result_distance['value']; //meters
                 $distance = $result_distance_value/1000; //kilometers
-                $current_distance = $current_distance + intval($distance);
+                $current_distance = $current_distance + $distance;
             }
 
             if(array_key_exists('duration',$result)){
                 $result_duration = $result['duration']; //array
                 $duration = intval($result_duration['value']);
             }
-        }
-        
-
-        
-        if($route_arrets->count()){
+        }else{
             
             $last_arret = null;
-            if(!is_array($route_arrets) && count($route_arrets) == 1){
+            if(count($route_arrets) == 1){
 
                 $arret_point = $route_arrets->first();
                 $result = GoogleMapsAPIUtils::getDistance([
@@ -1177,7 +1375,7 @@ class OrderAPIController extends AppBaseController
                     $result_distance = $result['distance']; //array
                     $result_distance_value = $result_distance['value']; //meters
                     $distance = $result_distance_value/1000; //kilometers
-                    $current_distance = $current_distance + intval($distance);
+                    $current_distance = $current_distance + $distance;
                 }
 
                 if(array_key_exists('duration',$result)){
@@ -1188,10 +1386,11 @@ class OrderAPIController extends AppBaseController
                 
                 $last_arret = $arret_point;
 
-            }elseif(!is_array($route_arrets)){
+            }else{
                 foreach ($route_arrets as $index => $route_arret){
                     
                     if($index == 0){
+                        // Calcul distance and duration from source to first arret
                         $result = GoogleMapsAPIUtils::getDistance([
                             $source_point['latitude'],
                             $source_point['longitude'],
@@ -1201,6 +1400,7 @@ class OrderAPIController extends AppBaseController
                         ]); 
                         
                     }else{
+                        // Calcul distance and duration from last arret to current arret
                         $result = GoogleMapsAPIUtils::getDistance([
                             $last_arret['latitude'],
                             $last_arret['longitude'],
@@ -1215,7 +1415,7 @@ class OrderAPIController extends AppBaseController
                         $result_distance = $result['distance']; //array
                         $result_distance_value = $result_distance['value']; //meters
                         $distance = $result_distance_value/1000; //kilometers
-                        $current_distance = $current_distance + intval($distance);
+                        $current_distance = $current_distance + $distance;
                     }
 
                     if(array_key_exists('duration',$result)){
@@ -1229,6 +1429,7 @@ class OrderAPIController extends AppBaseController
                 
             }
 
+            // Calcul distance and duration from last arret to destination
             $result = GoogleMapsAPIUtils::getDistance([
                 $last_arret['latitude'],
                 $last_arret['longitude'],
@@ -1241,7 +1442,7 @@ class OrderAPIController extends AppBaseController
                 $result_distance = $result['distance']; //array
                 $result_distance_value = $result_distance['value']; //meters
                 $distance = $result_distance_value/1000; //kilometers
-                $current_distance = $current_distance + intval($distance);
+                $current_distance = $current_distance + $distance;
             }
 
             if(array_key_exists('duration',$result)){
@@ -1250,18 +1451,37 @@ class OrderAPIController extends AppBaseController
             }
         }
 
-        $duration = strval($duration). " seconds";
+        $totalMinutes = intval($duration / 60);
+        $duration = $totalMinutes . " mins";
 
 
         $delivery_type_code = "EXPRESS";
         $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+
+        // Vérifier la disponibilité de l'option express en fonction de l'heure actuelle
+        $now = now();
+        $expressIsAvalable = true;
+        $expressMessage = null;
+        // // Plage Horaires interdites
+        // $start_morning = $now->copy()->setTime(6, 0);
+        // $end_morning   = $now->copy()->setTime(8, 59);
+
+        // $start_evening = $now->copy()->setTime(17, 0);
+        // $end_envening   = $now->copy()->setTime(19, 59);
+
+        // if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
+        //     $expressIsAvalable = false;
+        //     $expressMessage = "L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.";
+        // }
 
         //EXPRESS
         $expressPricing = [
             "distance" => $current_distance,
             "duration" => $duration,
             "amount" => $amount,
-            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+            "is_available" => $expressIsAvalable,
+            "error_message" => $expressMessage
         ];
 
 
@@ -1269,38 +1489,89 @@ class OrderAPIController extends AppBaseController
         //En journée
         $delivery_type_code = "en-journee";
         $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+
+        // Limiter la course en journée à partir de 12H
+        $isJourneeAvailable = true;
+        $journeeErrorMessage = null;
+        if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+            if(now()->hour < 6 || now()->hour > $cutoffHour){
+                $isJourneeAvailable = false;
+                $journeeErrorMessage = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+            }
+        }
         $sameDayPricing = [
             "distance" => $current_distance,
             "duration" => $duration,
             "amount" => $amount,
-            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+            "is_available" => $isJourneeAvailable,
+            "error_message" => $journeeErrorMessage
         ];
 
         //De nuit
         $delivery_type_code = "de-nuit";
         $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+
+        // Limiter la course de nuit uniquement de 07H00 à 19H30
+        $isDeNuitAvailable = true;
+        $deNuitErrorMessage = null;
+        if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+            $now = now();
+            $start = $now->copy()->setTime(7, 0);
+            $end   = $now->copy()->setTime(19, 30);
+
+            if ($now->lt($start) || $now->gt($end)) {
+                $isDeNuitAvailable = false;
+                $deNuitErrorMessage = "L’option Course De nuit est disponible uniquement de 07H00 à 19H30.";
+            }
+        }
+                
         $sameNightPricing = [
             "distance" => $current_distance,
             "duration" => $duration,
             "amount" => $amount,
-            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+            "is_available" => $isDeNuitAvailable,
+            "error_message" => $deNuitErrorMessage
         ];
 
         //En semaine
         $delivery_type_code = "en-semaine";
         $amount = PricingUtils::transportCourse($current_distance, $typeEnginModel, $delivery_type_code);
+        
+        // Limiter la course en semaine uniquement du lundi au jeudi
+        $isEnSemaineAvailable = true;
+        $enSemaineErrorMessage = null;
+        if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            $dayOfWeekIso = now()->dayOfWeekIso;
+            if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                $isEnSemaineAvailable = false;
+                $enSemaineErrorMessage = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+            }
+        }
+
         $sameWeekPricing = [
             "distance" => $current_distance,
             "duration" => $duration,
             "amount" => $amount,
-            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first()
+            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+            "is_available" => $isEnSemaineAvailable,
+            "error_message" => $enSemaineErrorMessage
         ];
 
+        $customer = auth('api-customers')->user();
+        $commercialDiscount = $this->getCommercialDiscount($customer);
+
         return $this->sendResponse([
-            $expressPricing,
-            $sameDayPricing,
-            $sameNightPricing,
-            $sameWeekPricing
+            'pricings' => [
+                $expressPricing,
+                $sameDayPricing,
+                $sameNightPricing,
+                $sameWeekPricing
+            ],
+            'discount' => $commercialDiscount['discount'],
+            'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
         ], 'Order saved successfully');
 
 
@@ -1373,7 +1644,7 @@ class OrderAPIController extends AppBaseController
             $result_distance = $result['distance']; //array
             $result_distance_value = $result_distance['value']; //meters
             $current_distance = $result_distance_value/1000; //kilometers
-            $current_distance = intval($current_distance);
+            $current_distance = $current_distance;
 
         }
 
@@ -1454,7 +1725,7 @@ class OrderAPIController extends AppBaseController
             $result_distance = $result['distance']; //array
             $result_distance_value = $result_distance['value']; //meters
             $current_distance = $result_distance_value/1000; //kilometers
-            $current_distance = intval($current_distance);
+            $current_distance = $current_distance;
 
         }
 
@@ -1474,6 +1745,10 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Order not found');
         }
 
+        if (empty($customer)) {
+            return $this->sendError('Unauthorized', 401);
+        }
+
         $input['is_draft'] = false;
         $input['order_date'] = now();
         $input['status'] = Order::PERFORMER_LOOKUP;
@@ -1483,11 +1758,13 @@ class OrderAPIController extends AppBaseController
         // Register order history
         $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
 
-        $this->driverAssignmentService->assignNearestDriver($order);
+        // Recherche de chauffeurs et envoi d'invitations
+        $expressService = app(DriverAssignmentService::class);
+        $expressService->sendInvitations($order, 10);
 
         return $this->sendResponse($order->toArray(), 'Order updated successfully');
-
     }
+
 
     public function performDriverLookup($id, Request $request){
         /** @var Order $order */
@@ -1497,14 +1774,6 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Commande introuvable', 400);
         }
 
-        //$route_point = RoutePoint::where([
-        //    'order_id' => $order->id,
-        //    'type' => 'source'
-        //])->first();
-
-        //$driver =  $this->driverAssignmentService->findNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, 1);
-        //dd($driver);
-
         if($order->driver_id == null || $order->acceptation_time == null){
 
                 $orderInvitations = OrderInvitation::where([
@@ -1513,8 +1782,9 @@ class OrderAPIController extends AppBaseController
                 ])->get();
 
                 if(count($orderInvitations) == 0){
-                   $driver =  $this->driverAssignmentService->assignNearestDriver($order, 10);
-                   //dd($driver);
+                    // Recherche de chauffeurs et envoi d'invitations
+                    $expressService = app(DriverAssignmentService::class);
+                    $expressService->sendInvitations($order, 10);
                 }
 
         }
@@ -1614,8 +1884,6 @@ class OrderAPIController extends AppBaseController
             if($route_point_item_type == 'destination'){
                 $destination_list->push($route_point_item);
             }
-
-
         }
 
         //$carrier = Carrier::first();
@@ -1649,7 +1917,6 @@ class OrderAPIController extends AppBaseController
         ],[
             $destination_point['latitude'],
             $destination_point['longitude']
-
         ]);
 
 
@@ -1660,26 +1927,74 @@ class OrderAPIController extends AppBaseController
             $result_distance = $result['distance']; //array
             $result_distance_value = $result_distance['value']; //meters
             $current_distance = $result_distance_value/1000; //kilometers
-            $current_distance = intval($current_distance);
-            $distance = $result_distance['text'];
+            $current_distance = $current_distance;
+            $distance = $current_distance." km";
 
-        }
-
-        $duration = "";
-
-        if(array_key_exists('duration',$result)){
-            $result_duration = $result['duration']; //array
-            $duration = $result_duration['text'];
         }
 
         //dd($current_distance);
 
 
+        $customer = auth('api-customers')->user();
+        $commercialDiscount = $this->getCommercialDiscount($customer);
+        $amount = PricingUtils::transport($current_distance, $delivery_type_code);
+        
+        $now = now();
+        $isAvailable = true;
+        $message = null;
+        if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
+            // Plage Horaires interdites
+            $start_morning = $now->copy()->setTime(6, 0);
+            $end_morning   = $now->copy()->setTime(8, 59);
+
+            $start_evening = $now->copy()->setTime(17, 0);
+            $end_envening   = $now->copy()->setTime(19, 59);
+
+            if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
+                $isAvailable = false;
+                $message = "L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.";
+            }
+        }
+
+        // Limiter la course en journée à partir de 12H
+        if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+            if(now()->hour < 6 || now()->hour > $cutoffHour){
+                $isAvailable = false;
+                $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+            }
+        }
+
+        // Limiter la course en semaine uniquement du lundi au jeudi
+        if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            $dayOfWeekIso = now()->dayOfWeekIso;
+            if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                $isAvailable = false;
+                $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+            }
+        }
+
+        if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+            $now = now();
+            $start = $now->copy()->setTime(7, 0);
+            $end   = $now->copy()->setTime(19, 30);
+
+            if ($now->lt($start) || $now->gt($end)) {
+                $isAvailable = false;
+                $message = "L’option Course De nuit est disponible uniquement de 07H00 à 19H30.";
+            }
+        }
+
         return $this->sendResponse([
             'carrier_id' => $carrier->id,
-            'amount' => PricingUtils::transport($current_distance, $delivery_type_code),
+            'amount' => $amount,
+            'amount_with_discount' => max(0, $amount - $commercialDiscount['discount']),
+            'discount' => $commercialDiscount['discount'],
+            'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
             'distance' => $distance,
-            'delivery_type' => $delivery_type_code
+            'delivery_type' => $delivery_type_code,
+            'is_available' => $isAvailable,
+            'error_message' => $message
         ], 'Order saved successfully');
 
 
@@ -1715,138 +2030,191 @@ class OrderAPIController extends AppBaseController
 
 
 
-    if(!array_key_exists('meta_data', $request->all())){
+    try{
+        if(!array_key_exists('meta_data', $request->all())){
 
-        return $this->sendError('meta_data is required', 400);
-    }
-
-    if(!array_key_exists('quantity', $request->all())){
-
-        return $this->sendError('quantity is required', 400);
-    }
-
-    if(!array_key_exists('route_points', $request->all())){
-
-        return $this->sendError('route_points is required', 400);
-    }
-
-
-    $quantity = $request->input('quantity');
-
-    $meta_data = $request->input('meta_data');
-
-    $route_points = $request->input('route_points');
-
-    if(!is_array($meta_data)){
-        $meta_data = (array) $meta_data;
-    }
-
-    if(!is_array($route_points)){
-        $route_points = (array) $route_points;
-    }
-
-    if(!array_key_exists('product_type_slug',$meta_data)){
-
-        return $this->sendError('product_type_slug is required', 400);
-    }
-
-    if(!array_key_exists('product_slug',$meta_data)){
-
-        return $this->sendError('product_slug is required', 400);
-    }
-
-    if(!array_key_exists('delivery_type_code',$meta_data)){
-
-        return $this->sendError('delivery_type_code is required', 400);
-    }
-
-    $delivery_type_code = $meta_data['delivery_type_code'];
-
-    $source_list = collect([]);
-    $destination_list = collect([]);
-
-    foreach ($route_points as $route_point_item){
-        if(!is_array($route_point_item)){
-            $route_point_item = (array)$route_point_item;
+            return $this->sendError('meta_data is required', 400);
         }
 
-        $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+        if(!array_key_exists('quantity', $request->all())){
 
-        if($route_point_item_type == 'source'){
-            $source_list->push($route_point_item);
+            return $this->sendError('quantity is required', 400);
         }
 
-        if($route_point_item_type == 'destination'){
-            $destination_list->push($route_point_item);
+        if(!array_key_exists('route_points', $request->all())){
+
+            return $this->sendError('route_points is required', 400);
         }
 
+
+        $quantity = $request->input('quantity');
+
+        $meta_data = $request->input('meta_data');
+
+        $route_points = $request->input('route_points');
+
+        if(!is_array($meta_data)){
+            $meta_data = (array) $meta_data;
+        }
+
+        if(!is_array($route_points)){
+            $route_points = (array) $route_points;
+        }
+
+        if(!array_key_exists('product_type_slug',$meta_data)){
+
+            return $this->sendError('product_type_slug is required', 400);
+        }
+
+        if(!array_key_exists('product_slug',$meta_data)){
+
+            return $this->sendError('product_slug is required', 400);
+        }
+
+        if(!array_key_exists('delivery_type_code',$meta_data)){
+
+            return $this->sendError('delivery_type_code is required', 400);
+        }
+
+        $delivery_type_code = $meta_data['delivery_type_code'];
+
+        $source_list = collect([]);
+        $destination_list = collect([]);
+
+        foreach ($route_points as $route_point_item){
+            if(!is_array($route_point_item)){
+                $route_point_item = (array)$route_point_item;
+            }
+
+            $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+            if($route_point_item_type == 'source'){
+                $source_list->push($route_point_item);
+            }
+
+            if($route_point_item_type == 'destination'){
+                $destination_list->push($route_point_item);
+            }
+
+        }
+
+
+        $destination_point = $destination_list->last();
+
+        $latitude = $destination_point['latitude'];
+        $longitude = $destination_point['longitude'];
+
+        $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
+
+        if(count($carriers)==0){
+            return $this->sendError('Désolé, aucune carrière à proximité trouvé', 400);
+        }
+
+        $carrier = $carriers->first();
+
+        $source_point = [
+            "latitude" => $carrier->location_latitude,
+            "longitude" =>  $carrier->location_longitude,
+        ];
+
+
+        $result = GoogleMapsAPIUtils::getDistance([
+            $source_point['latitude'],
+            $source_point['longitude']
+        ],[
+            $destination_point['latitude'],
+            $destination_point['longitude']
+
+        ]);
+
+
+        $current_distance = 0;
+        $distance= "";
+
+        if(array_key_exists('distance',$result)){
+            $result_distance = $result['distance']; //array
+            $result_distance_value = $result_distance['value']; //meters
+            $current_distance = $result_distance_value/1000; //kilometers
+            $current_distance = intval($current_distance);
+            $distance = $result_distance['text'];
+
+        }
+
+        $duration = "";
+
+        if(array_key_exists('duration',$result)){
+            $result_duration = $result['duration']; //array
+            $duration = $result_duration['text'];
+        }
+
+
+
+        $customer = auth('api-customers')->user();
+        $commercialDiscount = $this->getCommercialDiscount($customer);
+        $amount = PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code);
+
+        $now = now();
+        $isAvailable = true;
+        $message = null;
+        if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
+            // Plage Horaires interdites
+            $start_morning = $now->copy()->setTime(6, 0);
+            $end_morning   = $now->copy()->setTime(8, 59);
+
+            $start_evening = $now->copy()->setTime(17, 0);
+            $end_envening   = $now->copy()->setTime(19, 59);
+
+            if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
+                $isAvailable = false;
+                $message = "L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.";
+            }
+        }
+
+        // Limiter la course en journée à partir de 12H
+        if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+            if(now()->hour < 6 || now()->hour > $cutoffHour){
+                $isAvailable = false;
+                $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+            }
+        }
+
+        // Limiter la course en semaine uniquement du lundi au jeudi
+        if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            $dayOfWeekIso = now()->dayOfWeekIso;
+            if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                $isAvailable = false;
+                $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+            }
+        }
+
+        if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+            $now = now();
+            $start = $now->copy()->setTime(7, 0);
+            $end   = $now->copy()->setTime(19, 30);
+
+            if ($now->lt($start) || $now->gt($end)) {
+                $isAvailable = false;
+                $message = "L’option Course De nuit est disponible uniquement de 07H00 à 19H30.";
+            }
+        }
+
+        return $this->sendResponse([
+            'carrier' => $carrier,
+            'amount' => $amount,
+            'amount_with_discount' => max(0, $amount - $commercialDiscount['discount']),
+            'discount' => $commercialDiscount['discount'],
+            'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
+            'distance' => $distance,
+            'duration' => $duration,
+            'delivery_type' => $delivery_type_code,
+            'is_available' => $isAvailable,
+            'error_message' => $message
+        ], 'Order saved successfully');
+
+    }catch (\Exception $e){
+        return $this->sendError($e->getMessage(), 400);
     }
-
-    $inner_radius = 0;
-
-    $outer_radius = 100;
-
-    $destination_point = $destination_list->last();
-
-    $latitude = $destination_point['latitude'];
-    $longitude = $destination_point['longitude'];
-
-    $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_slug']);
-
-    if(count($carriers)==0){
-        return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
-    }
-
-    $carrier = $carriers->first();
-
-    $source_point = [
-        "latitude" => $carrier->location_latitude,
-        "longitude" =>  $carrier->location_longitude,
-    ];
-
-
-    $result = GoogleMapsAPIUtils::getDistance([
-        $source_point['latitude'],
-        $source_point['longitude']
-    ],[
-        $destination_point['latitude'],
-        $destination_point['longitude']
-
-    ]);
-
-
-    $current_distance = 0;
-    $distance= "";
-
-    if(array_key_exists('distance',$result)){
-        $result_distance = $result['distance']; //array
-        $result_distance_value = $result_distance['value']; //meters
-        $current_distance = $result_distance_value/1000; //kilometers
-        $current_distance = intval($current_distance);
-        $distance = $result_distance['text'];
-
-    }
-
-    $duration = "";
-
-    if(array_key_exists('duration',$result)){
-        $result_duration = $result['duration']; //array
-        $duration = $result_duration['text'];
-    }
-
-    //dd($current_distance);
-
-  //  $current_distance = 55;
-
-
-    return $this->sendResponse([
-        'carrier' => $carrier,
-        'amount' => PricingUtils::transportGravier($current_distance, $quantity, $delivery_type_code),
-        'distance' => $distance,
-        'duration' => $duration,
-        'delivery_type' => $delivery_type_code
-    ], 'Order saved successfully');
-
 
    }
 
@@ -1879,149 +2247,193 @@ class OrderAPIController extends AppBaseController
      */
 
 
+    try {
+    
+        if(!array_key_exists('meta_data', $request->all())){
 
-    if(!array_key_exists('meta_data', $request->all())){
-
-        return $this->sendError('meta_data is required', 400);
-    }
-
-    if(!array_key_exists('quantity', $request->all())){
-
-        return $this->sendError('quantity is required', 400);
-    }
-
-    if(!array_key_exists('route_points', $request->all())){
-
-        return $this->sendError('route_points is required', 400);
-    }
-
-    $meta_data = $request->input('meta_data');
-
-    $route_points = $request->input('route_points');
-
-    if(!is_array($meta_data)){
-        $meta_data = (array) $meta_data;
-    }
-
-    if(!is_array($route_points)){
-        $route_points = (array) $route_points;
-    }
-
-    if(!array_key_exists('product_type_slug',$meta_data)){
-
-        return $this->sendError('product_type_slug is required', 400);
-    }
-
-    if(!array_key_exists('product_slug',$meta_data)){
-
-        return $this->sendError('product_slug is required', 400);
-    }
-
-    if(!array_key_exists('delivery_type_code',$meta_data)){
-
-        return $this->sendError('delivery_type_code is required', 400);
-    }
-
-    $delivery_type_code = $meta_data['delivery_type_code'];
-
-    $source_list = collect([]);
-    $destination_list = collect([]);
-
-    foreach ($route_points as $route_point_item){
-        if(!is_array($route_point_item)){
-            $route_point_item = (array)$route_point_item;
+            return $this->sendError('meta_data is required', 400);
         }
 
-        $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+        if(!array_key_exists('quantity', $request->all())){
 
-        if($route_point_item_type == 'source'){
-            $source_list->push($route_point_item);
+            return $this->sendError('quantity is required', 400);
         }
 
-        if($route_point_item_type == 'destination'){
-            $destination_list->push($route_point_item);
+        if(!array_key_exists('route_points', $request->all())){
+
+            return $this->sendError('route_points is required', 400);
+        }
+
+        $meta_data = $request->input('meta_data');
+
+        $route_points = $request->input('route_points');
+
+        if(!is_array($meta_data)){
+            $meta_data = (array) $meta_data;
+        }
+
+        if(!is_array($route_points)){
+            $route_points = (array) $route_points;
+        }
+
+        if(!array_key_exists('product_type_slug',$meta_data)){
+
+            return $this->sendError('product_type_slug is required', 400);
+        }
+
+        if(!array_key_exists('product_slug',$meta_data)){
+
+            return $this->sendError('product_slug is required', 400);
+        }
+
+        if(!array_key_exists('delivery_type_code',$meta_data)){
+
+            return $this->sendError('delivery_type_code is required', 400);
+        }
+
+        $delivery_type_code = $meta_data['delivery_type_code'];
+
+        $source_list = collect([]);
+        $destination_list = collect([]);
+
+        foreach ($route_points as $route_point_item){
+            if(!is_array($route_point_item)){
+                $route_point_item = (array)$route_point_item;
+            }
+
+            $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+            if($route_point_item_type == 'source'){
+                $source_list->push($route_point_item);
+            }
+
+            if($route_point_item_type == 'destination'){
+                $destination_list->push($route_point_item);
+            }
+
+
+        }
+
+        $destination_point = $destination_list->last();
+
+        $latitude = $destination_point['latitude'];
+        $longitude = $destination_point['longitude'];
+
+        $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
+
+        if(count($carriers)==0){
+            return $this->sendError('Désolé, aucune carrière à proximité trouvé', 400);
+        }
+
+        $carrier = $carriers->first();
+
+        $source_point = [
+            "latitude" => $carrier->location_latitude,
+            "longitude" =>  $carrier->location_longitude,
+        ];
+
+
+        $result = GoogleMapsAPIUtils::getDistance([
+            $source_point['latitude'],
+            $source_point['longitude']
+        ],[
+            $destination_point['latitude'],
+            $destination_point['longitude']
+
+        ]);
+
+
+        $distance = "";
+        $current_distance = 0; // Initialiser la variable
+
+        if(array_key_exists('distance',$result)){
+            $result_distance = $result['distance']; //array
+            $result_distance_value = $result_distance['value']; //meters
+            $current_distance = $result_distance_value/1000; //kilometers
+            $formatted_distance = number_format($current_distance);
+            $distance = $formatted_distance." km";
+
+        }
+
+        $duration = "";
+
+        if(array_key_exists('duration',$result)){
+            $result_duration = $result['duration']; //array
+            $duration = $result_duration['text'];
         }
 
 
+        $customer = auth('api-customers')->user();
+        $commercialDiscount = $this->getCommercialDiscount($customer);
+        $amount = PricingUtils::transportSable($current_distance, $delivery_type_code);
+
+        $now = now();
+        $isAvailable = true;
+        $message = null;
+        if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
+            // Plage Horaires interdites
+            $start_morning = $now->copy()->setTime(6, 0);
+            $end_morning   = $now->copy()->setTime(8, 59);
+
+            $start_evening = $now->copy()->setTime(17, 0);
+            $end_envening   = $now->copy()->setTime(19, 59);
+
+            if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
+                $isAvailable = false;
+                $message = "L’option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.";
+            }
+        }
+
+        // Limiter la course en journée à partir de 12H
+        if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+            if(now()->hour < 6 || now()->hour > $cutoffHour){
+                $isAvailable = false;
+                $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+            }
+        }
+
+        // Limiter la course en semaine uniquement du lundi au jeudi
+        if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            $dayOfWeekIso = now()->dayOfWeekIso;
+            if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                $isAvailable = false;
+                $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+            }
+        }
+
+        if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+            $now = now();
+            $start = $now->copy()->setTime(7, 0);
+            $end   = $now->copy()->setTime(19, 30);
+
+            if ($now->lt($start) || $now->gt($end)) {
+                $isAvailable = false;
+                $message = "L’option Course De nuit est disponible uniquement de 07H00 à 19H30.";
+            }
+        }
+
+        return $this->sendResponse([
+            'carrier' => $carrier,
+            'amount' => $amount,
+            'amount_with_discount' => max(0, $amount - $commercialDiscount['discount']),
+            'discount' => $commercialDiscount['discount'],
+            'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
+            'distance' => $distance,
+            'duration' => $duration,
+            'delivery_type' => $delivery_type_code,
+            'is_available' => $isAvailable,
+            'error_message' => $message
+        ], 'Order saved successfully');
+
+    } catch (\Throwable $th) {
+        return $this->sendError($th->getMessage(), 400);
     }
-
-    $inner_radius = 0;
-
-    $outer_radius = 100;
-
-    $destination_point = $destination_list->last();
-
-    $latitude = $destination_point['latitude'];
-    $longitude = $destination_point['longitude'];
-
-    $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_slug']);
-
-    if(count($carriers)==0){
-        return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
-    }
-
-    $carrier = $carriers->first();
-
-    $source_point = [
-        "latitude" => $carrier->location_latitude,
-        "longitude" =>  $carrier->location_longitude,
-    ];
-
-
-    $result = GoogleMapsAPIUtils::getDistance([
-        $source_point['latitude'],
-        $source_point['longitude']
-    ],[
-        $destination_point['latitude'],
-        $destination_point['longitude']
-
-    ]);
-
-
-    $current_distance = 0;
-    $distance = "";
-
-    if(array_key_exists('distance',$result)){
-        $result_distance = $result['distance']; //array
-        $result_distance_value = $result_distance['value']; //meters
-        $current_distance = $result_distance_value/1000; //kilometers
-        $current_distance = intval($current_distance);
-        $distance = $result_distance['text'];
-
-    }
-
-    if(array_key_exists('duration',$result)){
-        $result_duration = $result['duration']; //array
-        $result_duration_value = $result_duration['value']; //meters
-        $current_duration = $result_duration_value/1000; //kilometers
-        $current_distance = intval($current_distance);
-
-    }
-
-    //dd($current_distance);
-
-    //$current_distance  = 10;
-
-    $duration = "";
-
-    if(array_key_exists('duration',$result)){
-        $result_duration = $result['duration']; //array
-        $duration = $result_duration['text'];
-    }
-
-
-    return $this->sendResponse([
-        'carrier' => $carrier,
-        'amount' => PricingUtils::transportSable($current_distance, $delivery_type_code),
-        'distance' => $distance,
-        'duration' => $duration,
-        'delivery_type' => $delivery_type_code
-    ], 'Order saved successfully');
 
 
    }
 
-   public function cancel($id, Request $request){
+  public function cancel($id, Request $request){
 
     $customer = auth('api-customers')->user();
 
@@ -2030,6 +2442,10 @@ class OrderAPIController extends AppBaseController
 
     if (empty($order)) {
         return $this->sendError('Order not found');
+    }
+
+    if($order->driver_id != null && $order->started){
+        return $this->sendError('Vous ne pouvez pas annuler cette commande car elle a commencé', 400);
     }
 
     $input['status'] = Order::CANCELLED;

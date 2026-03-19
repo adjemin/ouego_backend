@@ -41,7 +41,7 @@ class SendCustomerPushNotification
                         \Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $event->customerNotification->customer_id);
                     } catch (\Exception $e) {
                         // Gestion des autres exceptions
-                        \Log::error("Erreur lors de l'envoi de la notification: " . $e->getMessage());
+                        \Log::error("SendCustomerPushNotification Erreur lors de l'envoi de la notification: " . $e->getMessage());
                     }
 
                 }

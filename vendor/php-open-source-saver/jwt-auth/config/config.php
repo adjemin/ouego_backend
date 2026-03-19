@@ -89,17 +89,26 @@ return [
     |
     */
 
-    'ttl' => env('JWT_TTL', 60),
+    'ttl' => (int) env('JWT_TTL', 60),
 
     /*
     |--------------------------------------------------------------------------
     | Refresh time to live
     |--------------------------------------------------------------------------
     |
-    | Specify the length of time (in minutes) that the token can be refreshed
-    | within. I.E. The user can refresh their token within a 2 week window of
-    | the original token being created until they must re-authenticate.
-    | Defaults to 2 weeks.
+    | Specify the length of time (in minutes) that the token can be refreshed within.
+    | This defines the refresh window, during which the user can refresh their token
+    | before re-authentication is required.
+    |
+    | By default, a refresh will NOT issue a new "iat" (issued at) timestamp. If changed
+    | to true, each refresh will issue a new "iat" timestamp, extending the refresh
+    | period from the most recent refresh. This results in a rolling refresh
+    |
+    | To retain a fluid refresh window from the last refresh action (i.e., the behavior between
+    | version 2.5.0 and 2.8.2), set "refresh_iat" to true. With this setting, the refresh
+    | window will renew with each subsequent refresh.
+    |
+    | The refresh ttl defaults to 2 weeks.
     |
     | You can also set this to null, to yield an infinite refresh time.
     | Some may want this instead of never expiring tokens for e.g. a mobile app.
@@ -108,7 +117,8 @@ return [
     |
     */
 
-    'refresh_ttl' => env('JWT_REFRESH_TTL', 20160),
+    'refresh_iat' => env('JWT_REFRESH_IAT', false),
+    'refresh_ttl' => (int) env('JWT_REFRESH_TTL', 20160),
 
     /*
     |--------------------------------------------------------------------------
@@ -196,7 +206,7 @@ return [
     |
     */
 
-    'leeway' => env('JWT_LEEWAY', 0),
+    'leeway' => (int) env('JWT_LEEWAY', 0),
 
     /*
     |--------------------------------------------------------------------------
@@ -223,7 +233,7 @@ return [
     |
     */
 
-    'blacklist_grace_period' => env('JWT_BLACKLIST_GRACE_PERIOD', 0),
+    'blacklist_grace_period' => (int) env('JWT_BLACKLIST_GRACE_PERIOD', 0),
 
     /*
     |--------------------------------------------------------------------------
