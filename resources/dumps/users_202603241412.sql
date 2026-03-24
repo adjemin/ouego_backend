@@ -1,0 +1,7 @@
+INSERT INTO users ("name",email,email_verified_at,"password",remember_token,created_at,updated_at,deleted_at,is_active,"role") VALUES
+	 ('John Light','lamagniguitoure@gmail.com','2026-01-10 05:32:57','$2y$12$2oucq5zYt2jjtIiOSIsaUOJO//CeBAjAs/b/K0v1GxHFcASTYz3jS',NULL,'2025-08-05 14:44:36','2026-01-09 05:33:03',NULL,false,'admin'),
+	 ('John Light','dev.johnlight@gmail.com',NULL,'$2y$12$CZ0gESil83q/0FswoJQiZeIAAft0lVwP7LJ1gZ7UIXxYiiFnBtCQi','Gz5EGKESSE8CsYnoR5AMeCPNZxumS7XDORsjVlOH6TyDXptXbi6iJ7hmNTfP','2025-08-05 07:19:52','2025-08-05 07:19:52',NULL,true,NULL),
+	 ('Ouego','admin.ouego@gmail.com',NULL,'$2y$12$4p/kO3nIwaseASm8SwQwxObE4JJ7we3.QhGapeOE0iYU/Q/mc0bmq','GsYbMomBfnYrLEI5Q2r0yzZm5saIZGIPO3QAQFIeeb4rsOa4ELy3az8Pg3NZ','2025-08-06 07:34:49','2026-02-17 16:32:40',NULL,true,'super-admin'),
+	 ('Adams','adams@ouego.com',NULL,'$2y$12$KUzkeOEcZPzvfK8Sn9M6/uQihy6f1hw617nUhnx3acBKsUUbgSZES',NULL,'2026-02-17 17:49:15','2026-02-17 17:49:15',NULL,true,'super-admin'),
+	 ('Wily demo','wilyperliz@gmail.com',NULL,'$2y$12$w7AsewrMd3BZV3BccNyUle0cYktIXyg1F8O2H07yOOutT0xzL7Wwu','yvtw98VXK5clHlnxwiKQKRLcDkHt1pzNrGtpN2iApJwWGtvGn45zKi0T1p2V','2026-01-13 04:11:53','2026-03-05 10:22:23',NULL,true,'admin'),
+	 ('Wilfried N''Guessan','wilfried.nguessan@ouego.com',NULL,'$2y$12$NmjsPbBknehGMeELE7SCuuS8iq1iJNRcVI05Le9f5zT0DfQ63lj.y','NtseIqq06UQSCEPzPqYg74Vxz8PUXKYMpGD69aVceA40O0O3TQbQIamiHvgI','2026-03-05 10:39:08','2026-03-05 10:39:08',NULL,true,'super-admin');

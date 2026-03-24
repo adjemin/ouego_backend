@@ -1,0 +1,4 @@
+INSERT INTO services ("name",image,description,is_active,slug,deleted_at,created_at,updated_at) VALUES
+	 ('Location',NULL,'Location d''engins',false,'location',NULL,'2026-02-25 23:12:51','2026-03-07 16:22:04'),
+	 ('Course',NULL,'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus eu erat sit amet metus lacinia scelerisque eu eu purus. Nunc sagittis sem venenatis nulla tempor, ultricies placerat nunc bibendum.',true,'course',NULL,'2025-08-05 15:10:46','2026-03-07 18:04:45'),
+	 ('Agrégats construction',NULL,'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus eu erat sit amet metus lacinia scelerisque eu eu purus. Nunc sagittis sem venenatis nulla tempor, ultricies placerat nunc bibendum.',true,'agregats-construction',NULL,'2025-08-05 15:11:34','2026-02-23 22:45:39');

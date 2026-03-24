@@ -14,38 +14,39 @@ class SettingsSeeder extends Seeder
     {
         $settings = [
             // Gravier
-            ['name' => 'GRAVIER_DISTANCE_DE_BASE', 'value' => '0'],
-            ['name' => 'GRAVIER_QUANTITE_DE_BASE', 'value' => '0'],
-            ['name' => 'GRAVIER_PRIX_DE_BASE', 'value' => '0'],
-            ['name' => 'GRAVIER_PRIX_KILOMETRE', 'value' => '0'],
-            ['name' => 'GRAVIER_PRIX_TONNAGE', 'value' => '0'],
-            ['name' => 'GRAVIER_FRAIS_DE_ROUTE', 'value' => '0'],
-            ['name' => 'GRAVIER_COMMISSION_OUEGO', 'value' => '0'],
-            ['name' => 'GRAVIER_COMMISSION_OUEGO_MIN', 'value' => '0'],
+            ['name' => 'GRAVIER_DISTANCE_DE_BASE', 'value' => '45'],
+            ['name' => 'GRAVIER_QUANTITE_DE_BASE', 'value' => '20'],
+            ['name' => 'GRAVIER_PRIX_DE_BASE', 'value' => '55000'],
+            ['name' => 'GRAVIER_PRIX_KILOMETRE', 'value' => '1000'],
+            ['name' => 'GRAVIER_PRIX_TONNAGE', 'value' => '1000'],
+            ['name' => 'GRAVIER_FRAIS_DE_ROUTE', 'value' => '10000'],
+            ['name' => 'GRAVIER_COMMISSION_OUEGO', 'value' => '5000'],
+            ['name' => 'GRAVIER_COMMISSION_OUEGO_MIN', 'value' => '5000'],
 
             // Sable
-            ['name' => 'SABLE_DISTANCE_DE_BASE', 'value' => '0'],
-            ['name' => 'SABLE_PRIX_DE_BASE', 'value' => '0'],
-            ['name' => 'SABLE_PRIX_KILOMETRE', 'value' => '0'],
+            ['name' => 'SABLE_DISTANCE_DE_BASE', 'value' => '5'],
+            ['name' => 'SABLE_PRIX_DE_BASE', 'value' => '20000'],
+            ['name' => 'SABLE_PRIX_KILOMETRE', 'value' => '1000'],
             ['name' => 'SABLE_FRAIS_DE_ROUTE', 'value' => '0'],
-            ['name' => 'SABLE_COMMISSION_OUEGO', 'value' => '0'],
-            ['name' => 'SABLE_COMMISSION_OUEGO_MIN', 'value' => '0'],
+            ['name' => 'SABLE_COMMISSION_OUEGO', 'value' => '5000'],
+            ['name' => 'SABLE_COMMISSION_OUEGO_MIN', 'value' => '5000'],
 
             // Course
-            ['name' => 'COURSE_COMMISSION_OUEGO', 'value' => '0'],
-            ['name' => 'OUEGO_COMMISSION_COURSE_MIN', 'value' => '0'],
-            ['name' => 'FRAIS_ROUTE', 'value' => '0'],
+            ['name' => 'COURSE_COMMISSION_OUEGO', 'value' => '5000'],
+            ['name' => 'OUEGO_COMMISSION_COURSE_MIN', 'value' => '5000'],
+            ['name' => 'FRAIS_ROUTE', 'value' => '3000'],
+            ['name' => 'COMMISSION_COURSE', 'value' => '100'],
 
             // Transport / Location
-            ['name' => 'TRANSPORT_COMMISSION_OUEGO', 'value' => '0'],
-            ['name' => 'LOCATION_COMMISSION_OUEGO', 'value' => '0'],
-            ['name' => 'LOCATION_COMMISSION_OUEGO_MIN', 'value' => '0'],
+            ['name' => 'TRANSPORT_COMMISSION_OUEGO', 'value' => '5000'],
+            ['name' => 'LOCATION_COMMISSION_OUEGO', 'value' => '5000'],
+            ['name' => 'LOCATION_COMMISSION_OUEGO_MIN', 'value' => '5000'],
 
             // Tarification
-            ['name' => 'PRIX_CARBURANT', 'value' => '0'],
-            ['name' => 'CONSO_LITRE', 'value' => '0'],
-            ['name' => 'MARGE_CHAUFFEUR_COURSE', 'value' => '0'],
-            ['name' => 'TAXE', 'value' => '0'],
+            ['name' => 'PRIX_CARBURANT', 'value' => '650'],
+            ['name' => 'CONSO_LITRE', 'value' => '0.15'],
+            ['name' => 'MARGE_CHAUFFEUR_COURSE', 'value' => '200'],
+            ['name' => 'TAXE', 'value' => '0.18'],
 
             // Journée
             ['name' => 'JOURNEE_CUTOFF_HOUR', 'value' => '12'],
