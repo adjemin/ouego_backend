@@ -9,74 +9,83 @@ class ZoneMappingSeeder extends Seeder
 {
     public function run(): void
     {
-        // Build zone name -> id and carrier name -> id maps
-        $zones = DB::table('zones')->pluck('id', 'name');
+        // Mappings définis directement par [nom_zone, nom_carrière]
+        $mappings = [
+            // Abobo
+            ['Abobo',       'ABEILLE CARRIERE MBRAGO'],
+            ['Abobo',       'CMR GRANIT (Carrière)'],
+            // Adjamé
+            ['Adjamé',      'ABEILLE CARRIERE MBRAGO'],
+            ['Adjamé',      'CMR GRANIT (Carrière)'],
+            // Attécoubé
+            ['Attécoubé',   'ABEILLE CARRIERE MBRAGO'],
+            ['Attécoubé',   'CMR GRANIT (Carrière)'],
+            // Bingerville
+            ['Bingerville', 'ABEILLE CARRIERE MBRAGO'],
+            ['Bingerville', 'CMR GRANIT (Carrière)'],
+            // Cocody
+            ['Cocody',      'Abeille Groupe Carrière Bago'],
+            ['Cocody',      'Carrière de granite AMG'],
+            ['Cocody',      'Carrière Diamant noir'],
+            ['Cocody',      'Carrière Diakité'],
+            ['Cocody',      'Carrière PK 36'],
+            ['Cocody',      'Carrière soremi'],
+            ['Cocody',      'soligra ci'],
+            ['Cocody',      'Test Carrière'],
+            ['Cocody',      'Carrière Visitée'],
+            // Koumassi
+            ['Koumassi',    'ABEILLE CARRIERE MBRAGO'],
+            ['Koumassi',    'Carrière Agban CEFAL'],
+            ['Koumassi',    'Carrière Agban Confianza'],
+            ['Koumassi',    'Carrière Agban Primochim'],
+            ['Koumassi',    'Carrière Agban SIDCI'],
+            ['Koumassi',    'Carrière Agban SMCI'],
+            ['Koumassi',    'Carrière Bingerville Anan'],
+            ['Koumassi',    'Carrière démo'],
+            ['Koumassi',    'Carrière Diamant noir'],
+            ['Koumassi',    'Carrière Diakité'],
+            ['Koumassi',    'Carrière soremi'],
+            ['Koumassi',    'soligra ci'],
+            // Marcory
+            ['Marcory',     'Carrière PK 36'],
+            // Plateau
+            ['Plateau',     'CMR GRANIT (Carrière)'],
+            // Port-Bouët
+            ['Port-Bouët',  'ABEILLE CARRIERE MBRAGO'],
+            ['Port-Bouët',  'CMR GRANIT (Carrière)'],
+            // Songon
+            ['Songon',      'ABEILLE CARRIERE MBRAGO'],
+            ['Songon',      'CMR GRANIT (Carrière)'],
+            // Treichville
+            ['Treichville', 'ABEILLE CARRIERE MBRAGO'],
+            ['Treichville', 'Carrière Agban CEFAL'],
+            ['Treichville', 'Carrière Agban Confianza'],
+            ['Treichville', 'Carrière Agban Primochim'],
+            ['Treichville', 'Carrière Agban SIDCI'],
+            ['Treichville', 'Carrière Agban SMCI'],
+            ['Treichville', 'Carrière Bingerville Anan'],
+            ['Treichville', 'Carrière démo'],
+            ['Treichville', 'Carrière Diamant noir'],
+            ['Treichville', 'Carrière Diakité'],
+            ['Treichville', 'Carrière soremi'],
+            ['Treichville', 'CMR GRANIT (Carrière)'],
+            ['Treichville', 'soligra ci'],
+            ['Treichville', 'Test Carrière'],
+            // Yopougon
+            ['Yopougon',    'ABEILLE CARRIERE MBRAGO'],
+            ['Yopougon',    'CMR GRANIT (Carrière)'],
+        ];
+
+        // Récupérer les IDs depuis la BD par nom
+        $zones    = DB::table('zones')->pluck('id', 'name');
         $carriers = DB::table('carriers')->pluck('id', 'name');
 
-        // Mapping from dump (zone_id order matches zone insertion order)
-        // zone_id 1=Cocody, 2=Koumassi, 3=Treichville, 4=Adjamé, 5=Yopougon, 6=Plateau,
-        // 7=Attécoubé, 8=Marcory, 9=Bingerville, 10=Port-Bouët, 11=Abobo, 12=Songon
-        $zoneIdToName = [
-            1 => 'Cocody',
-            2 => 'Koumassi',
-            3 => 'Treichville',
-            4 => 'Adjamé',
-            5 => 'Yopougon',
-            6 => 'Plateau',
-            7 => 'Attécoubé',
-            8 => 'Marcory',
-            9 => 'Bingerville',
-            10 => 'Port-Bouët',
-            14 => 'Abobo',
-            19 => 'Songon',
-        ];
-
-        // carrier_id order matches carriers insertion order
-        $carrierIdToName = [
-            2  => 'Carrière PK 36',
-            3  => 'Carrière de granite AMG',
-            4  => 'Carrière Visitée',
-            5  => 'Abeille Groupe Carrière Bago',
-            6  => 'CMR GRANIT (Carrière)',
-            7  => 'ABEILLE CARRIERE MBRAGO',
-            8  => 'Carrière soremi',
-            10 => 'soligra ci',
-            16 => 'Carrière Diamant noir',
-            17 => 'Carrière Diakité',
-            20 => 'Carrière Agban SIDCI',
-            21 => 'Carrière Bingerville Anan',
-            22 => 'Carrière Agban SMCI',
-            23 => 'Carrière Agban Confianza',
-            24 => 'Carrière Agban Primochim',
-            27 => 'Carrière Agban CEFAL',
-            29 => 'Carrière démo',
-            30 => 'Test Carrière',
-        ];
-
-        $mappings = [
-            [1, 2], [1, 4], [1, 5], [3, 16], [2, 16], [1, 16],
-            [2, 17], [1, 17], [3, 17], [2, 10], [3, 10], [1, 10],
-            [2, 8], [3, 8], [1, 8], [2, 21], [3, 21], [2, 22],
-            [3, 22], [2, 23], [3, 23], [2, 24], [3, 24], [1, 3],
-            [4, 6], [10, 6], [5, 6], [6, 6], [7, 6], [4, 7],
-            [10, 7], [9, 7], [7, 7], [5, 7], [9, 6], [8, 2],
-            [3, 20], [2, 20], [3, 27], [2, 27], [14, 7], [19, 7],
-            [14, 6], [19, 6], [3, 6], [2, 7], [3, 7], [2, 29],
-            [3, 29], [3, 30], [1, 30],
-        ];
-
-        foreach ($mappings as [$dumpZoneId, $dumpCarrierId]) {
-            $zoneName = $zoneIdToName[$dumpZoneId] ?? null;
-            $carrierName = $carrierIdToName[$dumpCarrierId] ?? null;
-
-            if (!$zoneName || !$carrierName) {
-                continue;
-            }
-
-            $zoneId = $zones[$zoneName] ?? null;
+        foreach ($mappings as [$zoneName, $carrierName]) {
+            $zoneId    = $zones[$zoneName] ?? null;
             $carrierId = $carriers[$carrierName] ?? null;
 
             if (!$zoneId || !$carrierId) {
+                $this->command->warn("Introuvable : zone=\"{$zoneName}\" carrière=\"{$carrierName}\"");
                 continue;
             }
 
@@ -87,7 +96,7 @@ class ZoneMappingSeeder extends Seeder
 
             if (!$exists) {
                 DB::table('zone_mapping')->insert([
-                    'zone_id' => $zoneId,
+                    'zone_id'    => $zoneId,
                     'carrier_id' => $carrierId,
                 ]);
             }

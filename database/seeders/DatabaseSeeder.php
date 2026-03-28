@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             DeliveryObjectsSeeder::class,
             SettingsSeeder::class,
             UsersSeeder::class,
+            CustomerProfilesSeeder::class,
+            PaymentMethodsSeeder::class,
 
             // Products (no dependencies)
             ProductsSeeder::class,

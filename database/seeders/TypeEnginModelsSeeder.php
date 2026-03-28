@@ -516,7 +516,12 @@ class TypeEnginModelsSeeder extends Seeder
             ],
         ];
 
+        $typeEnginSlugs = DB::table('type_engins')->pluck('slug')->toArray();
         foreach ($models as $model) {
+            if (!in_array($model['type_engin_slug'], $typeEnginSlugs)) {
+                continue;
+            }
+            
             DB::table('type_engin_models')->updateOrInsert(
                 ['slug' => $model['slug']],
                 $model
