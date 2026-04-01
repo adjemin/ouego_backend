@@ -54,10 +54,10 @@ class SendTestPushNotificationJob
 
             foreach ($driverDevices as $device) {
 
-                $jsonPath = base_path('storage/app/firebase/ouego-pro-firebase-adminsdk-fbsvc-346d746dfe.json');
+                $serviceAccount =  config('firebase.ouego.pro');
 
                 $factory = (new Factory)
-                ->withServiceAccount($jsonPath);
+                ->withServiceAccount($serviceAccount);
 
             $messaging = $factory->createMessaging();
 
