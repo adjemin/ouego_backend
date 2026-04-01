@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805
+class ComposerStaticInita26541c51c0be933038c8e3e2e219754
 {
     public static $files = array (
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
@@ -1009,7 +1009,7 @@ class ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805
         'App\\Jobs\\NotifyDriverForOrder' => __DIR__ . '/../..' . '/app/Jobs/NotifyDriverForOrder.php',
         'App\\Jobs\\ProcessPendingOrderAssignments' => __DIR__ . '/../..' . '/app/Jobs/ProcessPendingOrderAssignments.php',
         'App\\Jobs\\SendPushCustomerNotification' => __DIR__ . '/../..' . '/app/Jobs/SendPushCustomerNotification.php',
-        'App\\Jobs\\SendPushNotification' => __DIR__ . '/../..' . '/app/Jobs/SendPushNotification.php',
+        'App\\Jobs\\SendPushNotificationDriver' => __DIR__ . '/../..' . '/app/Jobs/SendPushNotificationDriver.php',
         'App\\Jobs\\SendTestPushNotificationJob' => __DIR__ . '/../..' . '/app/Jobs/SendTestPushNotificationJob.php',
         'App\\Listeners\\SendCustomerPushNotification' => __DIR__ . '/../..' . '/app/Listeners/SendCustomerPushNotification.php',
         'App\\Listeners\\SendOrderAssignmentNotification' => __DIR__ . '/../..' . '/app/Listeners/SendOrderAssignmentNotification.php',
@@ -1684,8 +1684,21 @@ class ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805
         'Database\\Factories\\OrderInvitationFactory' => __DIR__ . '/../..' . '/database/factories/OrderInvitationFactory.php',
         'Database\\Factories\\TripRequestFactory' => __DIR__ . '/../..' . '/database/factories/TripRequestFactory.php',
         'Database\\Factories\\UserFactory' => __DIR__ . '/../..' . '/database/factories/UserFactory.php',
+        'Database\\Seeders\\CarriersSeeder' => __DIR__ . '/../..' . '/database/seeders/CarriersSeeder.php',
+        'Database\\Seeders\\CustomerProfilesSeeder' => __DIR__ . '/../..' . '/database/seeders/CustomerProfilesSeeder.php',
         'Database\\Seeders\\DatabaseSeeder' => __DIR__ . '/../..' . '/database/seeders/DatabaseSeeder.php',
+        'Database\\Seeders\\DeliveryObjectsSeeder' => __DIR__ . '/../..' . '/database/seeders/DeliveryObjectsSeeder.php',
+        'Database\\Seeders\\DeliveryTypesSeeder' => __DIR__ . '/../..' . '/database/seeders/DeliveryTypesSeeder.php',
+        'Database\\Seeders\\PaymentMethodsSeeder' => __DIR__ . '/../..' . '/database/seeders/PaymentMethodsSeeder.php',
+        'Database\\Seeders\\ProductTypesSeeder' => __DIR__ . '/../..' . '/database/seeders/ProductTypesSeeder.php',
+        'Database\\Seeders\\ProductsSeeder' => __DIR__ . '/../..' . '/database/seeders/ProductsSeeder.php',
+        'Database\\Seeders\\ServicesSeeder' => __DIR__ . '/../..' . '/database/seeders/ServicesSeeder.php',
         'Database\\Seeders\\SettingsSeeder' => __DIR__ . '/../..' . '/database/seeders/SettingsSeeder.php',
+        'Database\\Seeders\\TypeEnginModelsSeeder' => __DIR__ . '/../..' . '/database/seeders/TypeEnginModelsSeeder.php',
+        'Database\\Seeders\\TypeEnginsSeeder' => __DIR__ . '/../..' . '/database/seeders/TypeEnginsSeeder.php',
+        'Database\\Seeders\\UsersSeeder' => __DIR__ . '/../..' . '/database/seeders/UsersSeeder.php',
+        'Database\\Seeders\\ZoneMappingSeeder' => __DIR__ . '/../..' . '/database/seeders/ZoneMappingSeeder.php',
+        'Database\\Seeders\\ZonesSeeder' => __DIR__ . '/../..' . '/database/seeders/ZonesSeeder.php',
         'DateError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateError.php',
         'DateException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateException.php',
         'DateInvalidOperationException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateInvalidOperationException.php',
@@ -11859,10 +11872,10 @@ class ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInita26541c51c0be933038c8e3e2e219754::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInita26541c51c0be933038c8e3e2e219754::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInita26541c51c0be933038c8e3e2e219754::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInita26541c51c0be933038c8e3e2e219754::$classMap;
 
         }, null, ClassLoader::class);
     }
