@@ -54,14 +54,6 @@ class PricingUtils{
         //PRIX KILOMETRE (>45 km)
         $prix_kilometre = doubleval(Setting::get('SABLE_PRIX_KILOMETRE'));
 
-
-        // PRIX QUANTITE DE BASE (T)
-        $quantitte_base = doubleval(Setting::get('GRAVIER_QUANTITE_DE_BASE'));
-
-        // PRIX PAR TONNAGE
-        $prix_tonnage = doubleval(Setting::get('GRAVIER_PRIX_TONNAGE'));
-
-
         //FRAIS_DE_ROUTE
         $frais_route = doubleval(Setting::get('SABLE_FRAIS_DE_ROUTE'));
 
