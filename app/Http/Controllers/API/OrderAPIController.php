@@ -496,6 +496,11 @@ class OrderAPIController extends AppBaseController
                     $commission = doubleval(Setting::get('SABLE_COMMISSION_OUEGO'));
                 }
 
+                if($product->slug == Product::CIMENT_SLUG){
+                    $commission_min = doubleval(Setting::get('CIMENT_COMMISSION_OUEGO_MIN'));
+                    $commission = doubleval(Setting::get('CIMENT_COMMISSION_OUEGO'));
+                }
+
                 $service_due =  $commission;
                 if($service_due < $commission_min){
                     $service_due = $commission_min;
@@ -2196,6 +2201,201 @@ class OrderAPIController extends AppBaseController
             if ($now->lt($start) || $now->gt($end)) {
                 $isAvailable = false;
                 $message = "L’option Course De nuit est disponible uniquement de 07H00 à 19H30.";
+            }
+        }
+
+        return $this->sendResponse([
+            'carrier' => $carrier,
+            'amount' => $amount,
+            'amount_with_discount' => max(0, $amount - $commercialDiscount['discount']),
+            'discount' => $commercialDiscount['discount'],
+            'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
+            'distance' => $distance,
+            'duration' => $duration,
+            'delivery_type' => $delivery_type_code,
+            'is_available' => $isAvailable,
+            'error_message' => $message
+        ], 'Order saved successfully');
+
+    }catch (\Exception $e){
+        return $this->sendError($e->getMessage(), 400);
+    }
+
+   }
+
+   public function estimateDeliveryPriceCiment(Request $request){
+
+    /**
+     *
+      {
+        "service_slug":"agregats-construction",
+        "meta_data":{
+            "product_type_slug":"ciment-portland",
+            "product_slug":"ciment",
+            "delivery_type_code":"EXPRESS"
+        },
+        "quantity":3,
+        "route_points":[
+            {
+                "address_name":"Pharmacie Sainte Monique du plateau dokui, Abidjan, Côte d'ivoire",
+                "latitude":5.3994128,
+                "longitude":-3.9999536,
+                "type":"destination",
+                "parcel_details":"",
+                "contact_fullname": "string",
+                "contact_phone":"string",
+                "contact_email":""
+            }
+        ]
+      }
+     *
+     */
+
+    try{
+        if(!array_key_exists('meta_data', $request->all())){
+            return $this->sendError('meta_data is required', 400);
+        }
+
+        if(!array_key_exists('quantity', $request->all())){
+            return $this->sendError('quantity is required', 400);
+        }
+
+        if(!array_key_exists('route_points', $request->all())){
+            return $this->sendError('route_points is required', 400);
+        }
+
+        $quantity = $request->input('quantity');
+        $meta_data = $request->input('meta_data');
+        $route_points = $request->input('route_points');
+
+        if(!is_array($meta_data)){
+            $meta_data = (array) $meta_data;
+        }
+
+        if(!is_array($route_points)){
+            $route_points = (array) $route_points;
+        }
+
+        if(!array_key_exists('product_type_slug',$meta_data)){
+            return $this->sendError('product_type_slug is required', 400);
+        }
+
+        if(!array_key_exists('product_slug',$meta_data)){
+            return $this->sendError('product_slug is required', 400);
+        }
+
+        if(!array_key_exists('delivery_type_code',$meta_data)){
+            return $this->sendError('delivery_type_code is required', 400);
+        }
+
+        $delivery_type_code = $meta_data['delivery_type_code'];
+
+        $source_list = collect([]);
+        $destination_list = collect([]);
+
+        foreach ($route_points as $route_point_item){
+            if(!is_array($route_point_item)){
+                $route_point_item = (array)$route_point_item;
+            }
+
+            $route_point_item_type = array_key_exists('type', $route_point_item)?$route_point_item['type']:null;
+
+            if($route_point_item_type == 'source'){
+                $source_list->push($route_point_item);
+            }
+
+            if($route_point_item_type == 'destination'){
+                $destination_list->push($route_point_item);
+            }
+        }
+
+        $destination_point = $destination_list->last();
+
+        $latitude = $destination_point['latitude'];
+        $longitude = $destination_point['longitude'];
+
+        $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
+
+        if(count($carriers)==0){
+            return $this->sendError('Désolé, aucune carrière à proximité trouvé', 400);
+        }
+
+        $carrier = $carriers->first();
+
+        $source_point = [
+            "latitude" => $carrier->location_latitude,
+            "longitude" =>  $carrier->location_longitude,
+        ];
+
+        $result = GoogleMapsAPIUtils::getDistance([
+            $source_point['latitude'],
+            $source_point['longitude']
+        ],[
+            $destination_point['latitude'],
+            $destination_point['longitude']
+        ]);
+
+        $current_distance = 0;
+        $distance= "";
+
+        if(array_key_exists('distance',$result)){
+            $result_distance = $result['distance'];
+            $result_distance_value = $result_distance['value'];
+            $current_distance = $result_distance_value/1000;
+            $current_distance = intval($current_distance);
+            $distance = $result_distance['text'];
+        }
+
+        $duration = "";
+
+        if(array_key_exists('duration',$result)){
+            $result_duration = $result['duration'];
+            $duration = $result_duration['text'];
+        }
+
+        $customer = auth('api-customers')->user();
+        $commercialDiscount = $this->getCommercialDiscount($customer);
+        $amount = PricingUtils::transportCiment($current_distance, $quantity, $delivery_type_code);
+
+        $now = now();
+        $isAvailable = true;
+        $message = null;
+        if($delivery_type_code == DeliveryType::TYPE_EXPRESS){
+            $start_morning = $now->copy()->setTime(6, 0);
+            $end_morning   = $now->copy()->setTime(8, 59);
+            $start_evening = $now->copy()->setTime(17, 0);
+            $end_envening   = $now->copy()->setTime(19, 59);
+
+            if ($now->gte($start_morning) && $now->lte($end_morning) || $now->gte($start_evening) && $now->lte($end_envening)) {
+                $isAvailable = false;
+                $message = "L'option Course Express est n'est pas disponible de de 06H00 à 08H59 et de 17H00 à 19H30.";
+            }
+        }
+
+        if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+            if(now()->hour < 6 || now()->hour > $cutoffHour){
+                $isAvailable = false;
+                $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+            }
+        }
+
+        if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            $dayOfWeekIso = now()->dayOfWeekIso;
+            if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                $isAvailable = false;
+                $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+            }
+        }
+
+        if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
+            $now = now();
+            $start = $now->copy()->setTime(7, 0);
+            $end   = $now->copy()->setTime(19, 30);
+
+            if ($now->lt($start) || $now->gt($end)) {
+                $isAvailable = false;
+                $message = "L'option Course De nuit est disponible uniquement de 07H00 à 19H30.";
             }
         }
 

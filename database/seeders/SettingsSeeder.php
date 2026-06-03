@@ -23,6 +23,16 @@ class SettingsSeeder extends Seeder
             ['name' => 'GRAVIER_COMMISSION_OUEGO', 'value' => '0'],
             ['name' => 'GRAVIER_COMMISSION_OUEGO_MIN', 'value' => '0'],
 
+            // Ciment
+            ['name' => 'CIMENT_DISTANCE_DE_BASE', 'value' => '0'],
+            ['name' => 'CIMENT_QUANTITE_DE_BASE', 'value' => '0'],
+            ['name' => 'CIMENT_PRIX_DE_BASE', 'value' => '0'],
+            ['name' => 'CIMENT_PRIX_KILOMETRE', 'value' => '0'],
+            ['name' => 'CIMENT_PRIX_TONNAGE', 'value' => '0'],
+            ['name' => 'CIMENT_FRAIS_DE_ROUTE', 'value' => '0'],
+            ['name' => 'CIMENT_COMMISSION_OUEGO', 'value' => '0'],
+            ['name' => 'CIMENT_COMMISSION_OUEGO_MIN', 'value' => '0'],
+
             // Sable
             ['name' => 'SABLE_DISTANCE_DE_BASE', 'value' => '0'],
             ['name' => 'SABLE_PRIX_DE_BASE', 'value' => '0'],
