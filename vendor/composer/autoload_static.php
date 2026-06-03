@@ -1009,7 +1009,7 @@ class ComposerStaticInitefc5d2190cb04ac8d25856e9069ce805
         'App\\Jobs\\NotifyDriverForOrder' => __DIR__ . '/../..' . '/app/Jobs/NotifyDriverForOrder.php',
         'App\\Jobs\\ProcessPendingOrderAssignments' => __DIR__ . '/../..' . '/app/Jobs/ProcessPendingOrderAssignments.php',
         'App\\Jobs\\SendPushCustomerNotification' => __DIR__ . '/../..' . '/app/Jobs/SendPushCustomerNotification.php',
-        'App\\Jobs\\SendPushNotification' => __DIR__ . '/../..' . '/app/Jobs/SendPushNotification.php',
+        'App\\Jobs\\SendPushNotificationDriver' => __DIR__ . '/../..' . '/app/Jobs/SendPushNotificationDriver.php',
         'App\\Jobs\\SendTestPushNotificationJob' => __DIR__ . '/../..' . '/app/Jobs/SendTestPushNotificationJob.php',
         'App\\Listeners\\SendCustomerPushNotification' => __DIR__ . '/../..' . '/app/Listeners/SendCustomerPushNotification.php',
         'App\\Listeners\\SendOrderAssignmentNotification' => __DIR__ . '/../..' . '/app/Listeners/SendOrderAssignmentNotification.php',

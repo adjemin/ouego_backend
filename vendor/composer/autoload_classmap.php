@@ -201,7 +201,7 @@ return array(
     'App\\Jobs\\NotifyDriverForOrder' => $baseDir . '/app/Jobs/NotifyDriverForOrder.php',
     'App\\Jobs\\ProcessPendingOrderAssignments' => $baseDir . '/app/Jobs/ProcessPendingOrderAssignments.php',
     'App\\Jobs\\SendPushCustomerNotification' => $baseDir . '/app/Jobs/SendPushCustomerNotification.php',
-    'App\\Jobs\\SendPushNotification' => $baseDir . '/app/Jobs/SendPushNotification.php',
+    'App\\Jobs\\SendPushNotificationDriver' => $baseDir . '/app/Jobs/SendPushNotificationDriver.php',
     'App\\Jobs\\SendTestPushNotificationJob' => $baseDir . '/app/Jobs/SendTestPushNotificationJob.php',
     'App\\Listeners\\SendCustomerPushNotification' => $baseDir . '/app/Listeners/SendCustomerPushNotification.php',
     'App\\Listeners\\SendOrderAssignmentNotification' => $baseDir . '/app/Listeners/SendOrderAssignmentNotification.php',
