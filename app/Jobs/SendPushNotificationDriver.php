@@ -51,11 +51,10 @@ class SendPushNotificationDriver
                 'attempt_count' => 1,
                 'status' => 'PENDING'
             ]);
-            //
-            $jsonPath = base_path('storage/app/firebase/ouego-pro-firebase-adminsdk-fbsvc-346d746dfe.json');
 
-                $factory = (new Factory)
-                ->withServiceAccount($jsonPath);
+            $serviceAccount = config('firebase.ouego.pro');
+            $factory = (new Factory)
+                ->withServiceAccount($serviceAccount);
 
             $messaging = $factory->createMessaging();
 

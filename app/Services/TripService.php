@@ -119,6 +119,8 @@ class TripService
     private function createDriverInvitations(TripRequest $tripRequest, array $drivers, $order_id): void
     {
         foreach ($drivers as $index => $driver_id) {
+            $driver = Driver::find($driver_id);
+
             OrderInvitation::create([
                 'driver_id' => $driver_id,
                 'order_id' => $order_id,
@@ -126,8 +128,8 @@ class TripService
                 'is_waiting_acceptation' => true,
                 'acceptation_time' => null,
                 'rejection_time' => null,
-                'latitude' => null,
-                'longitude' => null,
+                'latitude' => $driver->last_location_latitude??null,
+                'longitude' => $driver->last_location_longitude??null,
                 'attempt_number' => 0,
                 'index' => $index,
                 'status' => TripDriverAttempt::PENDING,

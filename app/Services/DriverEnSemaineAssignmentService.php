@@ -69,8 +69,8 @@ class DriverEnSemaineAssignmentService
                         'is_waiting_acceptation' => true,
                         'acceptation_time' => null,
                         'rejection_time' => null,
-                        'latitude' => null,
-                        'longitude' => null
+                        'latitude' => $driver->last_location_latitude??null,
+                        'longitude' => $driver->last_location_longitude??null,
                     ]);
                 }
     
@@ -133,6 +133,7 @@ class DriverEnSemaineAssignmentService
 
 
             foreach($nearestDriverIds as $driverId){
+                $driver = Driver::find($driverId);
                 $orderInvitation = OrderInvitation::where([
                     'driver_id' => $driverId,
                     'order_id' => $order->id,
@@ -145,8 +146,8 @@ class DriverEnSemaineAssignmentService
                         'is_waiting_acceptation' => true,
                         'acceptation_time' => null,
                         'rejection_time' => null,
-                        'latitude' => null,
-                        'longitude' => null
+                        'latitude' => $driver->last_location_latitude??null,
+                        'longitude' => $driver->last_location_longitude??null
                     ]);
                 }
     

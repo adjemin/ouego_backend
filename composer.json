@@ -11,7 +11,7 @@
         "guzzlehttp/guzzle": "^7.2",
         "infyomlabs/adminlte-templates": "^6.0",
         "infyomlabs/laravel-generator": "^6.0",
-        "kreait/firebase-php": "^7.0",
+        "kreait/firebase-php": "^7.24",
         "kreait/laravel-firebase": "^5.9",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
