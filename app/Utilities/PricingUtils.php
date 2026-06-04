@@ -42,6 +42,36 @@ class PricingUtils{
 
     }
 
+    public static function transportCiment($distance, $quantity, $delivery_type){
+
+        $distance_de_base = doubleval(Setting::get('CIMENT_DISTANCE_DE_BASE'));
+        $quantite_de_base = doubleval(Setting::get('CIMENT_QUANTITE_DE_BASE'));
+        $prix_de_base = doubleval(Setting::get('CIMENT_PRIX_DE_BASE'));
+        $prix_kilometre = doubleval(Setting::get('CIMENT_PRIX_KILOMETRE'));
+        $prix_tonnage = doubleval(Setting::get('CIMENT_PRIX_TONNAGE'));
+        $frais_route = doubleval(Setting::get('CIMENT_FRAIS_DE_ROUTE'));
+        $commission_ouego = doubleval(Setting::get('CIMENT_COMMISSION_OUEGO'));
+
+        $amount = $prix_de_base + (MAX(0, ($distance - $distance_de_base)) * $prix_kilometre) + (MAX(0, ($quantity - $quantite_de_base)) * $prix_tonnage) + $frais_route + $commission_ouego;
+
+        $amount = self::round_up($amount, 100);
+
+        if($delivery_type == "EXPRESS"){
+            $amount = $amount;
+        }else if($delivery_type == "en-journee"){
+            $amount = $amount / 2;
+        }else if($delivery_type == "de-nuit"){
+            $amount = $amount + $amount * 1.5;
+        }else if($delivery_type == "en-semaine"){
+            $amount = $amount / 3;
+        }else{
+            $amount = $amount;
+        }
+
+        return self::round_up($amount, 100);
+
+    }
+
     public static function transportSable($distance, $delivery_type){
 
         //DISTANCE DE BASE (KM)
