@@ -449,6 +449,25 @@ class OrderAPIController extends AppBaseController
                     return $this->sendError('pricing est requis pour le sable', 400);
                 }
 
+                if($product->slug == Product::SABLE_SLUG){
+                    $pricing = $meta_data['pricing'];
+                    if(!is_array($pricing)){
+                        $pricing = (array) $pricing;
+                    }
+
+                    if(
+                        !array_key_exists('price', $pricing) ||
+                        !array_key_exists('roues', $pricing) ||
+                        !is_numeric($pricing['price']) ||
+                        !is_numeric($pricing['roues']) ||
+                        doubleval($pricing['price']) <= 0 ||
+                        intval($pricing['roues']) <= 0
+                    ){
+                        $order->forceDelete();
+                        return $this->sendError('pricing invalide pour le sable', 400);
+                    }
+                }
+
 
                 $quantity = intval($item['quantity']);
 
@@ -466,6 +485,12 @@ class OrderAPIController extends AppBaseController
                     $order_price = $quantity * $unit_price;
                 }
 
+                if($product->slug == Product::CIMENT_SLUG){
+                    $unit_price = doubleval($productType->price);
+
+                    $order_price = $quantity * $unit_price;
+                }
+
 
                 if($product->slug == Product::SABLE_SLUG && array_key_exists('pricing', $meta_data)){
                     $pricing = $meta_data['pricing'];
@@ -473,11 +498,11 @@ class OrderAPIController extends AppBaseController
                     if(!is_array($pricing)){
                         $pricing = (array) $meta_data['pricing'];
                     }
-                    $unit_price = $pricing['price'];
+                    $unit_price = doubleval($pricing['price']);
 
-                    $order_price = $pricing['price'];
+                    $order_price = doubleval($pricing['price']);
 
-                    $quantity = $pricing['roues'];
+                    $quantity = intval($pricing['roues']);
                 }
 
 
