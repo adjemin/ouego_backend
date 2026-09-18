@@ -141,20 +141,20 @@ class OrderAPIController extends AppBaseController
 
             // Limiter la course en journée à partir de 12H
             // Restriction horaire en journée désactivée temporairement
-            // if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
-            //     $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
-            //     if(now()->hour < 6 || now()->hour > $cutoffHour){
-            //         return $this->sendError("Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.");
-            //     }
-            // }
-
-            // Limiter la course en semaine uniquement du lundi au jeudi
-            if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
-                $dayOfWeekIso = now()->dayOfWeekIso;
-                if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
-                    return $this->sendError("Les courses en semaine ne peuvent être lancées que du lundi au jeudi.");
+            if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+                $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+                if(now()->hour < 6 || now()->hour > $cutoffHour){
+                    return $this->sendError("Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.");
                 }
             }
+
+            // Limiter la course en semaine uniquement du lundi au jeudi
+            // if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            //     $dayOfWeekIso = now()->dayOfWeekIso;
+            //     if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+            //         return $this->sendError("Les courses en semaine ne peuvent être lancées que du lundi au jeudi.");
+            //     }
+            // }
 
             if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
                 $now = now();
