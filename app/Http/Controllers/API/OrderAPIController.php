@@ -1225,13 +1225,13 @@ class OrderAPIController extends AppBaseController
                 // Limiter la course en semaine uniquement du lundi au jeudi
                 $isEnSemaineAvailable = true;
                 $enSemaineErrorMessage = null;
-                if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
-                    $dayOfWeekIso = now()->dayOfWeekIso;
-                    if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
-                        $isEnSemaineAvailable = false;
-                        $enSemaineErrorMessage = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
-                    }
-                }
+                // if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+                    // $dayOfWeekIso = now()->dayOfWeekIso;
+                    // if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                        // $isEnSemaineAvailable = false;
+                        // $enSemaineErrorMessage = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+                    // }
+                // }
                 $sameWeekPricing = [
                     "distance" => $current_distance,
                     "duration" => $duration,
@@ -1576,13 +1576,13 @@ class OrderAPIController extends AppBaseController
         // Limiter la course en semaine uniquement du lundi au jeudi
         $isEnSemaineAvailable = true;
         $enSemaineErrorMessage = null;
-        if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
-            $dayOfWeekIso = now()->dayOfWeekIso;
-            if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
-                $isEnSemaineAvailable = false;
-                $enSemaineErrorMessage = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
-            }
-        }
+        // if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            // $dayOfWeekIso = now()->dayOfWeekIso;
+            // if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                // $isEnSemaineAvailable = false;
+                // $enSemaineErrorMessage = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+            // }
+        // }
 
         $sameWeekPricing = [
             "distance" => $current_distance,
@@ -2000,13 +2000,13 @@ class OrderAPIController extends AppBaseController
         // }
 
         // Limiter la course en semaine uniquement du lundi au jeudi
-        if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
-            $dayOfWeekIso = now()->dayOfWeekIso;
-            if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
-                $isAvailable = false;
-                $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
-            }
-        }
+        // if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            // $dayOfWeekIso = now()->dayOfWeekIso;
+            // if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                // $isAvailable = false;
+                // $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+            // }
+        // }
 
         if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
             $now = now();
@@ -2215,13 +2215,13 @@ class OrderAPIController extends AppBaseController
         // }
 
         // Limiter la course en semaine uniquement du lundi au jeudi
-        if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
-            $dayOfWeekIso = now()->dayOfWeekIso;
-            if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
-                $isAvailable = false;
-                $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
-            }
-        }
+        // if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            // $dayOfWeekIso = now()->dayOfWeekIso;
+            // if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                // $isAvailable = false;
+                // $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+            // }
+        // }
 
         if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
             $now = now();
@@ -2411,13 +2411,13 @@ class OrderAPIController extends AppBaseController
         //     }
         // }
 
-        if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
-            $dayOfWeekIso = now()->dayOfWeekIso;
-            if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
-                $isAvailable = false;
-                $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
-            }
-        }
+        // if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            // $dayOfWeekIso = now()->dayOfWeekIso;
+            // if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                // $isAvailable = false;
+                // $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+            // }
+        // }
 
         if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
             $now = now();
@@ -2626,13 +2626,13 @@ class OrderAPIController extends AppBaseController
         // }
 
         // Limiter la course en semaine uniquement du lundi au jeudi
-        if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
-            $dayOfWeekIso = now()->dayOfWeekIso;
-            if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
-                $isAvailable = false;
-                $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
-            }
-        }
+        // if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
+            // $dayOfWeekIso = now()->dayOfWeekIso;
+            // if (!in_array($dayOfWeekIso, [1, 2, 3, 4], true)) {
+                // $isAvailable = false;
+                // $message = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+            // }
+        // }
 
         if($delivery_type_code == DeliveryType::TYPE_DE_NUIT){
             $now = now();
