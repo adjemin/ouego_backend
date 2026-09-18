@@ -140,12 +140,13 @@ class OrderAPIController extends AppBaseController
             // }
 
             // Limiter la course en journée à partir de 12H
-            if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
-                $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
-                if(now()->hour < 6 || now()->hour > $cutoffHour){
-                    return $this->sendError("Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.");
-                }
-            }
+            // Restriction horaire en journée désactivée temporairement
+            // if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+            //     $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+            //     if(now()->hour < 6 || now()->hour > $cutoffHour){
+            //         return $this->sendError("Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.");
+            //     }
+            // }
 
             // Limiter la course en semaine uniquement du lundi au jeudi
             if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
@@ -1172,13 +1173,14 @@ class OrderAPIController extends AppBaseController
                 // Limiter la course en journée à partir de 12H
                 $isJourneeAvailable = true;
                 $journeeErrorMessage = null;
-                if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
-                    $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
-                    if(now()->hour < 6 || now()->hour > $cutoffHour){
-                        $isJourneeAvailable = false;
-                        $journeeErrorMessage = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
-                    }
-                }
+                // Restriction horaire en journée désactivée temporairement
+                // if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+                //     $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+                //     if(now()->hour < 6 || now()->hour > $cutoffHour){
+                //         $isJourneeAvailable = false;
+                //         $journeeErrorMessage = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+                //     }
+                // }
 
                 $sameDayPricing = [
                     "distance" => $current_distance,
@@ -1523,13 +1525,14 @@ class OrderAPIController extends AppBaseController
         // Limiter la course en journée à partir de 12H
         $isJourneeAvailable = true;
         $journeeErrorMessage = null;
-        if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
-            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
-            if(now()->hour < 6 || now()->hour > $cutoffHour){
-                $isJourneeAvailable = false;
-                $journeeErrorMessage = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
-            }
-        }
+        // Restriction horaire en journée désactivée temporairement
+        // if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+        //     $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+        //     if(now()->hour < 6 || now()->hour > $cutoffHour){
+        //         $isJourneeAvailable = false;
+        //         $journeeErrorMessage = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+        //     }
+        // }
         $sameDayPricing = [
             "distance" => $current_distance,
             "duration" => $duration,
@@ -1987,13 +1990,14 @@ class OrderAPIController extends AppBaseController
         }
 
         // Limiter la course en journée à partir de 12H
-        if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
-            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
-            if(now()->hour < 6 || now()->hour > $cutoffHour){
-                $isAvailable = false;
-                $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
-            }
-        }
+        // Restriction horaire en journée désactivée temporairement
+        // if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+        //     $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+        //     if(now()->hour < 6 || now()->hour > $cutoffHour){
+        //         $isAvailable = false;
+        //         $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+        //     }
+        // }
 
         // Limiter la course en semaine uniquement du lundi au jeudi
         if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
@@ -2201,13 +2205,14 @@ class OrderAPIController extends AppBaseController
         }
 
         // Limiter la course en journée à partir de 12H
-        if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
-            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
-            if(now()->hour < 6 || now()->hour > $cutoffHour){
-                $isAvailable = false;
-                $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
-            }
-        }
+        // Restriction horaire en journée désactivée temporairement
+        // if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+        //     $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+        //     if(now()->hour < 6 || now()->hour > $cutoffHour){
+        //         $isAvailable = false;
+        //         $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+        //     }
+        // }
 
         // Limiter la course en semaine uniquement du lundi au jeudi
         if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
@@ -2397,13 +2402,14 @@ class OrderAPIController extends AppBaseController
             }
         }
 
-        if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
-            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
-            if(now()->hour < 6 || now()->hour > $cutoffHour){
-                $isAvailable = false;
-                $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
-            }
-        }
+        // Restriction horaire en journée désactivée temporairement
+        // if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+        //     $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+        //     if(now()->hour < 6 || now()->hour > $cutoffHour){
+        //         $isAvailable = false;
+        //         $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+        //     }
+        // }
 
         if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
             $dayOfWeekIso = now()->dayOfWeekIso;
@@ -2610,13 +2616,14 @@ class OrderAPIController extends AppBaseController
         }
 
         // Limiter la course en journée à partir de 12H
-        if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
-            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
-            if(now()->hour < 6 || now()->hour > $cutoffHour){
-                $isAvailable = false;
-                $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
-            }
-        }
+        // Restriction horaire en journée désactivée temporairement
+        // if($delivery_type_code == DeliveryType::TYPE_EN_JOURNEE){
+        //     $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+        //     if(now()->hour < 6 || now()->hour > $cutoffHour){
+        //         $isAvailable = false;
+        //         $message = "Vous pouvez passer une course en journée uniquement de 06H00 à {$cutoffHour}H00.";
+        //     }
+        // }
 
         // Limiter la course en semaine uniquement du lundi au jeudi
         if($delivery_type_code == DeliveryType::TYPE_DE_SEMAINE){
