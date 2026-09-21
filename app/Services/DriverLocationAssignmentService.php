@@ -90,7 +90,7 @@ class DriverLocationAssignmentService
      *    puis tri par count cours en-semaine croissant (Règle 5)
      *  - sinon : tri par distance croissante
      */
-    private function queryEligibleDrivers(
+    protected function queryEligibleDrivers(
         string $serviceSlug,
         float $latitude,
         float $longitude,

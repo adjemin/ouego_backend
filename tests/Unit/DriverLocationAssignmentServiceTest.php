@@ -6,6 +6,7 @@ use Tests\TestCase;
 use App\Services\DriverLocationAssignmentService;
 use App\Models\Order;
 use App\Models\OrderInvitation;
+use App\Models\RoutePoint;
 use App\Events\OrderAssigned;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -88,8 +89,6 @@ class DriverLocationAssignmentServiceTest extends TestCase
             (object) ['id' => 2],
         ]);
 
-        $invitation = Mockery::mock(OrderInvitation::class)->makePartial();
-
         // Partial mock du service : on bypasse queryEligibleDrivers (requête PostGIS)
         $service = Mockery::mock(DriverLocationAssignmentService::class)
             ->makePartial()
@@ -97,11 +96,13 @@ class DriverLocationAssignmentServiceTest extends TestCase
 
         $service->shouldReceive('queryEligibleDrivers')->andReturn($drivers);
 
-        // Stub de OrderInvitation::firstOrCreate
-        Mockery::mock('alias:' . OrderInvitation::class)
-            ->shouldReceive('firstOrCreate')
-            ->twice()
-            ->andReturn($invitation);
+        // Point de départ requis pour ne pas sortir en early return
+        RoutePoint::forceCreate([
+            'order_id'  => 99,
+            'type'      => 'source',
+            'latitude'  => 5.3600,
+            'longitude' => -4.0083,
+        ]);
 
         $order = $this->mockOrder(
             item: $this->mockItem(
@@ -114,6 +115,7 @@ class DriverLocationAssignmentServiceTest extends TestCase
 
         Event::assertDispatched(OrderAssigned::class, 2);
         $this->assertEquals([1, 2], $result);
+        $this->assertEquals(2, OrderInvitation::where('order_id', 99)->count());
     }
 
     // =========================================================================

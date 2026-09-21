@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class Driver extends Authenticatable  implements JWTSubject
 {
 
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     public $table = 'drivers';
 

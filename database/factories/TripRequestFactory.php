@@ -17,7 +17,8 @@ class TripRequestFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'carrier_id' => \App\Models\Carrier::factory(),
+            'order_id' => \App\Models\Order::factory(),
         ];
     }
 }
