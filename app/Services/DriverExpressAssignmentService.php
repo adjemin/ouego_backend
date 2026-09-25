@@ -2,20 +2,16 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderInvitation;
-use App\Models\DriverNotification;
 use App\Models\RoutePoint;
-use App\Utilities\DriverNotificationsUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Events\OrderAssigned;
 use App\Models\Carrier;
 use App\Models\DriverCarrier;
 use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
-use App\Models\DeliveryType;
 
 
 class DriverExpressAssignmentService
