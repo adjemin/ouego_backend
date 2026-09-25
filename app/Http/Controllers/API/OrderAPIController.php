@@ -203,14 +203,14 @@ class OrderAPIController extends AppBaseController
             $item = (array)$item;
 
             if(!array_key_exists('service_slug',$item)){
-                $order->forceDelete();
+                DB::rollBack();
                 return $this->sendError('service_slug is required', 400);
             }
 
             $service = Service::where('slug', $item["service_slug"])->first();
 
             if($service == null){
-                $order->forceDelete();
+                DB::rollBack();
                 return $this->sendError('Service not found', 400);
             }
 
@@ -249,12 +249,12 @@ class OrderAPIController extends AppBaseController
                  */
 
                  if(!array_key_exists('meta_data',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('meta_data is required', 400);
                 }
 
                 if(!array_key_exists('route_points',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('route_points is required', 400);
                 }
 
@@ -264,17 +264,17 @@ class OrderAPIController extends AppBaseController
                 }
 
                 if(!array_key_exists('type_engin_slug',$meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('type_engin_slug is required', 400);
                 }
 
                 if(!array_key_exists('engin_model',$meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('engin_model is required', 400);
                 }
 
                 if(!array_key_exists('delivery_type_code',$meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('delivery_type_code is required', 400);
                 }
 
@@ -364,22 +364,22 @@ class OrderAPIController extends AppBaseController
                  */
 
                  if(!array_key_exists('meta_data',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('meta_data is required', 400);
                 }
 
                 if(!array_key_exists('route_points',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('route_points is required', 400);
                 }
 
                 if(!array_key_exists('delivery_price',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('delivery_price is required', 400);
                 }
 
                 if(!array_key_exists('carrier_id',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('carrier_id is required', 400);
                 }
 
@@ -389,37 +389,37 @@ class OrderAPIController extends AppBaseController
                 }
 
                 if(!array_key_exists('product_type_slug',$meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('product_type_slug is required', 400);
                 }
 
                 if(!array_key_exists('product_slug',$meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('product_slug is required', 400);
                 }
 
                 if(!array_key_exists('delivery_type_code',$meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('delivery_type_code is required', 400);
                 }
 
                 if(!array_key_exists('quantity',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('quantity is required', 400);
                 }
 
                 if(!array_key_exists('product_type_slug', $meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('product_type_slug is required', 400);
                 }
 
                 if(!array_key_exists('product_slug', $meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('product_slug is required', 400);
                 }
 
                 if(!array_key_exists('delivery_type_code', $meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('delivery_type_code is required', 400);
                 }
 
@@ -432,21 +432,24 @@ class OrderAPIController extends AppBaseController
 
                 $productType = ProductType::where(['slug' => $meta_data['product_type_slug']])->first();
                 if(empty($productType)) {
+                    DB::rollBack();
                     return $this->sendError('Type de produit introuvable', 400);
                 }
 
                 $product = Product::where(['id' => $productType->product_id])->first();
                 if(empty($product)) {
+                    DB::rollBack();
                     return $this->sendError('Produit introuvable', 400);
                 }
 
                 $carrier =  Carrier::where(['id' => $item['carrier_id']])->first();
                 if(empty($carrier)) {
+                    DB::rollBack();
                     return $this->sendError('Carrier introuvable', 400);
                 }
 
                 if($product->slug == Product::SABLE_SLUG && !array_key_exists('pricing', $meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('pricing est requis pour le sable', 400);
                 }
 
@@ -464,7 +467,7 @@ class OrderAPIController extends AppBaseController
                         doubleval($pricing['price']) <= 0 ||
                         intval($pricing['roues']) <= 0
                     ){
-                        $order->forceDelete();
+                        DB::rollBack();
                         return $this->sendError('pricing invalide pour le sable', 400);
                     }
                 }
@@ -620,12 +623,12 @@ class OrderAPIController extends AppBaseController
                  */
 
                  if(!array_key_exists('meta_data',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('meta_data is required', 400);
                 }
 
                 if(!array_key_exists('route_points',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('route_points is required', 400);
                 }
 
@@ -635,27 +638,27 @@ class OrderAPIController extends AppBaseController
                 }
 
                 if(!array_key_exists('type_engin_slug',$meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('type_engin_slug is required', 400);
                 }
 
                 if(!array_key_exists('engin_model',$meta_data)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('engin_model is required', 400);
                 }
 
                 if(!array_key_exists('quantity',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('quantity is required', 400);
                 }
 
                 if(!array_key_exists('location_start_date',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('location_start_date is required', 400);
                 }
 
                 if(!array_key_exists('location_end_date',$item)){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('location_end_date is required', 400);
                 }
 
@@ -672,12 +675,12 @@ class OrderAPIController extends AppBaseController
                 $typeEnginModel = TypeEnginModel::where(['slug' => $meta_data['engin_model']])->first();
 
                 if($typeEngin == null){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('type_engin_slug not found', 400);
                 }
 
                 if($typeEnginModel == null){
-                    $order->forceDelete();
+                    DB::rollBack();
                     return $this->sendError('engin_model not found', 400);
                 }
 
