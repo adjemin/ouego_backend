@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Events\OrderCreated;
+use App\Events\OrderStatusUpdated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -147,6 +149,20 @@ class Order extends Model
         
         static::creating(function ($order) {
             $order->public_token = Str::random(32);
+        });
+
+        static::created(function (Order $order) {
+            if ($order->customer_id) {
+                OrderCreated::dispatch($order);
+            }
+        });
+
+        // Branché sur le modèle plutôt que sur newOrderHistory() : certains changements
+        // de statut (TripRequestAPIController, ReassignNightOrders) ne créent pas d'historique.
+        static::updated(function (Order $order) {
+            if ($order->wasChanged(['status', 'driver_id'])) {
+                OrderStatusUpdated::dispatch($order, $order->getOriginal('status'));
+            }
         });
     }
 

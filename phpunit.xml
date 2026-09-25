@@ -20,6 +20,8 @@
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
+        <!-- Pas d'appel au serveur Reverb pendant les tests -->
+        <env name="BROADCAST_DRIVER" value="log" force="true"/>
         <env name="CACHE_DRIVER" value="array"/>
         <!-- Base de test isolée (voir docker-compose.test.yml) : force="true" empêche le .env de dev/prod de prendre le dessus -->
         <env name="DB_CONNECTION" value="pgsql" force="true"/>

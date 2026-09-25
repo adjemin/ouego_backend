@@ -12,7 +12,11 @@ class BroadcastServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Broadcast::routes();
+        // POST /api/v1/broadcasting/auth : les apps mobiles s'authentifient avec leur JWT client
+        Broadcast::routes([
+            'prefix' => 'api/v1',
+            'middleware' => ['api', 'auth.customer:api-customers'],
+        ]);
 
         require base_path('routes/channels.php');
     }
