@@ -18,3 +18,5 @@
 #/.idea
 #/.vscode
 .env
+.phpunit.result.cache
+.DS_Store
