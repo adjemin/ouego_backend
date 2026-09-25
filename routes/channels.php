@@ -27,3 +27,8 @@ Broadcast::channel('orders.{orderId}', function ($customer, $orderId) {
 Broadcast::channel('customers.{customerId}', function ($customer, $customerId) {
     return (int) $customer->id === (int) $customerId;
 }, ['guards' => ['api-customers']]);
+
+// Invitations du chauffeur (drivers/orders_invitations/list) : nouvelles commandes proposées
+Broadcast::channel('drivers.{driverId}', function ($driver, $driverId) {
+    return (int) $driver->id === (int) $driverId;
+}, ['guards' => ['api-drivers']]);
