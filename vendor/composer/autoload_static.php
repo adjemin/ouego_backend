@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInita26541c51c0be933038c8e3e2e219754
+class ComposerStaticInitd963bce8d675f84e97f14b54f0700a1a
 {
     public static $files = array (
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
@@ -888,6 +888,8 @@ class ComposerStaticInita26541c51c0be933038c8e3e2e219754
         'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
         'App\\Events\\CustomerNotificationCreated' => __DIR__ . '/../..' . '/app/Events/CustomerNotificationCreated.php',
         'App\\Events\\OrderAssigned' => __DIR__ . '/../..' . '/app/Events/OrderAssigned.php',
+        'App\\Events\\OrderCreated' => __DIR__ . '/../..' . '/app/Events/OrderCreated.php',
+        'App\\Events\\OrderStatusUpdated' => __DIR__ . '/../..' . '/app/Events/OrderStatusUpdated.php',
         'App\\Exceptions\\Handler' => __DIR__ . '/../..' . '/app/Exceptions/Handler.php',
         'App\\Http\\Controllers\\API\\CarrierAPIController' => __DIR__ . '/../..' . '/app/Http/Controllers/API/CarrierAPIController.php',
         'App\\Http\\Controllers\\API\\CommercialAPIController' => __DIR__ . '/../..' . '/app/Http/Controllers/API/CommercialAPIController.php',
@@ -9805,6 +9807,9 @@ class ComposerStaticInita26541c51c0be933038c8e3e2e219754
         'Tests\\Feature\\Orders\\Aggregats\\CimentOrderFlowTest' => __DIR__ . '/../..' . '/tests/Feature/Orders/Aggregats/CimentOrderFlowTest.php',
         'Tests\\Feature\\Orders\\Aggregats\\GravierOrderFlowTest' => __DIR__ . '/../..' . '/tests/Feature/Orders/Aggregats/GravierOrderFlowTest.php',
         'Tests\\Feature\\Orders\\Aggregats\\SableOrderFlowTest' => __DIR__ . '/../..' . '/tests/Feature/Orders/Aggregats/SableOrderFlowTest.php',
+        'Tests\\Feature\\Realtime\\CustomerOrdersBroadcastTest' => __DIR__ . '/../..' . '/tests/Feature/Realtime/CustomerOrdersBroadcastTest.php',
+        'Tests\\Feature\\Realtime\\DriverInvitationsBroadcastTest' => __DIR__ . '/../..' . '/tests/Feature/Realtime/DriverInvitationsBroadcastTest.php',
+        'Tests\\Feature\\Realtime\\OrderStatusBroadcastTest' => __DIR__ . '/../..' . '/tests/Feature/Realtime/OrderStatusBroadcastTest.php',
         'Tests\\TestCase' => __DIR__ . '/../..' . '/tests/TestCase.php',
         'Tests\\Unit\\DriverAssignmentServiceTest' => __DIR__ . '/../..' . '/tests/Unit/DriverAssignmentServiceTest.php',
         'Tests\\Unit\\DriverLocationAssignmentServiceTest' => __DIR__ . '/../..' . '/tests/Unit/DriverLocationAssignmentServiceTest.php',
@@ -12156,10 +12161,10 @@ class ComposerStaticInita26541c51c0be933038c8e3e2e219754
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInita26541c51c0be933038c8e3e2e219754::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInita26541c51c0be933038c8e3e2e219754::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInita26541c51c0be933038c8e3e2e219754::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInita26541c51c0be933038c8e3e2e219754::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitd963bce8d675f84e97f14b54f0700a1a::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitd963bce8d675f84e97f14b54f0700a1a::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInitd963bce8d675f84e97f14b54f0700a1a::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInitd963bce8d675f84e97f14b54f0700a1a::$classMap;
 
         }, null, ClassLoader::class);
     }
