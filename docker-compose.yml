@@ -1,9 +1,10 @@
 services:
   db-postgres:
     container_name: ouego-db-postgres
-    image: postgres:alpine
+    platform: linux/amd64
+    image: postgis/postgis:17-3.5-alpine
     ports:
-      - 5434:5434
+      - 5434:5432
     volumes:
       - 'ouego_psql_data:/var/lib/postgresql/data'
     environment:
