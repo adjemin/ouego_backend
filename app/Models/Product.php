@@ -16,6 +16,7 @@ class Product extends Model
 
    const GRAVIER_SLUG = "gravier";
    const SABLE_SLUG = "sable";
+   const CIMENT_SLUG = "ciment";
 
     public $fillable = [
         'name',

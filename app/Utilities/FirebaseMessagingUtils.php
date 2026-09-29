@@ -15,12 +15,9 @@ class FirebaseMessagingUtils{
 
         try {
 
-            if($isPro){
-                $serviceAccount = base_path('storage/app/firebase/ouego-pro-firebase-adminsdk-fbsvc-346d746dfe.json');
-            }else{
-                $serviceAccount = base_path('storage/app/firebase/ouego-44587-firebase-adminsdk-fbsvc-bfc72b0d4b.json');
-            }
-            
+            $serviceAccount = $isPro
+                ? config('firebase.ouego.pro')
+                : config('firebase.ouego.dev');
 
             $factory = (new Factory)
              ->withServiceAccount($serviceAccount);
@@ -56,6 +53,7 @@ class FirebaseMessagingUtils{
              return true;
 
         }catch (Exception $e){
+            dd($e);
             // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
             Log::error($e);
             return  false;

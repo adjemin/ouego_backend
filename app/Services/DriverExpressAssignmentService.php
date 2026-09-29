@@ -2,20 +2,16 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderInvitation;
-use App\Models\DriverNotification;
 use App\Models\RoutePoint;
-use App\Utilities\DriverNotificationsUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Events\OrderAssigned;
 use App\Models\Carrier;
 use App\Models\DriverCarrier;
 use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
-use App\Models\DeliveryType;
 
 
 class DriverExpressAssignmentService
@@ -71,8 +67,8 @@ class DriverExpressAssignmentService
                         'is_waiting_acceptation' => true,
                         'acceptation_time' => null,
                         'rejection_time' => null,
-                        'latitude' => null,
-                        'longitude' => null
+                        'latitude' => $driver->last_location_latitude??null,
+                        'longitude' => $driver->last_location_longitude??null,
                     ]);
                 }
     
@@ -134,6 +130,7 @@ class DriverExpressAssignmentService
 
 
             foreach($nearestDriverIds as $driverId){
+                $driver = Driver::find($driverId);
                 $orderInvitation = OrderInvitation::where([
                     'driver_id' => $driverId,
                     'order_id' => $order->id,
@@ -146,8 +143,8 @@ class DriverExpressAssignmentService
                         'is_waiting_acceptation' => true,
                         'acceptation_time' => null,
                         'rejection_time' => null,
-                        'latitude' => null,
-                        'longitude' => null
+                        'latitude' => $driver->last_location_latitude??null,
+                        'longitude' => $driver->last_location_longitude??null
                     ]);
                 }
     
@@ -356,11 +353,14 @@ class DriverExpressAssignmentService
                 );
             }
 
-        // Pas de restriction de distance pour le gravier
+        // Pas de restriction de distance pour les agrégats (gravier, ciment)
         $orderItem = \App\Models\OrderItem::where('order_id', $order_id)->first();
         $isGravier = $orderItem
             && isset($orderItem->meta_data['product_slug'])
-            && $orderItem->meta_data['product_slug'] === \App\Models\Product::GRAVIER_SLUG;
+            && in_array($orderItem->meta_data['product_slug'], [
+                \App\Models\Product::GRAVIER_SLUG,
+                \App\Models\Product::CIMENT_SLUG,
+            ]);
 
         if ($maxDistance && !$isGravier) {
             $query->whereRaw('ST_DWithin(last_location::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)', [$longitude, $latitude, $maxDistance*1000]);

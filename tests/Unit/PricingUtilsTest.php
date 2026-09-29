@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use Tests\TestCase;
 use App\Utilities\PricingUtils;
 use App\Models\Setting;
+use Database\Seeders\DeliveryTypesSeeder;
 use Illuminate\Foundation\Testing\WithFaker;
 
 class PricingUtilsTest extends TestCase
@@ -15,7 +16,18 @@ class PricingUtilsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
+        // RefreshDatabase vide delivery_types : applyDeliveryPricing() en dépend
+        $this->seed(DeliveryTypesSeeder::class);
+
+        Setting::updateOrCreate(['name' => 'CIMENT_DISTANCE_DE_BASE'], ['value' => '45']);
+        Setting::updateOrCreate(['name' => 'CIMENT_QUANTITE_DE_BASE'], ['value' => '20']);
+        Setting::updateOrCreate(['name' => 'CIMENT_PRIX_DE_BASE'], ['value' => '55000']);
+        Setting::updateOrCreate(['name' => 'CIMENT_PRIX_KILOMETRE'], ['value' => '1000']);
+        Setting::updateOrCreate(['name' => 'CIMENT_PRIX_TONNAGE'], ['value' => '1000']);
+        Setting::updateOrCreate(['name' => 'CIMENT_FRAIS_DE_ROUTE'], ['value' => '10000']);
+        Setting::updateOrCreate(['name' => 'CIMENT_COMMISSION_OUEGO'], ['value' => '0']);
+
         Setting::updateOrCreate(['name' => 'GRAVIER_DISTANCE_DE_BASE'], ['value' => '45']);
         Setting::updateOrCreate(['name' => 'GRAVIER_QUANTITE_DE_BASE'], ['value' => '20']);
         Setting::updateOrCreate(['name' => 'GRAVIER_PRIX_DE_BASE'], ['value' => '55000']);
@@ -32,7 +44,7 @@ class PricingUtilsTest extends TestCase
         Setting::updateOrCreate(['name' => 'PRIX_CARBURANT'], ['value' => '650']);
         Setting::updateOrCreate(['name' => 'CONSO_LITRE'], ['value' => '0.15']);
         Setting::updateOrCreate(['name' => 'MARGE_CHAUFFEUR_COURSE'], ['value' => '200']);
-        Setting::updateOrCreate(['name' => 'COMMISSION_COURSE'], ['value' => '100']);
+        Setting::updateOrCreate(['name' => 'TRANSPORT_COMMISSION_OUEGO'], ['value' => '100']);
         Setting::updateOrCreate(['name' => 'TAXE'], ['value' => '0.18']);
     }
 
@@ -226,11 +238,13 @@ class PricingUtilsTest extends TestCase
         
         $result = PricingUtils::transportCourse($distance, $mockEngine, $delivery_type);
 
-        $t1 = max(20000, min(5, 40) * 1500);
-        $t2 = max(0, min((20 - 5), max(0, 20 - 5))) * 1000;
-        $t3 = max(0, $initial_distance - 25) * $typeEnginModel->slice_3_pricing;
-        
-        $expected = $t1;
+        $t1 = max(20000, min(5, 40) * 1500);          // 20000
+        $t2 = min(20 - 5, 40 - 5) * 1000;             // 15000
+        $t3 = max(0, 40 - 20) * 500;                  // 10000
+        $chargement = 5000;
+        $frais_route = 3000;
+
+        $expected = $t1 + $t2 + $t3 + $chargement + $frais_route; // 53000
         $this->assertEquals($expected, $result);
     }
 
@@ -252,8 +266,12 @@ class PricingUtilsTest extends TestCase
         
         $result = PricingUtils::transportCourse($distance, $mockEngine, $delivery_type);
         
-        $t1 = max(20000, min(5, $initial_distance) * $typeEnginModel->slice_1_pricing);
-        $expected = 9900;
+        $t1 = max(20000, min(5, 25) * 400);           // 20000
+        $t2 = min(40 - 5, 25 - 5) * 300;              // 6000
+        $t3 = max(0, 25 - 40) * 200;                  // 0
+        $avant_livraison = $t1 + $t2 + $t3 + 1500 + 3000; // 30500
+
+        $expected = ceil(($avant_livraison / 2) / 100) * 100; // en-journee = /2
         $this->assertEquals($expected, $result);
     }
 
@@ -315,7 +333,8 @@ class PricingUtilsTest extends TestCase
         $prix_transport_net = ($total_conso + $marge_brute) * $distance;
         $frais_route = 3000;
         $taxe_amount = $prix_transport_net * 0.18;
-        $amount_before_delivery = $prix_transport_net + $frais_route + $taxe_amount;
+        // le montant est arrondi à 100 avant l'application du type de livraison
+        $amount_before_delivery = ceil(($prix_transport_net + $frais_route + $taxe_amount) / 100) * 100;
         $amount_after_delivery = $amount_before_delivery + $amount_before_delivery * 1.5;
         $expected = ceil($amount_after_delivery / 100) * 100;
         
@@ -405,9 +424,99 @@ class PricingUtilsTest extends TestCase
     {
         $distance = 0;
         $delivery_type = "EXPRESS";
-        
+
         $result = PricingUtils::transport($distance, $delivery_type);
-        
+
+        $this->assertGreaterThan(0, $result);
+    }
+
+    /** @test */
+    public function test_transport_ciment_base_price()
+    {
+        $distance = 45;
+        $quantity = 20;
+        $delivery_type = "EXPRESS";
+
+        $result = PricingUtils::transportCiment($distance, $quantity, $delivery_type);
+
+        $expected = 65000;
+        $this->assertEquals($expected, $result);
+    }
+
+    /** @test */
+    public function test_transport_ciment_with_extra_distance()
+    {
+        $distance = 49.8;
+        $quantity = 20;
+        $delivery_type = "EXPRESS";
+
+        $result = PricingUtils::transportCiment($distance, $quantity, $delivery_type);
+
+        $expected = 69800;
+        $this->assertEquals($expected, $result);
+    }
+
+    /** @test */
+    public function test_transport_ciment_with_extra_quantity()
+    {
+        $distance = 45;
+        $quantity = 35;
+        $delivery_type = "EXPRESS";
+
+        $result = PricingUtils::transportCiment($distance, $quantity, $delivery_type);
+
+        $expected = 80000;
+        $this->assertEquals($expected, $result);
+    }
+
+    /** @test */
+    public function test_transport_ciment_en_journee()
+    {
+        $distance = 45;
+        $quantity = 20;
+        $delivery_type = "en-journee";
+
+        $result = PricingUtils::transportCiment($distance, $quantity, $delivery_type);
+
+        $expected = 32500;
+        $this->assertEquals($expected, $result);
+    }
+
+    /** @test */
+    public function test_transport_ciment_de_nuit()
+    {
+        $distance = 45;
+        $quantity = 20;
+        $delivery_type = "de-nuit";
+
+        $result = PricingUtils::transportCiment($distance, $quantity, $delivery_type);
+
+        $expected = 162500;
+        $this->assertEquals($expected, $result);
+    }
+
+    /** @test */
+    public function test_transport_ciment_en_semaine()
+    {
+        $distance = 45;
+        $quantity = 20;
+        $delivery_type = "en-semaine";
+
+        $result = PricingUtils::transportCiment($distance, $quantity, $delivery_type);
+
+        $expected = 21700;
+        $this->assertEquals($expected, $result);
+    }
+
+    /** @test */
+    public function test_transport_ciment_zero_distance()
+    {
+        $distance = 0;
+        $quantity = 10;
+        $delivery_type = "EXPRESS";
+
+        $result = PricingUtils::transportCiment($distance, $quantity, $delivery_type);
+
         $this->assertGreaterThan(0, $result);
     }
 }

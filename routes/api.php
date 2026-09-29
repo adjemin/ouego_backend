@@ -90,6 +90,8 @@ Route::prefix('v1/')->group(function () {
 
     Route::post('orders/delivery/sable/estimate_price', [App\Http\Controllers\API\OrderAPIController::class, 'estimateDeliveryPriceSable'])->middleware("auth.customer:api-customers");
 
+    Route::post('orders/delivery/ciment/estimate_price', [App\Http\Controllers\API\OrderAPIController::class, 'estimateDeliveryPriceCiment'])->middleware("auth.customer:api-customers");
+
     Route::post('type-engins/create', [App\Http\Controllers\API\TypeEnginAPIController::class, 'store']);
 
     Route::get('type-engins/list', [App\Http\Controllers\API\TypeEnginAPIController::class, 'index']);
@@ -158,16 +160,6 @@ Route::prefix('v1/')->group(function () {
     Route::post('notifications/confirm-delivery', [App\Http\Controllers\API\NotificationAPIController::class, 'confirmDelivery']);
 
     Route::post('carriers', [App\Http\Controllers\API\CarrierAPIController::class, 'store']);
-
-    // TEST ROUTES
-    Route::post('testing-algorithm/drivers-by-carriers', [App\Http\Controllers\API\TestAPIController::class, 'searchNearDriverByCarrier']);
-    
-    Route::post('testing-algorithm/v1/nearest-carrier-and-drivers', [App\Http\Controllers\API\TestAPIController::class, 'getNearestCarrierAndDrivers']);
-    
-    Route::post('testing-algorithm/v1/onday-order-assignment', [App\Http\Controllers\API\TestAPIController::class, 'OndayOrderAssignment']);
-
-    Route::post('testing-algorithm/v1/confirm', [App\Http\Controllers\API\TestAPIController::class, 'assign']);
-
 
     Route::resource('customer-addresses', App\Http\Controllers\API\CustomerAddressAPIController::class)
     ->except(['create', 'edit'])

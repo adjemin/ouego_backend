@@ -2,6 +2,7 @@
 
 namespace App\Utilities;
 
+use App\Models\DeliveryType;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Mail;
 
@@ -35,24 +36,36 @@ class PricingUtils{
 
         $amount =  self::round_up($amount, 100);
 
+        $amount = self::applyDeliveryPricing($amount, $delivery_type);
+
+        return self::round_up($amount, 100);
+
+    }
+
+    public static function transportCiment($distance, $quantity, $delivery_type){
+
+        $distance_de_base = doubleval(Setting::get('CIMENT_DISTANCE_DE_BASE'));
+        $quantite_de_base = doubleval(Setting::get('CIMENT_QUANTITE_DE_BASE'));
+        $prix_de_base = doubleval(Setting::get('CIMENT_PRIX_DE_BASE'));
+        $prix_kilometre = doubleval(Setting::get('CIMENT_PRIX_KILOMETRE'));
+        $prix_tonnage = doubleval(Setting::get('CIMENT_PRIX_TONNAGE'));
+        $frais_route = doubleval(Setting::get('CIMENT_FRAIS_DE_ROUTE'));
+        $commission_ouego = doubleval(Setting::get('CIMENT_COMMISSION_OUEGO'));
+
+        $amount = $prix_de_base + (MAX(0, ($distance - $distance_de_base)) * $prix_kilometre) + (MAX(0, ($quantity - $quantite_de_base)) * $prix_tonnage) + $frais_route + $commission_ouego;
+
+        $amount = self::round_up($amount, 100);
+
         if($delivery_type == "EXPRESS"){
             $amount = $amount;
         }else if($delivery_type == "en-journee"){
-
             $amount = $amount / 2;
-
         }else if($delivery_type == "de-nuit"){
-
-            $amount = $amount + $amount * 1.5 ;
-
+            $amount = $amount + $amount * 1.5;
         }else if($delivery_type == "en-semaine"){
-
             $amount = $amount / 3;
-
         }else{
-
             $amount = $amount;
-
         }
 
         return self::round_up($amount, 100);
@@ -71,14 +84,6 @@ class PricingUtils{
         //PRIX KILOMETRE (>45 km)
         $prix_kilometre = doubleval(Setting::get('SABLE_PRIX_KILOMETRE'));
 
-
-        // PRIX QUANTITE DE BASE (T)
-        $quantitte_base = doubleval(Setting::get('GRAVIER_QUANTITE_DE_BASE'));
-
-        // PRIX PAR TONNAGE
-        $prix_tonnage = doubleval(Setting::get('GRAVIER_PRIX_TONNAGE'));
-
-
         //FRAIS_DE_ROUTE
         $frais_route = doubleval(Setting::get('SABLE_FRAIS_DE_ROUTE'));
 
@@ -89,25 +94,7 @@ class PricingUtils{
 
         $amount =  self::round_up($amount, 100);
 
-        if($delivery_type == "EXPRESS"){
-            $amount = $amount;
-        }else if($delivery_type == "en-journee"){
-
-            $amount = $amount / 2;
-
-        }else if($delivery_type == "de-nuit"){
-
-            $amount = $amount + $amount * 1.5 ;
-
-        }else if($delivery_type == "en-semaine"){
-
-            $amount = $amount / 3;
-
-        }else{
-
-            $amount = $amount;
-
-        }
+        $amount = self::applyDeliveryPricing($amount, $delivery_type);
 
         return self::round_up($amount, 100);
 
@@ -145,25 +132,7 @@ class PricingUtils{
 
         $amount =  self::round_up($amount, 100);
 
-        if($delivery_type == "EXPRESS"){
-            $amount = $amount;
-        }else if($delivery_type == "en-journee"){
-
-            $amount = $amount / 2;
-
-        }else if($delivery_type == "de-nuit"){
-
-            $amount = $amount + $amount * 1.5 ;
-
-        }else if($delivery_type == "en-semaine"){
-
-            $amount = $amount / 3;
-
-        }else{
-
-            $amount = $amount;
-
-        }
+        $amount = self::applyDeliveryPricing($amount, $delivery_type);
 
         return self::round_up($amount, 100);
 
@@ -194,28 +163,29 @@ class PricingUtils{
 
         $amount =  self::round_up($amount, 100);
 
-        if($delivery_type == "EXPRESS"){
-            $amount = $amount;
-        }else if($delivery_type == "en-journee"){
-
-            $amount = $amount / 2;
-
-        }else if($delivery_type == "de-nuit"){
-
-            $amount = $amount + $amount * 1.5;
-
-        }else if($delivery_type == "en-semaine"){
-
-            $amount = $amount / 3;
-
-        }else{
-
-            $amount = $amount;
-
-        }
+        $amount = self::applyDeliveryPricing($amount, $delivery_type);
 
         return self::round_up($amount, 100);
 
+    }
+
+    public static function applyDeliveryPricing(float $amount, string $delivery_type): float
+    {
+        $config = DeliveryType::where('slug', $delivery_type)->first();
+
+        if (!$config) {
+            return $amount;
+        }
+
+        return match($config->pricing_operator) {
+            'add'              => $amount + $config->pricing_value,
+            'subtract'         => $amount - $config->pricing_value,
+            'multiply'         => $amount * $config->pricing_value,
+            'divide'           => $config->pricing_value != 0 ? $amount / $config->pricing_value : $amount,
+            'add_percent'      => $amount + $amount * ($config->pricing_value / 100),
+            'subtract_percent' => $amount - $amount * ($config->pricing_value / 100),
+            default            => $amount,
+        };
     }
 
     public static function round_up($num, $mul) {

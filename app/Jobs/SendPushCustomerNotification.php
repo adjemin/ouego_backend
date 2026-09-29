@@ -40,8 +40,8 @@ class SendPushCustomerNotification
     public function handle(): void
     {
         try {
-            $jsonPath = base_path('storage/app/firebase/ouego-44587-firebase-adminsdk-fbsvc-bfc72b0d4b.json');
-            $factory = (new Factory)->withServiceAccount($jsonPath);
+            $serviceAccount = config('firebase.ouego.dev');
+            $factory = (new Factory)->withServiceAccount($serviceAccount);
             $messaging = $factory->createMessaging();
 
             $message = CloudMessage::withTarget('token', $this->firebaseId)

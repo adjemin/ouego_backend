@@ -36,9 +36,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('zone_mapping', function (Blueprint $table) {
-            $table->dropForeign(['zone_id']);
-        });
+        if (Schema::hasTable('zone_mapping')) {
+            Schema::table('zone_mapping', function (Blueprint $table) {
+                $table->dropForeign(['zone_id']);
+            });
+        }
         Schema::dropIfExists('zones');
     }
 };
