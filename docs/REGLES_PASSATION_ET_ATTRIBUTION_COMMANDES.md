@@ -88,7 +88,8 @@ Ensuite :
 - **Le premier chauffeur qui accepte** devient le chauffeur de la commande. La commande passe au statut **« performer_found »** et le client reçoit la notification *« Nous avons trouvé un conducteur pour la course »*.
 - Toutes les autres invitations en attente pour cette commande sont **annulées**.
 - Si un chauffeur **accepte trop tard** (commande déjà terminée ou attribuée), il reçoit le message « Affectation déjà traitée » ou « Order already completed ».
-- Un **refus** ferme seulement l'invitation de ce chauffeur. La recherche ne repart pas tout de suite : elle reprend au prochain passage automatique (au plus 2 minutes).
+- Un **refus** ferme l'invitation de ce chauffeur, qui **n'est plus jamais réinvité ni notifié** pour cette commande : sa place revient au chauffeur suivant. Si plus aucune invitation n'est en attente, la recherche **repart immédiatement**.
+- Un chauffeur n'est **notifié qu'une fois** par commande, au moment de son invitation.
 
 ### 4.2 Conditions communes à tous les chauffeurs
 
@@ -140,7 +141,7 @@ Conditions communes (4.2) et limites de charge (4.3), avec une **exception pour 
 - De 20h00 à 07h00, la recherche est relancée **toutes les 2 minutes** jusqu'à ce qu'un chauffeur accepte.
 - À **07h00**, une commande de nuit toujours sans chauffeur passe en **« Chauffeur non trouvé »**.
 - À **20h00**, une tâche automatique lance la recherche pour toutes les commandes de nuit sans chauffeur.
-- À **05h00**, une tâche automatique **réattribue** toutes les commandes de nuit **pas encore démarrées**, même déjà acceptées : le chauffeur est retiré, les invitations en attente sont annulées et une nouvelle recherche est lancée.
+- À **05h00**, une tâche automatique **réattribue** toutes les commandes de nuit **pas encore démarrées**, même déjà acceptées : le chauffeur est retiré (et n'est pas réinvité), les invitations en attente sont supprimées et une nouvelle recherche est lancée.
 - Critères d'éligibilité : conditions communes (4.2) et limites de charge (4.3).
 
 ### 4.5 Comment les chauffeurs sont classés
@@ -192,8 +193,8 @@ Confirmation (t = 0)
    │  invitations envoyées à 5 chauffeurs max
    ▼
 Toutes les 2 min : tâche automatique
-   │  • une invitation sans réponse depuis plus de 2 min est supprimée
-   │  • avant l'échéance → nouvelle recherche (de nouveaux chauffeurs peuvent être invités)
+   │  • une invitation sans réponse depuis plus de 2 min est supprimée (le chauffeur pourra être réinvité)
+   │  • avant l'échéance → nouvelle recherche (les chauffeurs qui ont refusé sont exclus)
    │  • après l'échéance → statut « performer_not_found » (commande close)
    ▼
 Un chauffeur accepte → « performer_found » → le client est notifié
@@ -255,7 +256,7 @@ Cette section liste les comportements actuels qui ne correspondent probablement 
 3. ~~**Créneau Express non bloqué à la création.**~~ **Corrigé.** Le créneau (06h00–09h00 et 17h00–19h30) est défini à un seul endroit. Il est appliqué à toutes les estimations, y compris la course avec arrêts, et bloque la création d'une commande Express.
 4. ~~**Heure limite « en journée ».**~~ **Corrigé.** Une commande « en journée » est possible de 06h00 jusqu'à l'heure limite exclue (12h00 par défaut). Ce créneau est appliqué à toutes les estimations et à la création ; il avait été désactivé dans les estimations le 18 septembre puis réactivé par erreur à la création seulement. Si le paramètre `JOURNEE_CUTOFF_HOUR` est absent, l'heure limite retombe sur 12h (elle tombait auparavant à 0h, ce qui bloquait toutes les commandes).
 5. ~~**Score des agrégats.**~~ **Corrigé.** Les deux critères qui valaient toujours 100 % (hérités d'une version où l'on choisissait aussi la carrière) sont remplacés : la proximité chauffeur ↔ client (25 %) et un poids plus fort pour la proximité chauffeur ↔ carrière (35 %). Un chauffeur situé exactement sur la carrière ne provoque plus d'erreur : auparavant, une division par zéro empêchait l'envoi de toute invitation pour la commande.
-6. **Refus d'un chauffeur.** Un refus ne relance pas immédiatement la recherche : il faut attendre la tâche suivante (jusqu'à 2 minutes).
+6. ~~**Refus d'un chauffeur.**~~ **Corrigé.** Un refus relance la recherche immédiatement quand plus aucune invitation n'est en attente. Les chauffeurs qui ont refusé sont exclus des recherches suivantes pour cette commande : auparavant, ils occupaient les 5 places à chaque relance, si bien que la commande ne trouvait jamais de chauffeur quand les 5 plus proches avaient refusé. Ils ne reçoivent plus non plus une nouvelle notification toutes les 2 minutes.
 
 ---
 

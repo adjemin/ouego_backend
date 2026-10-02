@@ -51,10 +51,11 @@ class ReassignNightOrders extends Command
 
         foreach ($orders as $order) {
             try {
-                // Annuler les invitations en attente existantes
+                // Supprimer les invitations en attente : ces chauffeurs pourront être réinvités.
+                // L'invitation acceptée par le chauffeur retiré reste close : il n'est pas réinvité.
                 OrderInvitation::where('order_id', $order->id)
                     ->where('is_waiting_acceptation', true)
-                    ->update(['is_waiting_acceptation' => false]);
+                    ->delete();
 
                 // Réinitialiser le chauffeur assigné
                 $order->update([

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\OrderAssigned;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -52,6 +53,37 @@ class OrderInvitation extends Model
 
     public function order(){
         return $this->belongsTo(Order::class, 'order_id', 'id');
+    }
+
+    /**
+     * Invite un chauffeur sur une commande et le notifie.
+     * Ne fait rien si le chauffeur a déjà une invitation pour cette commande (en attente, refusée ou close) :
+     * il n'est notifié qu'une seule fois.
+     */
+    public static function inviteDriver(int $orderId, Driver $driver): ?self
+    {
+        $exists = self::where([
+            'driver_id' => $driver->id,
+            'order_id' => $orderId,
+        ])->exists();
+
+        if ($exists) {
+            return null;
+        }
+
+        $invitation = self::create([
+            'driver_id' => $driver->id,
+            'order_id' => $orderId,
+            'is_waiting_acceptation' => true,
+            'acceptation_time' => null,
+            'rejection_time' => null,
+            'latitude' => $driver->last_location_latitude,
+            'longitude' => $driver->last_location_longitude,
+        ]);
+
+        event(new OrderAssigned($invitation));
+
+        return $invitation;
     }
 
 

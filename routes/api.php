@@ -100,8 +100,8 @@ Route::prefix('v1/')->group(function () {
 
 
     //Accepter ou Refuser une taches  (Livreur)
-    Route::put('order_invitations/{id}/accept', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'accept']);
-    Route::put('order_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse']);
+    Route::put('order_invitations/{id}/accept', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'accept'])->middleware("auth.driver:api-drivers");
+    Route::put('order_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse'])->middleware("auth.driver:api-drivers");
 
     //TODO Modifier le statut d’un ramassage ou livraison (ANNULER, DEMARRER, REUSSIR, ECHOUER ) (Livreur)
     Route::put('route_points/{id}/update_status', [App\Http\Controllers\API\RoutePointAPIController::class, 'updateStatus'])->middleware("auth.driver:api-drivers");

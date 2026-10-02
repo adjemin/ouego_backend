@@ -9,7 +9,6 @@ use App\Models\OrderInvitation;
 use App\Models\DriverNotification;
 use App\Models\RoutePoint;
 use App\Utilities\DriverNotificationsUtils;
-use App\Events\OrderAssigned;
 use App\Models\Carrier;
 use App\Models\DriverCarrier;
 use Illuminate\Support\Facades\Log;
@@ -47,7 +46,7 @@ class DriverEnjourneeAssignmentService
                 $order->service_slug, 
                 $route_point->latitude, 
                 $route_point->longitude, 
-                $maxDrivers, $distance
+                $maxDrivers, $distance, $order->id
             );
             Log::info("DriverEnjourneeAssignmentService: Commande course #{$order->id} - " . $nearestDrivers->count() . " chauffeurs trouvés à proximité ($distance km) pour assignation.");
 
@@ -60,25 +59,7 @@ class DriverEnjourneeAssignmentService
             // Ici, vous pouvez ajouter la logique pour assigner effectivement la course au chauffeur
             // Par exemple, mettre à jour le statut du chauffeur, créer un enregistrement de course, etc.
             foreach($nearestDrivers as $driver){
-                $orderInvitation = OrderInvitation::where([
-                    'driver_id' => $driver->id,
-                    'order_id' => $order->id,
-                ])->first();
-    
-                if($orderInvitation == null){
-                    $orderInvitation = OrderInvitation::create([
-                        'driver_id' => $driver->id,
-                        'order_id' => $order->id,
-                        'is_waiting_acceptation' => true,
-                        'acceptation_time' => null,
-                        'rejection_time' => null,
-                        'latitude' => $driver->last_location_latitude??null,
-                        'longitude' => $driver->last_location_longitude??null
-                    ]);
-                }
-    
-                // Déclencher l'événement d'assignation de commande
-                event(new OrderAssigned($orderInvitation));
+                OrderInvitation::inviteDriver($order->id, $driver);
             }
 
             return $driver;
@@ -144,26 +125,9 @@ class DriverEnjourneeAssignmentService
 
             foreach($nearestDriverIds as $driverId){
                 $driver = Driver::find($driverId);
-
-                $orderInvitation = OrderInvitation::where([
-                    'driver_id' => $driverId,
-                    'order_id' => $order->id,
-                ])->first();
-    
-                if($orderInvitation == null){
-                    $orderInvitation = OrderInvitation::create([
-                        'driver_id' => $driverId,
-                        'order_id' => $order->id,
-                        'is_waiting_acceptation' => true,
-                        'acceptation_time' => null,
-                        'rejection_time' => null,
-                        'latitude' => $driver->last_location_latitude??null,
-                        'longitude' => $driver->last_location_longitude??null
-                    ]);
+                if ($driver) {
+                    OrderInvitation::inviteDriver($order->id, $driver);
                 }
-    
-                // Déclencher l'événement d'assignation de commande
-                event(new OrderAssigned($orderInvitation));
             }
 
             return $driversData;
@@ -190,7 +154,7 @@ class DriverEnjourneeAssignmentService
      * @param float $maxDistance Distance maximum en mètres (optionnel)
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function findCourseNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
+    public function findCourseNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null, ?int $orderId = null)
     {
         $isSaturday = now()->dayOfWeekIso === 6;
         $today = now()->toDateString();
@@ -206,6 +170,7 @@ class DriverEnjourneeAssignmentService
             ->whereRaw('is_active = true')
             ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
+            ->withoutClosedInvitationFor($orderId)
 
             // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
             ->where(Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(), '<', 3)
@@ -272,6 +237,7 @@ class DriverEnjourneeAssignmentService
             ->whereRaw('is_active = true')
             ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
+            ->withoutClosedInvitationFor($order_id)
 
             // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
             ->where(Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(), '<', 3)
