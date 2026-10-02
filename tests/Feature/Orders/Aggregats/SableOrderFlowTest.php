@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Orders\Aggregats;
 
+use App\Models\DeliveryType;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -156,5 +157,38 @@ class SableOrderFlowTest extends AggregatOrderTestCase
             ->assertJsonPath('data.status', Order::PERFORMER_LOOKUP);
 
         $this->assertEquals(45000 + $estimate['amount'], Order::findOrFail($orderId)->invoice->total);
+    }
+
+    /** @test */
+    public function it_marks_express_unavailable_in_the_estimate_during_rush_hours()
+    {
+        $this->travelTo(now()->setTime(18, 0));
+
+        $this->estimate('sable', $this->estimatePayload())
+            ->assertOk()
+            ->assertJsonPath('data.is_available', false)
+            ->assertJsonPath('data.error_message', DeliveryType::EXPRESS_UNAVAILABLE_MESSAGE);
+    }
+
+    /** @test */
+    public function it_rejects_an_express_order_during_rush_hours()
+    {
+        $this->travelTo(now()->setTime(18, 0));
+
+        $this->createOrder($this->orderItem())
+            ->assertStatus(404)
+            ->assertJsonPath('message', DeliveryType::EXPRESS_UNAVAILABLE_MESSAGE);
+
+        $this->assertDatabaseCount('orders', 0);
+    }
+
+    /** @test */
+    public function it_accepts_an_express_order_from_19h30()
+    {
+        $this->travelTo(now()->setTime(19, 30));
+
+        $this->createOrder($this->orderItem())
+            ->assertOk()
+            ->assertJsonPath('data.status', Order::INITIATED);
     }
 }

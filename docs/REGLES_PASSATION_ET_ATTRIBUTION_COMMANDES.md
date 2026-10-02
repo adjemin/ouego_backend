@@ -63,7 +63,7 @@
 
 | Type de livraison | Quand peut-on commander ? | Contrôle |
 |---|---|---|
-| **Express** | Toute la journée **sauf de 06h00 à 08h59 et de 17h00 à 19h59** | Affiché à l'estimation (option grisée) |
+| **Express** | Toute la journée **sauf de 06h00 à 09h00 et de 17h00 à 19h30** | Affiché à l'estimation (option grisée) **et** bloqué à la création |
 | **En journée** | De **06h00 à 12h59** (heure limite réglable, 12h par défaut) | Bloqué à la création |
 | **En semaine** | Tous les jours (la restriction du lundi au jeudi est **désactivée**) | — |
 | **De nuit** | De **07h00 à 19h30** | Affiché à l'estimation **et** bloqué à la création |
@@ -251,7 +251,7 @@ Cette section liste les comportements actuels qui ne correspondent probablement 
 
 1. ~~**Commandes de nuit closes avant 20h.**~~ **Corrigé.** Les commandes de nuit attendent 20h00 et restent en recherche jusqu'à 07h00. Les locations restent en recherche jusqu'à leur date de début. La recherche de nuit fonctionne aussi après minuit, ce qui rend effective la réattribution de 05h00.
 2. ~~**Délai de 5 minutes calculé depuis la création, pas depuis la confirmation.**~~ **Corrigé.** Les délais sont maintenant comptés à partir de la confirmation de la commande par le client.
-3. **Créneau Express non bloqué à la création.** L'option Express est grisée à l'estimation entre 06h00–08h59 et 17h00–19h59, mais la création d'une commande Express n'est pas bloquée sur ces créneaux. Le message affiché indique « 19H30 » alors que le contrôle s'arrête à 19h59.
+3. ~~**Créneau Express non bloqué à la création.**~~ **Corrigé.** Le créneau (06h00–09h00 et 17h00–19h30) est défini à un seul endroit. Il est appliqué à toutes les estimations, y compris la course avec arrêts, et bloque la création d'une commande Express.
 4. **Heure limite « en journée ».** Le message indique « jusqu'à 12H00 », mais une commande reste acceptée jusqu'à 12h59.
 5. **Score des agrégats.** Les critères « Proximité carrière ↔ livraison » (25 %) et « Concentration » (5 %) valent toujours 100 % pour tous les chauffeurs. Ils ne départagent donc personne : en pratique, le classement se fait sur la proximité, les jetons et la note.
 6. **Refus d'un chauffeur.** Un refus ne relance pas immédiatement la recherche : il faut attendre la tâche suivante (jusqu'à 2 minutes).

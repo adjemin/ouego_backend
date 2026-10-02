@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -15,6 +16,10 @@ class DeliveryType extends Model
     const TYPE_EN_JOURNEE = "en-journee";
     const TYPE_DE_NUIT = "de-nuit";
     const TYPE_DE_SEMAINE = "en-semaine";
+
+    // Créneaux où l'option Express est indisponible : [début inclus, fin exclue]
+    const EXPRESS_UNAVAILABLE_SLOTS = [['06:00', '09:00'], ['17:00', '19:30']];
+    const EXPRESS_UNAVAILABLE_MESSAGE = "L’option Course Express n'est pas disponible de 06H00 à 09H00 et de 17H00 à 19H30.";
 
     const OPERATOR_ADD              = "add";
     const OPERATOR_SUBTRACT         = "subtract";
@@ -45,5 +50,16 @@ class DeliveryType extends Model
 
     ];
 
+    public static function isExpressAvailable(?Carbon $at = null): bool
+    {
+        $time = ($at ?? now())->format('H:i');
 
+        foreach (self::EXPRESS_UNAVAILABLE_SLOTS as [$start, $end]) {
+            if ($time >= $start && $time < $end) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
