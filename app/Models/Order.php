@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Events\OrderCreated;
 use App\Events\OrderStatusUpdated;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -72,6 +73,12 @@ class Order extends Model
 
    CONST PAYMENT_MODE_CASH = "cash";
    CONST PAYMENT_MODE_ONLINE = "online";
+
+    // Fenêtre de recherche des chauffeurs pour les commandes de nuit : de 20h à 07h
+    const NIGHT_LOOKUP_START_HOUR = 20;
+    const NIGHT_LOOKUP_END_HOUR = 7;
+    // Délai standard (en minutes) avant de déclarer « chauffeur non trouvé »
+    const PERFORMER_LOOKUP_TIMEOUT = 5;
 
     protected $appends = ['customer','driver', 'service','items', 'invoice', 'route_points'];
 
@@ -292,6 +299,63 @@ class Order extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class, 'order_id', 'id');
+    }
+
+    public static function isNightLookupWindow(?Carbon $at = null): bool
+    {
+        $hour = ($at ?? now())->hour;
+
+        return $hour >= self::NIGHT_LOOKUP_START_HOUR || $hour < self::NIGHT_LOOKUP_END_HOUR;
+    }
+
+    public function isNightDelivery(): bool
+    {
+        return !$this->is_location && $this->delivery_type_code == DeliveryType::TYPE_DE_NUIT;
+    }
+
+    /**
+     * Moment à partir duquel on cherche des chauffeurs.
+     * Une commande de nuit passée en journée attend l'ouverture de la fenêtre de nuit (20h).
+     */
+    public function performerLookupStartsAt(): Carbon
+    {
+        $start = $this->created_at->copy();
+
+        if ($this->isNightDelivery() && !self::isNightLookupWindow($start)) {
+            return $start->setTime(self::NIGHT_LOOKUP_START_HOUR, 0);
+        }
+
+        return $start;
+    }
+
+    /**
+     * Moment après lequel une commande toujours sans chauffeur passe en « chauffeur non trouvé ».
+     *  - location : début du jour de location (au moins le délai standard après la commande)
+     *  - nuit : 07h, fin de la fenêtre de nuit
+     *  - autres : délai standard après la commande
+     */
+    public function performerLookupDeadline(): Carbon
+    {
+        $start = $this->performerLookupStartsAt();
+        $standardDeadline = $start->copy()->addMinutes(self::PERFORMER_LOOKUP_TIMEOUT);
+
+        if ($this->is_location) {
+            $item = $this->orderItems->firstWhere('service_slug', Service::LOCATION);
+
+            if ($item && $item->location_start_date) {
+                return Carbon::parse($item->location_start_date)->startOfDay()->max($standardDeadline);
+            }
+
+            return $standardDeadline;
+        }
+
+        if ($this->isNightDelivery()) {
+            $deadline = $start->copy()->setTime(self::NIGHT_LOOKUP_END_HOUR, 0);
+
+            return $start->hour >= self::NIGHT_LOOKUP_START_HOUR ? $deadline->addDay() : $deadline;
+        }
+
+        return $standardDeadline;
     }
 
 

@@ -230,4 +230,23 @@ class DriverAssignmentServiceTest extends TestCase
 
         (new DriverAssignmentService())->sendInvitations($order, 10);
     }
+
+    /** @test */
+    public function it_delegates_to_nuit_service_before_07h()
+    {
+        $this->travelTo(now()->setTime(5, 0));
+
+        $order = Order::factory()->make([
+            'is_location'        => false,
+            'delivery_type_code' => DeliveryType::TYPE_DE_NUIT,
+            'service_slug'       => Service::COURSE,
+        ]);
+
+        $this->mock(DriverNuitAssignmentService::class)
+            ->shouldReceive('assignCourseNearestDrivers')
+            ->once()
+            ->with($order, 10, 5);
+
+        (new DriverAssignmentService())->sendInvitations($order, 10);
+    }
 }
