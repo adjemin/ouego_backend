@@ -21,6 +21,10 @@ class DeliveryType extends Model
     const EXPRESS_UNAVAILABLE_SLOTS = [['06:00', '09:00'], ['17:00', '19:30']];
     const EXPRESS_UNAVAILABLE_MESSAGE = "L’option Course Express n'est pas disponible de 06H00 à 09H00 et de 17H00 à 19H30.";
 
+    // Commandes « en journée » : de 06h00 jusqu'à l'heure limite JOURNEE_CUTOFF_HOUR (exclue)
+    const EN_JOURNEE_START_HOUR = 6;
+    const EN_JOURNEE_DEFAULT_CUTOFF_HOUR = 12;
+
     const OPERATOR_ADD              = "add";
     const OPERATOR_SUBTRACT         = "subtract";
     const OPERATOR_MULTIPLY         = "multiply";
@@ -61,5 +65,26 @@ class DeliveryType extends Model
         }
 
         return true;
+    }
+
+    public static function enJourneeCutoffHour(): int
+    {
+        $value = Setting::get('JOURNEE_CUTOFF_HOUR');
+
+        return is_numeric($value) ? intval($value) : self::EN_JOURNEE_DEFAULT_CUTOFF_HOUR;
+    }
+
+    public static function isEnJourneeAvailable(?Carbon $at = null, ?int $cutoffHour = null): bool
+    {
+        $hour = ($at ?? now())->hour;
+
+        return $hour >= self::EN_JOURNEE_START_HOUR && $hour < ($cutoffHour ?? self::enJourneeCutoffHour());
+    }
+
+    public static function enJourneeUnavailableMessage(?int $cutoffHour = null): string
+    {
+        $cutoffHour = $cutoffHour ?? self::enJourneeCutoffHour();
+
+        return sprintf("Vous pouvez passer une course en journée uniquement de %02dH00 à %02dH00.", self::EN_JOURNEE_START_HOUR, $cutoffHour);
     }
 }

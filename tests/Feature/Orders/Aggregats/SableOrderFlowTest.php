@@ -191,4 +191,37 @@ class SableOrderFlowTest extends AggregatOrderTestCase
             ->assertOk()
             ->assertJsonPath('data.status', Order::INITIATED);
     }
+
+    /** @test */
+    public function it_marks_en_journee_unavailable_in_the_estimate_from_the_cutoff_hour()
+    {
+        $this->travelTo(now()->setTime(12, 0));
+
+        $this->estimate('sable', $this->estimatePayload(['delivery_type_code' => DeliveryType::TYPE_EN_JOURNEE]))
+            ->assertOk()
+            ->assertJsonPath('data.is_available', false)
+            ->assertJsonPath('data.error_message', 'Vous pouvez passer une course en journée uniquement de 06H00 à 12H00.');
+    }
+
+    /** @test */
+    public function it_rejects_an_en_journee_order_from_the_cutoff_hour()
+    {
+        $this->travelTo(now()->setTime(12, 0));
+
+        $this->createOrder($this->orderItem(['delivery_type_code' => DeliveryType::TYPE_EN_JOURNEE]))
+            ->assertStatus(404)
+            ->assertJsonPath('message', 'Vous pouvez passer une course en journée uniquement de 06H00 à 12H00.');
+
+        $this->assertDatabaseCount('orders', 0);
+    }
+
+    /** @test */
+    public function it_accepts_an_en_journee_order_before_the_cutoff_hour()
+    {
+        $this->travelTo(now()->setTime(11, 59));
+
+        $this->createOrder($this->orderItem(['delivery_type_code' => DeliveryType::TYPE_EN_JOURNEE]))
+            ->assertOk()
+            ->assertJsonPath('data.status', Order::INITIATED);
+    }
 }

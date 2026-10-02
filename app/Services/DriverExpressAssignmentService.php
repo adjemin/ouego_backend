@@ -12,6 +12,7 @@ use App\Models\Carrier;
 use App\Models\DriverCarrier;
 use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
+use App\Models\DeliveryType;
 
 
 class DriverExpressAssignmentService
@@ -235,7 +236,7 @@ class DriverExpressAssignmentService
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
             // 5) Qui n'a pas plus de 3 en journée en cours
-            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+            $cutoffHour = DeliveryType::enJourneeCutoffHour();
             if (now()->hour >= $cutoffHour) {
                 $query->whereDoesntHave('orders', function ($q) {
                     $q->active()
@@ -337,7 +338,7 @@ class DriverExpressAssignmentService
             ->orderByRaw('last_location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography', [$longitude, $latitude]);
 
             // 6) Qui n'a pas plus de 3 en journée en cours
-            $cutoffHour = intval(Setting::get('JOURNEE_CUTOFF_HOUR'))?? 12;
+            $cutoffHour = DeliveryType::enJourneeCutoffHour();
             if (now()->hour >= $cutoffHour) {
                 $query->whereDoesntHave('orders', function ($q) {
                     $q->active()
