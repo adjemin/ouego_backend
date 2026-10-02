@@ -12,7 +12,7 @@
 - Pour les courses et les agrégats, il choisit un **type de livraison** : **Express**, **En journée**, **En semaine** ou **De nuit**. Certains types ne sont disponibles qu'à certaines heures.
 - Une fois la commande confirmée, la plateforme **n'impose pas** la commande à un chauffeur : elle envoie une **invitation** à **5 chauffeurs au maximum**, choisis selon des règles d'éligibilité et de priorité.
 - **Le premier chauffeur qui accepte obtient la commande.** Les autres invitations sont alors annulées.
-- Sans acceptation, la recherche est relancée **toutes les 2 minutes**. Une commande toujours sans chauffeur passe au statut **« Chauffeur non trouvé »** **5 minutes** après sa création, sauf les commandes **de nuit** (à 07h00) et les **locations réservées à l'avance** (à la date de début).
+- Sans acceptation, la recherche est relancée **toutes les 2 minutes**. Une commande toujours sans chauffeur passe au statut **« Chauffeur non trouvé »** **5 minutes** après sa confirmation, sauf les commandes **de nuit** (à 07h00) et les **locations réservées à l'avance** (à la date de début).
 
 ---
 
@@ -202,9 +202,9 @@ Un chauffeur accepte → « performer_found » → le client est notifié
 |---|---|
 | Fréquence de relance de la recherche | **toutes les 2 minutes** |
 | Durée de vie d'une invitation sans réponse | **2 minutes** |
-| Échéance avant « Chauffeur non trouvé » (cas général) | **5 minutes** après la création de la commande |
+| Échéance avant « Chauffeur non trouvé » (cas général) | **5 minutes** après la confirmation de la commande |
 | Échéance pour une commande **de nuit** | **07h00** à la fin de la nuit (la recherche ne commence qu'à 20h00) |
-| Échéance pour une **location** | Début du **jour de début de location** (au moins 5 minutes après la création) |
+| Échéance pour une **location** | Début du **jour de début de location** (au moins 5 minutes après la confirmation) |
 | Nombre de chauffeurs invités par recherche | **5** |
 | Rayon de recherche (courses, sable) | **10 km** |
 | Chauffeur considéré comme hors ligne après | **30 minutes** sans activité |
@@ -250,7 +250,7 @@ Les autres valeurs (5 chauffeurs, 10 km, 2 min, 5 min, 30 min, créneaux Express
 Cette section liste les comportements actuels qui ne correspondent probablement pas à l'intention métier. Ils sont signalés pour être arbitrés, **pas encore corrigés**.
 
 1. ~~**Commandes de nuit closes avant 20h.**~~ **Corrigé.** Les commandes de nuit attendent 20h00 et restent en recherche jusqu'à 07h00. Les locations restent en recherche jusqu'à leur date de début. La recherche de nuit fonctionne aussi après minuit, ce qui rend effective la réattribution de 05h00.
-2. **Délai de 5 minutes calculé depuis la création, pas depuis la confirmation.** Si le client confirme plusieurs minutes après avoir créé sa commande, il reste moins de 5 minutes pour trouver un chauffeur.
+2. ~~**Délai de 5 minutes calculé depuis la création, pas depuis la confirmation.**~~ **Corrigé.** Les délais sont maintenant comptés à partir de la confirmation de la commande par le client.
 3. **Créneau Express non bloqué à la création.** L'option Express est grisée à l'estimation entre 06h00–08h59 et 17h00–19h59, mais la création d'une commande Express n'est pas bloquée sur ces créneaux. Le message affiché indique « 19H30 » alors que le contrôle s'arrête à 19h59.
 4. **Heure limite « en journée ».** Le message indique « jusqu'à 12H00 », mais une commande reste acceptée jusqu'à 12h59.
 5. **Score des agrégats.** Les critères « Proximité carrière ↔ livraison » (25 %) et « Concentration » (5 %) valent toujours 100 % pour tous les chauffeurs. Ils ne départagent donc personne : en pratique, le classement se fait sur la proximité, les jetons et la note.

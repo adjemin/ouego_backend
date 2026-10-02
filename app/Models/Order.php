@@ -314,12 +314,20 @@ class Order extends Model
     }
 
     /**
+     * Moment de la confirmation par le client (order_date), ou de la création à défaut.
+     */
+    public function confirmedAt(): Carbon
+    {
+        return $this->order_date ? Carbon::parse($this->order_date) : $this->created_at->copy();
+    }
+
+    /**
      * Moment à partir duquel on cherche des chauffeurs.
-     * Une commande de nuit passée en journée attend l'ouverture de la fenêtre de nuit (20h).
+     * Une commande de nuit confirmée en journée attend l'ouverture de la fenêtre de nuit (20h).
      */
     public function performerLookupStartsAt(): Carbon
     {
-        $start = $this->created_at->copy();
+        $start = $this->confirmedAt();
 
         if ($this->isNightDelivery() && !self::isNightLookupWindow($start)) {
             return $start->setTime(self::NIGHT_LOOKUP_START_HOUR, 0);
@@ -330,9 +338,9 @@ class Order extends Model
 
     /**
      * Moment après lequel une commande toujours sans chauffeur passe en « chauffeur non trouvé ».
-     *  - location : début du jour de location (au moins le délai standard après la commande)
+     *  - location : début du jour de location (au moins le délai standard après la confirmation)
      *  - nuit : 07h, fin de la fenêtre de nuit
-     *  - autres : délai standard après la commande
+     *  - autres : délai standard après la confirmation
      */
     public function performerLookupDeadline(): Carbon
     {

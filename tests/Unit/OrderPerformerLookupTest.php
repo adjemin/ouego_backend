@@ -99,21 +99,61 @@ class OrderPerformerLookupTest extends TestCase
         }
     }
 
-    private function makeOrder(string $deliveryType, string $createdAt): Order
+    // =========================================================================
+    // POINT DE DÉPART : CONFIRMATION
+    // =========================================================================
+
+    /** @test */
+    public function timeout_is_counted_from_confirmation_not_creation()
+    {
+        $order = $this->makeOrder(DeliveryType::TYPE_EXPRESS, '2026-10-02 10:00', '2026-10-02 10:12');
+
+        $this->assertEquals('2026-10-02 10:12:00', $order->performerLookupStartsAt()->toDateTimeString());
+        $this->assertEquals('2026-10-02 10:17:00', $order->performerLookupDeadline()->toDateTimeString());
+    }
+
+    /** @test */
+    public function night_order_confirmed_at_night_starts_at_confirmation()
+    {
+        $order = $this->makeOrder(DeliveryType::TYPE_DE_NUIT, '2026-10-02 19:00', '2026-10-02 21:30');
+
+        $this->assertEquals('2026-10-02 21:30:00', $order->performerLookupStartsAt()->toDateTimeString());
+        $this->assertEquals('2026-10-03 07:00:00', $order->performerLookupDeadline()->toDateTimeString());
+    }
+
+    /** @test */
+    public function location_short_notice_timeout_is_counted_from_confirmation()
+    {
+        $order = $this->makeLocationOrder('2026-10-02 10:00', '2026-10-02', null, '2026-10-02 10:20');
+
+        $this->assertEquals('2026-10-02 10:25:00', $order->performerLookupDeadline()->toDateTimeString());
+    }
+
+    /** @test */
+    public function falls_back_to_creation_when_order_date_is_missing()
+    {
+        $order = $this->makeOrder(DeliveryType::TYPE_EXPRESS, '2026-10-02 10:00');
+
+        $this->assertEquals('2026-10-02 10:00:00', $order->confirmedAt()->toDateTimeString());
+    }
+
+    private function makeOrder(string $deliveryType, string $createdAt, ?string $orderDate = null): Order
     {
         return (new Order())->forceFill([
             'is_location'        => false,
             'delivery_type_code' => $deliveryType,
             'created_at'         => $createdAt,
+            'order_date'         => $orderDate,
         ]);
     }
 
-    private function makeLocationOrder(string $createdAt, string $startDate, ?string $deliveryType = null): Order
+    private function makeLocationOrder(string $createdAt, string $startDate, ?string $deliveryType = null, ?string $orderDate = null): Order
     {
         $order = (new Order())->forceFill([
             'is_location'        => true,
             'delivery_type_code' => $deliveryType,
             'created_at'         => $createdAt,
+            'order_date'         => $orderDate,
         ]);
 
         $order->setRelation('orderItems', collect([
