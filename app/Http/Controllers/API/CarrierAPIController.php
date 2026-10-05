@@ -39,7 +39,7 @@ class CarrierAPIController extends AppBaseController
         // Récupérer les carriers associés au driver
         $carriers = $driver->carriers()->get();
 
-        return $this->sendResponse($carriers->toArray(), 'Driver carriers retrieved successfully');
+        return $this->sendResponse($carriers->toArray(), 'Carrières du chauffeur récupérées avec succès');
     }
 
     /**
@@ -57,17 +57,17 @@ class CarrierAPIController extends AppBaseController
         // Vérifier si la carrière existe
         $carrier = Carrier::find($carrierId);
         if (!$carrier) {
-            return $this->sendError('Carrier not found');
+            return $this->sendError('Carrière introuvable');
         }
 
         // Vérifier si la relation n'existe pas déjà
         if (!$driver->carriers()->where('carrier_id', $carrierId)->exists()) {
             // Ajouter la relation
             $driver->carriers()->attach($carrierId);
-            return $this->sendSuccess('Carrier added to driver successfully');
+            return $this->sendSuccess('Carrière associée au chauffeur avec succès');
         }
 
-        return $this->sendError('Carrier already associated with this driver');
+        return $this->sendError('Carrière déjà associée à ce chauffeur');
     }
 
     /**
@@ -86,10 +86,10 @@ class CarrierAPIController extends AppBaseController
         if ($driver->carriers()->where('carrier_id', $carrierId)->exists()) {
             // Supprimer la relation
             $driver->carriers()->detach($carrierId);
-            return $this->sendSuccess('Carrier removed from driver successfully');
+            return $this->sendSuccess('Carrière retirée du chauffeur avec succès');
         }
 
-        return $this->sendError('Carrier not associated with this driver');
+        return $this->sendError('Carrière non associée à ce chauffeur');
     }
 
     /**
@@ -104,7 +104,7 @@ class CarrierAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($carriers->toArray(), 'Carriers retrieved successfully');
+        return $this->sendResponse($carriers->toArray(), 'Carrières récupérées avec succès');
     }
 
     /**
@@ -124,7 +124,7 @@ class CarrierAPIController extends AppBaseController
         // Rechercher les carriers par nom
         $carriers = Carrier::where('name', 'LIKE', '%' . $request->name . '%')->get();
 
-        return $this->sendResponse($carriers->toArray(), 'Carriers search results');
+        return $this->sendResponse($carriers->toArray(), 'Résultats de la recherche de carrières');
     }
 
     /**
@@ -140,7 +140,7 @@ class CarrierAPIController extends AppBaseController
         $carrier->location  = [ $carrier->location_latitude,$carrier->location_longitude];
         $carrier->save();
 
-        return $this->sendResponse($carrier, 'Carrier saved successfully');
+        return $this->sendResponse($carrier, 'Carrière enregistrée avec succès');
     }
 
     /**
@@ -153,10 +153,10 @@ class CarrierAPIController extends AppBaseController
         $carrier = $this->carrierRepository->find($id);
 
         if (empty($carrier)) {
-            return $this->sendError('Carrier not found');
+            return $this->sendError('Carrière introuvable');
         }
 
-        return $this->sendResponse($carrier->toArray(), 'Carrier retrieved successfully');
+        return $this->sendResponse($carrier->toArray(), 'Carrière récupérée avec succès');
     }
 
     /**
@@ -171,12 +171,12 @@ class CarrierAPIController extends AppBaseController
         $carrier = $this->carrierRepository->find($id);
 
         if (empty($carrier)) {
-            return $this->sendError('Carrier not found');
+            return $this->sendError('Carrière introuvable');
         }
 
         $carrier = $this->carrierRepository->update($input, $id);
 
-        return $this->sendResponse($carrier->toArray(), 'Carrier updated successfully');
+        return $this->sendResponse($carrier->toArray(), 'Carrière mise à jour avec succès');
     }
 
     /**
@@ -191,11 +191,11 @@ class CarrierAPIController extends AppBaseController
         $carrier = $this->carrierRepository->find($id);
 
         if (empty($carrier)) {
-            return $this->sendError('Carrier not found');
+            return $this->sendError('Carrière introuvable');
         }
 
         $carrier->delete();
 
-        return $this->sendSuccess('Carrier deleted successfully');
+        return $this->sendSuccess('Carrière supprimée avec succès');
     }
 }

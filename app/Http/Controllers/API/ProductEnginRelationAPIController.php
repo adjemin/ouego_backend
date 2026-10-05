@@ -60,7 +60,7 @@ class ProductEnginRelationAPIController extends AppBaseController
         $productEnginRelation = $this->productEnginRelationRepository->find($id);
 
         if (empty($productEnginRelation)) {
-            return $this->sendError('Product Engin Relation not found');
+            return $this->sendError('Relation produit-engin introuvable');
         }
 
         return $this->sendResponse($productEnginRelation->toArray(), 'Product Engin Relation retrieved successfully');
@@ -78,7 +78,7 @@ class ProductEnginRelationAPIController extends AppBaseController
         $productEnginRelation = $this->productEnginRelationRepository->find($id);
 
         if (empty($productEnginRelation)) {
-            return $this->sendError('Product Engin Relation not found');
+            return $this->sendError('Relation produit-engin introuvable');
         }
 
         $productEnginRelation = $this->productEnginRelationRepository->update($input, $id);
@@ -98,7 +98,7 @@ class ProductEnginRelationAPIController extends AppBaseController
         $productEnginRelation = $this->productEnginRelationRepository->find($id);
 
         if (empty($productEnginRelation)) {
-            return $this->sendError('Product Engin Relation not found');
+            return $this->sendError('Relation produit-engin introuvable');
         }
 
         $productEnginRelation->delete();

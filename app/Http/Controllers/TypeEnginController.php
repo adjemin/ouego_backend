@@ -60,7 +60,7 @@ class TypeEnginController extends AppBaseController
         $typeEngin = $this->typeEnginRepository->find($id);
 
         if (empty($typeEngin)) {
-            Flash::error('Type Engin not found');
+            Flash::error("Type d'engin introuvable");
 
             return redirect(route('typeEngins.index'));
         }
@@ -76,7 +76,7 @@ class TypeEnginController extends AppBaseController
         $typeEngin = $this->typeEnginRepository->find($id);
 
         if (empty($typeEngin)) {
-            Flash::error('Type Engin not found');
+            Flash::error("Type d'engin introuvable");
 
             return redirect(route('typeEngins.index'));
         }
@@ -92,7 +92,7 @@ class TypeEnginController extends AppBaseController
         $typeEngin = $this->typeEnginRepository->find($id);
 
         if (empty($typeEngin)) {
-            Flash::error('Type Engin not found');
+            Flash::error("Type d'engin introuvable");
 
             return redirect(route('typeEngins.index'));
         }
@@ -114,7 +114,7 @@ class TypeEnginController extends AppBaseController
         $typeEngin = $this->typeEnginRepository->find($id);
 
         if (empty($typeEngin)) {
-            Flash::error('Type Engin not found');
+            Flash::error("Type d'engin introuvable");
 
             return redirect(route('typeEngins.index'));
         }

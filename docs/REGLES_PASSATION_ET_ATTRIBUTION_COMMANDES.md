@@ -87,7 +87,7 @@ Ensuite :
 
 - **Le premier chauffeur qui accepte** devient le chauffeur de la commande. La commande passe au statut **« performer_found »** et le client reçoit la notification *« Nous avons trouvé un conducteur pour la course »*.
 - Toutes les autres invitations en attente pour cette commande sont **annulées**.
-- Si un chauffeur **accepte trop tard** (commande déjà terminée ou attribuée), il reçoit le message « Affectation déjà traitée » ou « Order already completed ».
+- Si un chauffeur **accepte trop tard** (commande déjà terminée ou attribuée), il reçoit le message « Affectation déjà traitée » ou « Commande déjà terminée ».
 - Un **refus** ferme l'invitation de ce chauffeur, qui **n'est plus jamais réinvité ni notifié** pour cette commande : sa place revient au chauffeur suivant. Si plus aucune invitation n'est en attente, la recherche **repart immédiatement**.
 - Un chauffeur n'est **notifié qu'une fois** par commande, au moment de son invitation.
 

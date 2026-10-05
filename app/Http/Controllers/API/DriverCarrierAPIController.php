@@ -60,7 +60,7 @@ class DriverCarrierAPIController extends AppBaseController
         $driverCarrier = $this->driverCarrierRepository->find($id);
 
         if (empty($driverCarrier)) {
-            return $this->sendError('Driver Carrier not found');
+            return $this->sendError('Carrière du chauffeur introuvable');
         }
 
         return $this->sendResponse($driverCarrier->toArray(), 'Driver Carrier retrieved successfully');
@@ -78,7 +78,7 @@ class DriverCarrierAPIController extends AppBaseController
         $driverCarrier = $this->driverCarrierRepository->find($id);
 
         if (empty($driverCarrier)) {
-            return $this->sendError('Driver Carrier not found');
+            return $this->sendError('Carrière du chauffeur introuvable');
         }
 
         $driverCarrier = $this->driverCarrierRepository->update($input, $id);
@@ -98,7 +98,7 @@ class DriverCarrierAPIController extends AppBaseController
         $driverCarrier = $this->driverCarrierRepository->find($id);
 
         if (empty($driverCarrier)) {
-            return $this->sendError('Driver Carrier not found');
+            return $this->sendError('Carrière du chauffeur introuvable');
         }
 
         $driverCarrier->delete();

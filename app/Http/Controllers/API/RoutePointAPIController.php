@@ -91,7 +91,7 @@ class RoutePointAPIController extends AppBaseController
         $routePoint = $this->routePointRepository->find($id);
 
         if (empty($routePoint)) {
-            return $this->sendError('Route Point not found');
+            return $this->sendError("Point d'arrêt introuvable");
         }
 
         return $this->sendResponse($routePoint->toArray(), 'Route Point retrieved successfully');
@@ -109,7 +109,7 @@ class RoutePointAPIController extends AppBaseController
         $routePoint = $this->routePointRepository->find($id);
 
         if (empty($routePoint)) {
-            return $this->sendError('Route Point not found');
+            return $this->sendError("Point d'arrêt introuvable");
         }
 
         $routePoint = $this->routePointRepository->update($input, $id);
@@ -129,7 +129,7 @@ class RoutePointAPIController extends AppBaseController
         $routePoint = $this->routePointRepository->find($id);
 
         if (empty($routePoint)) {
-            return $this->sendError('Route Point not found');
+            return $this->sendError("Point d'arrêt introuvable");
         }
 
         $routePoint->delete();
@@ -154,11 +154,11 @@ class RoutePointAPIController extends AppBaseController
         $routePoint = $this->routePointRepository->find($id);
 
         if (empty($routePoint)) {
-            return $this->sendError('Route Point not found', 400);
+            return $this->sendError("Point d'arrêt introuvable", 400);
         }
 
         if (!array_key_exists('status', $input) || empty($input['status'])) {
-            return $this->sendError('status is required', 400);
+            return $this->sendError('Le champ status est obligatoire', 400);
         }
 
         if(!in_array($input['status'], [

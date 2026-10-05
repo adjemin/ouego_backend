@@ -35,7 +35,7 @@ class TypeEnginAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($typeEngins->toArray(), 'Type Engins retrieved successfully');
+        return $this->sendResponse($typeEngins->toArray(), "Types d'engin récupérés avec succès");
     }
 
     /**
@@ -50,12 +50,12 @@ class TypeEnginAPIController extends AppBaseController
 
         $typeEngin = TypeEngin::where('slug', $input['slug'])->first();
         if($typeEngin != null){
-            return $this->sendError('This typeEngin already exist', 400);
+            return $this->sendError("Ce type d'engin existe déjà", 400);
         }
 
         $typeEngin = $this->typeEnginRepository->create($input);
 
-        return $this->sendResponse($typeEngin->toArray(), 'Type Engin saved successfully');
+        return $this->sendResponse($typeEngin->toArray(), "Type d'engin enregistré avec succès");
     }
 
     /**
@@ -68,10 +68,10 @@ class TypeEnginAPIController extends AppBaseController
         $typeEngin = $this->typeEnginRepository->find($id);
 
         if (empty($typeEngin)) {
-            return $this->sendError('Type Engin not found');
+            return $this->sendError("Type d'engin introuvable");
         }
 
-        return $this->sendResponse($typeEngin->toArray(), 'Type Engin retrieved successfully');
+        return $this->sendResponse($typeEngin->toArray(), "Type d'engin récupéré avec succès");
     }
 
     /**
@@ -86,12 +86,12 @@ class TypeEnginAPIController extends AppBaseController
         $typeEngin = $this->typeEnginRepository->find($id);
 
         if (empty($typeEngin)) {
-            return $this->sendError('Type Engin not found');
+            return $this->sendError("Type d'engin introuvable");
         }
 
         $typeEngin = $this->typeEnginRepository->update($input, $id);
 
-        return $this->sendResponse($typeEngin->toArray(), 'TypeEngin updated successfully');
+        return $this->sendResponse($typeEngin->toArray(), "Type d'engin mis à jour avec succès");
     }
 
     /**
@@ -106,11 +106,11 @@ class TypeEnginAPIController extends AppBaseController
         $typeEngin = $this->typeEnginRepository->find($id);
 
         if (empty($typeEngin)) {
-            return $this->sendError('Type Engin not found');
+            return $this->sendError("Type d'engin introuvable");
         }
 
         $typeEngin->delete();
 
-        return $this->sendSuccess('Type Engin deleted successfully');
+        return $this->sendSuccess("Type d'engin supprimé avec succès");
     }
 }

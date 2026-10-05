@@ -60,7 +60,7 @@ class OrderController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
-            Flash::error('Order not found');
+            Flash::error('Commande introuvable');
 
             return redirect(route('orders.index'));
         }
@@ -76,7 +76,7 @@ class OrderController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
-            Flash::error('Order not found');
+            Flash::error('Commande introuvable');
 
             return redirect(route('orders.index'));
         }
@@ -92,7 +92,7 @@ class OrderController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
-            Flash::error('Order not found');
+            Flash::error('Commande introuvable');
 
             return redirect(route('orders.index'));
         }
@@ -114,7 +114,7 @@ class OrderController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
-            Flash::error('Order not found');
+            Flash::error('Commande introuvable');
 
             return redirect(route('orders.index'));
         }

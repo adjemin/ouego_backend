@@ -51,11 +51,11 @@ class DriverDeviceAPIController extends AppBaseController
         }
 
         if(!array_key_exists('driver_id', $input)){
-            return $this->sendError('driver_id is required');
+            return $this->sendError('Le champ driver_id est obligatoire');
         }
 
         if(!array_key_exists('firebase_id', $input)){
-            return $this->sendError('firebase_id is required');
+            return $this->sendError('Le champ firebase_id est obligatoire');
         }
 
         $devices = DriverDevice::where(['firebase_id' => $input['firebase_id']])->get();
@@ -80,7 +80,7 @@ class DriverDeviceAPIController extends AppBaseController
         $driverDevice = $this->driverDeviceRepository->find($id);
 
         if (empty($driverDevice)) {
-            return $this->sendError('Driver Device not found');
+            return $this->sendError('Appareil du chauffeur introuvable');
         }
 
         return $this->sendResponse($driverDevice->toArray(), 'Driver Device retrieved successfully');
@@ -98,7 +98,7 @@ class DriverDeviceAPIController extends AppBaseController
         $driverDevice = $this->driverDeviceRepository->find($id);
 
         if (empty($driverDevice)) {
-            return $this->sendError('Driver Device not found');
+            return $this->sendError('Appareil du chauffeur introuvable');
         }
 
         $driverDevice = $this->driverDeviceRepository->update($input, $id);
@@ -118,7 +118,7 @@ class DriverDeviceAPIController extends AppBaseController
         $driverDevice = $this->driverDeviceRepository->find($id);
 
         if (empty($driverDevice)) {
-            return $this->sendError('Driver Device not found');
+            return $this->sendError('Appareil du chauffeur introuvable');
         }
 
         $driverDevice->delete();

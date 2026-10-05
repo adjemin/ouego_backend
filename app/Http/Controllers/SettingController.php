@@ -60,7 +60,7 @@ class SettingController extends AppBaseController
         $setting = $this->settingRepository->find($id);
 
         if (empty($setting)) {
-            Flash::error('Setting not found');
+            Flash::error('Paramètre introuvable');
 
             return redirect(route('settings.index'));
         }
@@ -76,7 +76,7 @@ class SettingController extends AppBaseController
         $setting = $this->settingRepository->find($id);
 
         if (empty($setting)) {
-            Flash::error('Setting not found');
+            Flash::error('Paramètre introuvable');
 
             return redirect(route('settings.index'));
         }
@@ -92,7 +92,7 @@ class SettingController extends AppBaseController
         $setting = $this->settingRepository->find($id);
 
         if (empty($setting)) {
-            Flash::error('Setting not found');
+            Flash::error('Paramètre introuvable');
 
             return redirect(route('settings.index'));
         }
@@ -114,7 +114,7 @@ class SettingController extends AppBaseController
         $setting = $this->settingRepository->find($id);
 
         if (empty($setting)) {
-            Flash::error('Setting not found');
+            Flash::error('Paramètre introuvable');
 
             return redirect(route('settings.index'));
         }

@@ -103,7 +103,7 @@ class GravierOrderFlowTest extends AggregatOrderTestCase
     {
         $this->estimate('gravier', $this->estimatePayload(['product_type_slug' => 'gravier-1525-gros-grain']))
             ->assertStatus(400)
-            ->assertJsonPath('message', 'Désolé, aucune carrière à proximité trouvé');
+            ->assertJsonPath('message', 'Désolé, aucune carrière trouvée à proximité');
     }
 
     /** @test */
@@ -113,7 +113,7 @@ class GravierOrderFlowTest extends AggregatOrderTestCase
 
         $this->estimate('gravier', $this->estimatePayload())
             ->assertStatus(400)
-            ->assertJsonPath('message', 'Désolé, aucune carrière à proximité trouvé');
+            ->assertJsonPath('message', 'Désolé, aucune carrière trouvée à proximité');
     }
 
     /** @test */
@@ -124,7 +124,7 @@ class GravierOrderFlowTest extends AggregatOrderTestCase
 
         $this->estimate('gravier', $payload)
             ->assertStatus(400)
-            ->assertJsonPath('message', 'quantity is required');
+            ->assertJsonPath('message', 'Le champ quantity est obligatoire');
     }
 
     /** @test */
@@ -192,7 +192,7 @@ class GravierOrderFlowTest extends AggregatOrderTestCase
 
         $this->createOrder($item)
             ->assertStatus(400)
-            ->assertJsonPath('message', 'carrier_id is required');
+            ->assertJsonPath('message', 'Le champ carrier_id est obligatoire');
 
         $this->assertDatabaseCount('orders', 0);
     }
@@ -205,7 +205,7 @@ class GravierOrderFlowTest extends AggregatOrderTestCase
 
         $this->createOrder($item)
             ->assertStatus(400)
-            ->assertJsonPath('message', 'quantity is required');
+            ->assertJsonPath('message', 'Le champ quantity est obligatoire');
 
         $this->assertDatabaseCount('orders', 0);
     }
@@ -216,7 +216,7 @@ class GravierOrderFlowTest extends AggregatOrderTestCase
         $this->actingAs($this->customer, 'api-customers')
             ->postJson('/api/v1/orders/create', ['items' => [$this->orderItem()]])
             ->assertStatus(400)
-            ->assertJsonPath('message', 'payment_method_code is required');
+            ->assertJsonPath('message', 'Le champ payment_method_code est obligatoire');
     }
 
     /** @test */
@@ -250,13 +250,13 @@ class GravierOrderFlowTest extends AggregatOrderTestCase
     public static function rejectedOrderItems(): array
     {
         return [
-            'service inconnu' => [fn (array $item) => ['service_slug' => 'inconnu'] + $item, 'Service not found'],
-            'sans carrier_id' => [fn (array $item) => array_diff_key($item, ['carrier_id' => true]), 'carrier_id is required'],
+            'service inconnu' => [fn (array $item) => ['service_slug' => 'inconnu'] + $item, 'Service introuvable'],
+            'sans carrier_id' => [fn (array $item) => array_diff_key($item, ['carrier_id' => true]), 'Le champ carrier_id est obligatoire'],
             'type de produit inconnu' => [
                 fn (array $item) => array_replace_recursive($item, ['meta_data' => ['product_type_slug' => 'gravier-inconnu']]),
                 'Type de produit introuvable',
             ],
-            'carrière inconnue' => [fn (array $item) => ['carrier_id' => 999999] + $item, 'Carrier introuvable'],
+            'carrière inconnue' => [fn (array $item) => ['carrier_id' => 999999] + $item, 'Carrière introuvable'],
         ];
     }
 

@@ -46,7 +46,7 @@ class CustomerAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($customers->toArray(), 'Customers retrieved successfully');
+        return $this->sendResponse($customers->toArray(), 'Clients récupérés avec succès');
     }
 
     /**
@@ -59,7 +59,7 @@ class CustomerAPIController extends AppBaseController
 
         $customer = $this->customerRepository->create($input);
 
-        return $this->sendResponse($customer->toArray(), 'Customer saved successfully');
+        return $this->sendResponse($customer->toArray(), 'Client enregistré avec succès');
     }
 
     /**
@@ -72,10 +72,10 @@ class CustomerAPIController extends AppBaseController
         $customer = $this->customerRepository->find($id);
 
         if (empty($customer)) {
-            return $this->sendError('Customer not found');
+            return $this->sendError('Client introuvable');
         }
 
-        return $this->sendResponse($customer->toArray(), 'Customer retrieved successfully');
+        return $this->sendResponse($customer->toArray(), 'Client récupéré avec succès');
     }
 
     /**
@@ -98,7 +98,7 @@ class CustomerAPIController extends AppBaseController
 
 
         if (empty($customer)) {
-            return $this->sendError('Customer not found');
+            return $this->sendError('Client introuvable');
         }
 
         // Empêcher la modification du code_commercial s'il existe déjà
@@ -128,7 +128,7 @@ class CustomerAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $customer
-        ], 'Customer updated successfully');
+        ], 'Client mis à jour avec succès');
     }
 
     /**
@@ -143,12 +143,12 @@ class CustomerAPIController extends AppBaseController
         $customer = $this->customerRepository->find($id);
 
         if (empty($customer)) {
-            return $this->sendError('Customer not found');
+            return $this->sendError('Client introuvable');
         }
 
         $customer->delete();
 
-        return $this->sendSuccess('Customer deleted successfully');
+        return $this->sendSuccess('Client supprimé avec succès');
     }
 
     public function register(Request $request){
@@ -160,26 +160,26 @@ class CustomerAPIController extends AppBaseController
         }
 
         if (!array_key_exists('last_name', $input)) {
-            return $this->sendError('last_name is required');
+            return $this->sendError('Le champ last_name est obligatoire');
         }
 
         if (!array_key_exists('first_name', $input)) {
-            return $this->sendError('first_name is required');
+            return $this->sendError('Le champ first_name est obligatoire');
         }
 
         if (!array_key_exists('dialing_code', $input)) {
-            return $this->sendError('dialing_code is required');
+            return $this->sendError('Le champ dialing_code est obligatoire');
         }
 
         if(!array_key_exists('phone_number', $input)) {
-            return $this->sendError('phone_number is required');
+            return $this->sendError('Le champ phone_number est obligatoire');
         }
 
         // Vérifier que le profile_id existe
         if (array_key_exists('profile_id', $input)) {
             $profile = CustomerProfile::find($input['profile_id']);
             if ($profile == null) {
-                return $this->sendError('Profile not found', 404);
+                return $this->sendError('Profil introuvable', 404);
             }
         }
 
@@ -241,7 +241,7 @@ class CustomerAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $customer
-        ], 'Customer saved successfully');
+        ], 'Client enregistré avec succès');
 
     }
 
@@ -253,11 +253,11 @@ class CustomerAPIController extends AppBaseController
         }
 
         if (!array_key_exists('dialing_code', $input)) {
-            return $this->sendError('dialing_code is required',400);
+            return $this->sendError('Le champ dialing_code est obligatoire',400);
         }
 
         if(!array_key_exists('phone_number', $input)) {
-            return $this->sendError('phone_number is required',400);
+            return $this->sendError('Le champ phone_number est obligatoire',400);
         }
 
         $input['phone'] = $input['dialing_code'].''.$input['phone_number'];
@@ -306,7 +306,7 @@ class CustomerAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $customer
-        ], 'Customer saved successfully');
+        ], 'Client enregistré avec succès');
     }
 
     public function logout(Request $request){
@@ -315,7 +315,7 @@ class CustomerAPIController extends AppBaseController
 
         return response()->json([
             'success' => true,
-            'message' => 'Successfully logged out',
+            'message' => 'Déconnexion réussie',
         ]);
 
     }
@@ -332,7 +332,7 @@ class CustomerAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $customer
-        ], 'Token refreshed successfully');
+        ], 'Jeton actualisé avec succès');
     }
 
     public function getProfil(Request $request){
@@ -350,7 +350,7 @@ class CustomerAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $customer
-        ], 'Customer got successfully');
+        ], 'Client récupéré avec succès');
 
 
     }
@@ -424,7 +424,7 @@ class CustomerAPIController extends AppBaseController
         $customer = Customer::where('phone', $request->phone)->first();
         if($customer == null){
 
-            return $this->sendResponse(true, 'OTP verified successfully');
+            return $this->sendResponse(true, 'OTP vérifié avec succès');
 
         }else{
             // Vérifier si le compte est bloquer
@@ -466,7 +466,7 @@ class CustomerAPIController extends AppBaseController
                 'expires_in' => JWTAuth::factory()->getTTL(),
                 'server_time'=> now(),
                 'user' => $customer
-            ], 'Customer got successfully');
+            ], 'Client récupéré avec succès');
         }
 
     }

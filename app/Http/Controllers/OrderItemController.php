@@ -60,7 +60,7 @@ class OrderItemController extends AppBaseController
         $orderItem = $this->orderItemRepository->find($id);
 
         if (empty($orderItem)) {
-            Flash::error('Order Item not found');
+            Flash::error('Article de la commande introuvable');
 
             return redirect(route('orderItems.index'));
         }
@@ -76,7 +76,7 @@ class OrderItemController extends AppBaseController
         $orderItem = $this->orderItemRepository->find($id);
 
         if (empty($orderItem)) {
-            Flash::error('Order Item not found');
+            Flash::error('Article de la commande introuvable');
 
             return redirect(route('orderItems.index'));
         }
@@ -92,7 +92,7 @@ class OrderItemController extends AppBaseController
         $orderItem = $this->orderItemRepository->find($id);
 
         if (empty($orderItem)) {
-            Flash::error('Order Item not found');
+            Flash::error('Article de la commande introuvable');
 
             return redirect(route('orderItems.index'));
         }
@@ -114,7 +114,7 @@ class OrderItemController extends AppBaseController
         $orderItem = $this->orderItemRepository->find($id);
 
         if (empty($orderItem)) {
-            Flash::error('Order Item not found');
+            Flash::error('Article de la commande introuvable');
 
             return redirect(route('orderItems.index'));
         }

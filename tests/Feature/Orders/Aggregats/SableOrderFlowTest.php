@@ -74,7 +74,7 @@ class SableOrderFlowTest extends AggregatOrderTestCase
     {
         $this->estimate('sable', $this->estimatePayload(['product_type_slug' => 'sable-fin']))
             ->assertStatus(400)
-            ->assertJsonPath('message', 'Désolé, aucune carrière à proximité trouvé');
+            ->assertJsonPath('message', 'Désolé, aucune carrière trouvée à proximité');
     }
 
     /** @test */
@@ -110,7 +110,7 @@ class SableOrderFlowTest extends AggregatOrderTestCase
 
         $this->createOrder($item)
             ->assertStatus(400)
-            ->assertJsonPath('message', 'pricing est requis pour le sable');
+            ->assertJsonPath('message', 'Le champ pricing est obligatoire pour le sable');
 
         $this->assertDatabaseCount('orders', 0);
     }
@@ -123,7 +123,7 @@ class SableOrderFlowTest extends AggregatOrderTestCase
     {
         $this->createOrder($this->orderItem(['pricing' => $pricing]))
             ->assertStatus(400)
-            ->assertJsonPath('message', 'pricing invalide pour le sable');
+            ->assertJsonPath('message', 'Le champ pricing est invalide pour le sable');
 
         $this->assertDatabaseCount('orders', 0);
     }

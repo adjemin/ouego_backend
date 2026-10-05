@@ -72,7 +72,7 @@ class OrderInvitationAPIController extends AppBaseController
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
         if (empty($orderInvitation)) {
-            return $this->sendError('Order Invitation not found');
+            return $this->sendError('Invitation introuvable');
         }
 
         return $this->sendResponse($orderInvitation->toArray(), 'Order Invitation retrieved successfully');
@@ -90,7 +90,7 @@ class OrderInvitationAPIController extends AppBaseController
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
         if (empty($orderInvitation)) {
-            return $this->sendError('Order Invitation not found');
+            return $this->sendError('Invitation introuvable');
         }
 
         $orderInvitation = $this->orderInvitationRepository->update($input, $id);
@@ -110,7 +110,7 @@ class OrderInvitationAPIController extends AppBaseController
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
         if (empty($orderInvitation)) {
-            return $this->sendError('Order Invitation not found');
+            return $this->sendError('Invitation introuvable');
         }
 
         $orderInvitation->delete();
@@ -123,7 +123,7 @@ class OrderInvitationAPIController extends AppBaseController
         $input = $request->all();
 
         if(!array_key_exists('driver_id', $input)){
-            return $this->sendError('driver_id is required');
+            return $this->sendError('Le champ driver_id est obligatoire');
         }
 
         $orderInvitations = OrderInvitation::where([
@@ -143,7 +143,7 @@ class OrderInvitationAPIController extends AppBaseController
 
         // Un chauffeur ne peut accepter que ses propres invitations
         if (empty($orderInvitation) || !$this->belongsToDriver($orderInvitation, $cdriver)) {
-            return $this->sendError('Order Invitation not found', 400);
+            return $this->sendError('Invitation introuvable', 400);
         }
 
         $order = Order::find($orderInvitation->order_id);
@@ -156,7 +156,7 @@ class OrderInvitationAPIController extends AppBaseController
                 $orderInvitation->save();
             }
 
-            return $this->sendError('Order already completed', 400);
+            return $this->sendError('Commande déjà terminée', 400);
 
         }
 
@@ -264,7 +264,7 @@ class OrderInvitationAPIController extends AppBaseController
 
         // Un chauffeur ne peut refuser que ses propres invitations
         if (empty($orderInvitation) || !$this->belongsToDriver($orderInvitation, $cdriver)) {
-            return $this->sendError('Order Invitation not found');
+            return $this->sendError('Invitation introuvable');
         }
 
         if($orderInvitation->is_waiting_acceptation){

@@ -60,7 +60,7 @@ class CarrierController extends AppBaseController
         $carrier = $this->carrierRepository->find($id);
 
         if (empty($carrier)) {
-            Flash::error('Carrier not found');
+            Flash::error('Carrière introuvable');
 
             return redirect(route('carriers.index'));
         }
@@ -76,7 +76,7 @@ class CarrierController extends AppBaseController
         $carrier = $this->carrierRepository->find($id);
 
         if (empty($carrier)) {
-            Flash::error('Carrier not found');
+            Flash::error('Carrière introuvable');
 
             return redirect(route('carriers.index'));
         }
@@ -92,7 +92,7 @@ class CarrierController extends AppBaseController
         $carrier = $this->carrierRepository->find($id);
 
         if (empty($carrier)) {
-            Flash::error('Carrier not found');
+            Flash::error('Carrière introuvable');
 
             return redirect(route('carriers.index'));
         }
@@ -114,7 +114,7 @@ class CarrierController extends AppBaseController
         $carrier = $this->carrierRepository->find($id);
 
         if (empty($carrier)) {
-            Flash::error('Carrier not found');
+            Flash::error('Carrière introuvable');
 
             return redirect(route('carriers.index'));
         }

@@ -60,7 +60,7 @@ class CustomerOTPAPIController extends AppBaseController
         $customerOTP = $this->customerOTPRepository->find($id);
 
         if (empty($customerOTP)) {
-            return $this->sendError('Customer O T P not found');
+            return $this->sendError('OTP du client introuvable');
         }
 
         return $this->sendResponse($customerOTP->toArray(), 'Customer O T P retrieved successfully');
@@ -78,7 +78,7 @@ class CustomerOTPAPIController extends AppBaseController
         $customerOTP = $this->customerOTPRepository->find($id);
 
         if (empty($customerOTP)) {
-            return $this->sendError('Customer O T P not found');
+            return $this->sendError('OTP du client introuvable');
         }
 
         $customerOTP = $this->customerOTPRepository->update($input, $id);
@@ -98,7 +98,7 @@ class CustomerOTPAPIController extends AppBaseController
         $customerOTP = $this->customerOTPRepository->find($id);
 
         if (empty($customerOTP)) {
-            return $this->sendError('Customer O T P not found');
+            return $this->sendError('OTP du client introuvable');
         }
 
         $customerOTP->delete();

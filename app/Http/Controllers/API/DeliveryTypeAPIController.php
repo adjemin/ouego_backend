@@ -56,7 +56,7 @@ class DeliveryTypeAPIController extends AppBaseController
         $deliveryType = $this->deliveryTypeRepository->find($id);
 
         if (empty($deliveryType)) {
-            return $this->sendError('Delivery Type not found');
+            return $this->sendError('Type de livraison introuvable');
         }
 
         return $this->sendResponse($deliveryType->toArray(), 'Delivery Type retrieved successfully');
@@ -74,7 +74,7 @@ class DeliveryTypeAPIController extends AppBaseController
         $deliveryType = $this->deliveryTypeRepository->find($id);
 
         if (empty($deliveryType)) {
-            return $this->sendError('Delivery Type not found');
+            return $this->sendError('Type de livraison introuvable');
         }
 
         $deliveryType = $this->deliveryTypeRepository->update($input, $id);
@@ -94,7 +94,7 @@ class DeliveryTypeAPIController extends AppBaseController
         $deliveryType = $this->deliveryTypeRepository->find($id);
 
         if (empty($deliveryType)) {
-            return $this->sendError('Delivery Type not found');
+            return $this->sendError('Type de livraison introuvable');
         }
 
         $deliveryType->delete();

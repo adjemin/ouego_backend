@@ -74,7 +74,7 @@ class ZoneAPIController extends AppBaseController
         $zone = $this->zoneRepository->find($id);
 
         if (empty($zone)) {
-            return $this->sendError('Zone not found');
+            return $this->sendError('Zone introuvable');
         }
 
         return $this->sendResponse($zone->toArray(), 'Zone retrieved successfully');
@@ -92,7 +92,7 @@ class ZoneAPIController extends AppBaseController
         $zone = $this->zoneRepository->find($id);
 
         if (empty($zone)) {
-            return $this->sendError('Zone not found');
+            return $this->sendError('Zone introuvable');
         }
 
         $zone = $this->zoneRepository->update($input, $id);
@@ -112,7 +112,7 @@ class ZoneAPIController extends AppBaseController
         $zone = $this->zoneRepository->find($id);
 
         if (empty($zone)) {
-            return $this->sendError('Zone not found');
+            return $this->sendError('Zone introuvable');
         }
 
         $zone->delete();

@@ -60,7 +60,7 @@ class ProductTypeController extends AppBaseController
         $productType = $this->productTypeRepository->find($id);
 
         if (empty($productType)) {
-            Flash::error('Product Type not found');
+            Flash::error('Type de produit introuvable');
 
             return redirect(route('productTypes.index'));
         }
@@ -76,7 +76,7 @@ class ProductTypeController extends AppBaseController
         $productType = $this->productTypeRepository->find($id);
 
         if (empty($productType)) {
-            Flash::error('Product Type not found');
+            Flash::error('Type de produit introuvable');
 
             return redirect(route('productTypes.index'));
         }
@@ -92,7 +92,7 @@ class ProductTypeController extends AppBaseController
         $productType = $this->productTypeRepository->find($id);
 
         if (empty($productType)) {
-            Flash::error('Product Type not found');
+            Flash::error('Type de produit introuvable');
 
             return redirect(route('productTypes.index'));
         }
@@ -114,7 +114,7 @@ class ProductTypeController extends AppBaseController
         $productType = $this->productTypeRepository->find($id);
 
         if (empty($productType)) {
-            Flash::error('Product Type not found');
+            Flash::error('Type de produit introuvable');
 
             return redirect(route('productTypes.index'));
         }
