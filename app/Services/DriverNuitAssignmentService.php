@@ -6,8 +6,6 @@ use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderInvitation;
 use App\Models\RoutePoint;
-use App\Utilities\GoogleMapsAPIUtils;
-use App\Events\OrderAssigned;
 use App\Models\Carrier;
 use App\Models\DriverCarrier;
 use Illuminate\Support\Facades\Log;
@@ -44,7 +42,7 @@ class DriverNuitAssignmentService
 
         
         if($route_point != null){
-            $nearestDrivers = $this->findCourseNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, $maxDrivers, $distance);
+            $nearestDrivers = $this->findCourseNearestDrivers($order->service_slug, $route_point->latitude, $route_point->longitude, $maxDrivers, $distance, $order->id);
             Log::info("DriverNuitAssignmentService: Commande course #{$order->id} - " . $nearestDrivers->count() . " chauffeurs trouvés à proximité ($distance km) pour assignation.");
 
             if ($nearestDrivers->isEmpty()) {
@@ -56,25 +54,7 @@ class DriverNuitAssignmentService
             // Ici, vous pouvez ajouter la logique pour assigner effectivement la course au chauffeur
             // Par exemple, mettre à jour le statut du chauffeur, créer un enregistrement de course, etc.
             foreach($nearestDrivers as $driver){
-                $orderInvitation = OrderInvitation::where([
-                    'driver_id' => $driver->id,
-                    'order_id' => $order->id,
-                ])->first();
-    
-                if($orderInvitation == null){
-                    $orderInvitation = OrderInvitation::create([
-                        'driver_id' => $driver->id,
-                        'order_id' => $order->id,
-                        'is_waiting_acceptation' => true,
-                        'acceptation_time' => null,
-                        'rejection_time' => null,
-                        'latitude' => $driver->last_location_latitude??null,
-                        'longitude' => $driver->last_location_longitude??null,
-                    ]);
-                }
-    
-                // Déclencher l'événement d'assignation de commande
-                event(new OrderAssigned($orderInvitation));
+                OrderInvitation::inviteDriver($order->id, $driver);
             }
 
             return $driver;
@@ -132,25 +112,9 @@ class DriverNuitAssignmentService
 
             foreach($nearestDriverIds as $driverId){
                 $driver = Driver::find($driverId);
-                $orderInvitation = OrderInvitation::where([
-                    'driver_id' => $driverId,
-                    'order_id' => $order->id,
-                ])->first();
-    
-                if($orderInvitation == null){
-                    $orderInvitation = OrderInvitation::create([
-                        'driver_id' => $driverId,
-                        'order_id' => $order->id,
-                        'is_waiting_acceptation' => true,
-                        'acceptation_time' => null,
-                        'rejection_time' => null,
-                        'latitude' => $driver->last_location_latitude??null,
-                        'longitude' => $driver->last_location_longitude??null
-                    ]);
+                if ($driver) {
+                    OrderInvitation::inviteDriver($order->id, $driver);
                 }
-    
-                // Déclencher l'événement d'assignation de commande
-                event(new OrderAssigned($orderInvitation));
             }
 
             return $driversData;
@@ -177,7 +141,7 @@ class DriverNuitAssignmentService
      * @param float $maxDistance Distance maximum en mètres (optionnel)
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function findCourseNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null)
+    public function findCourseNearestDrivers($service_slug, $latitude, $longitude, $limit = 5, $maxDistance = null, ?int $orderId = null)
     {
         $isSaturday = now()->dayOfWeekIso === 6;
         $today = now()->toDateString();
@@ -193,6 +157,7 @@ class DriverNuitAssignmentService
             ->whereRaw('is_active = true')
             ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
+            ->withoutClosedInvitationFor($orderId)
 
             // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
             ->where(Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(), '<', 3)
@@ -259,6 +224,7 @@ class DriverNuitAssignmentService
             ->whereRaw('is_active = true')
             ->whereRaw("updated_at >= NOW() - INTERVAL '{$this->maxUpdateTime} MINUTE'")
             ->whereJsonContains('services', $service_slug)
+            ->withoutClosedInvitationFor($order_id)
 
             // 1) Limites chauffeur trois cours en journée et cinq cours en semaine
             ->where(Order::selectRaw('count(*)')->whereColumn('drivers.id', 'orders.driver_id')->active()->day(), '<', 3)
@@ -298,56 +264,8 @@ class DriverNuitAssignmentService
 
         $chauffeursProches = $query->get();
 
-        // Étape 5 : Calcul des pondérations
-        $ponderations = [];
-        $minDistanceChauffeurCarriere = $chauffeursProches->min('distance');
-        $maxJetons = $chauffeursProches->max('current_balance');
-        $maxJetons = $maxJetons > 0 ? $maxJetons : 1;
-        $chauffeursCarriere = count($driverIds);
-
-        foreach ($chauffeursProches as $item) {
-            $chauffeur = $item;
-            $distanceChauffeurCarriere = $item->distance;
-
-            // Calcul de distance avec Haversine (calcul local, pas d'appel API)
-            $distanceCarriereLivraisonKm = GoogleMapsAPIUtils::distanceHaversine(
-                $route_point->latitude,
-                $route_point->longitude,
-                $chauffeur->last_location_latitude,
-                $chauffeur->last_location_longitude
-            );
-
-            // Convertir en mètres pour cohérence
-            $distanceCarriereLivraison = $distanceCarriereLivraisonKm * 1000;
-
-            $score = [];
-
-            $score['proximity_driver_carrier'] = number_format(($minDistanceChauffeurCarriere / $distanceChauffeurCarriere) * 100, 2);
-            $score['jetons'] = number_format((floatval($chauffeur->current_balance) / ($maxJetons ?? 1)) * 100, 2);
-            $score['proximity_carrier_delivery'] = number_format(($distanceCarriereLivraison / $distanceCarriereLivraison) * 100, 2);
-            $score['note'] = number_format(($chauffeur->rate / 5) * 100, 2);
-            $score['concentration'] = number_format(($chauffeursCarriere / $chauffeursCarriere) * 100, 2);
-
-            $scoreTotal = number_format(
-                floatval($score['proximity_driver_carrier']) * 0.30 +
-                floatval($score['jetons']) * 0.25 +
-                floatval($score['proximity_carrier_delivery']) * 0.25 +
-                floatval($score['note']) * 0.15 +
-                floatval($score['concentration']) * 0.05,
-                3
-            );
-
-
-            $ponderations[$chauffeur->id] = [
-                'driver_id' => $chauffeur->id,
-                'carrier_id' => $carrier->id,
-                'distance' => $item['distance'],
-                'score_total' => $scoreTotal,
-                'details' => $score,
-            ];
-        }
-
-        $ponderations = collect($ponderations)->sortByDesc('score_total')->values()->take($limit)->all();
+        // Classement des chauffeurs par score
+        $ponderations = app(AggregatDriverScoringService::class)->rank($chauffeursProches, $carrier, $route_point, $limit);
 
         if (empty($ponderations)) {
             throw new \Exception("Aucun chauffeur trouvé à proximité de la carrière");

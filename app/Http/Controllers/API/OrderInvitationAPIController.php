@@ -14,6 +14,8 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Collection;
 use App\Models\CustomerNotification;
 use App\Events\CustomerNotificationCreated;
+use App\Services\DriverAssignmentService;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class OrderInvitationAPIController
@@ -139,7 +141,8 @@ class OrderInvitationAPIController extends AppBaseController
         /** @var OrderInvitation $orderInvitation */
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
-        if (empty($orderInvitation)) {
+        // Un chauffeur ne peut accepter que ses propres invitations
+        if (empty($orderInvitation) || !$this->belongsToDriver($orderInvitation, $cdriver)) {
             return $this->sendError('Order Invitation not found', 400);
         }
 
@@ -255,10 +258,12 @@ class OrderInvitationAPIController extends AppBaseController
     }
 
     public function  refuse($id, Request $request){
+        $cdriver = auth('api-drivers')->user();
         /** @var OrderInvitation $orderInvitation */
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
-        if (empty($orderInvitation)) {
+        // Un chauffeur ne peut refuser que ses propres invitations
+        if (empty($orderInvitation) || !$this->belongsToDriver($orderInvitation, $cdriver)) {
             return $this->sendError('Order Invitation not found');
         }
 
@@ -269,7 +274,7 @@ class OrderInvitationAPIController extends AppBaseController
             $orderInvitation->longitude = $request->input('longitude');
             $orderInvitation->save();
 
-            //TODO Vérifier s'il y a d'autre invitation ou relancer la recherche
+            $this->relaunchLookupIfNoPendingInvitation($orderInvitation->order_id);
 
             $orderInvitations = OrderInvitation::where([
                 'driver_id' => $orderInvitation->driver_id,
@@ -279,6 +284,47 @@ class OrderInvitationAPIController extends AppBaseController
             return $this->sendResponse($orderInvitations->toArray(), 'Order Invitation retrieved successfully');
         }else{
             return $this->sendError('Affectation déjà traitée');
+        }
+    }
+
+    /**
+     * Une invitation d'un autre chauffeur est traitée comme introuvable, pour ne pas révéler son existence.
+     */
+    private function belongsToDriver(OrderInvitation $orderInvitation, $driver): bool
+    {
+        return $driver != null && (int) $orderInvitation->driver_id === (int) $driver->id;
+    }
+
+    /**
+     * Relance la recherche de chauffeurs dès qu'un refus laisse la commande sans invitation en attente,
+     * sans attendre le passage de la tâche automatique (toutes les 2 minutes).
+     */
+    private function relaunchLookupIfNoPendingInvitation(int $orderId): void
+    {
+        $order = Order::find($orderId);
+
+        if ($order == null
+            || $order->driver_id != null
+            || $order->status != Order::PERFORMER_LOOKUP
+            || $order->is_completed
+            || $order->performerLookupDeadline()->isPast()) {
+            return;
+        }
+
+        $hasPendingInvitation = OrderInvitation::where([
+            'order_id' => $orderId,
+            'is_waiting_acceptation' => true,
+        ])->exists();
+
+        if ($hasPendingInvitation) {
+            return;
+        }
+
+        try {
+            app(DriverAssignmentService::class)->sendInvitations($order, 10);
+        } catch (\Throwable $e) {
+            // Le refus est enregistré ; la tâche automatique reprendra la recherche
+            Log::warning("OrderInvitationAPIController: relance de la recherche impossible pour la commande #{$orderId} : ".$e->getMessage());
         }
     }
 }

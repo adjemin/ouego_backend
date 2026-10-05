@@ -24,15 +24,14 @@ class ProcessPendingOrderAssignments
     // Nombre maximum d'invitations avant abandon
     private const MAX_INVITATIONS = 5;
     
-    // Délai d'attente pour une réponse (en minutes)
-    private const INVITATION_TIMEOUT = 5;
+    // Durée de vie d'une invitation sans réponse (en minutes)
     private const INVITATION_RETRY = 2;
 
     public function handle()
     {
         Log::info("ProcessPendingOrderAssignments: Debut de recherche de commandes en attentes");
         // Optimisation : eager loading pour éviter N+1
-        $pendingOrders = Order::with(['orderInvitations' => function($query) {
+        $pendingOrders = Order::with(['orderItems', 'orderInvitations' => function($query) {
                 $query->where('is_waiting_acceptation', true);
             }])
             ->where('status', Order::PERFORMER_LOOKUP)
@@ -61,6 +60,12 @@ class ProcessPendingOrderAssignments
 
     private function processOrder(Order $order)
     {
+        // Commande de nuit passée en journée : la recherche n'a pas encore commencé
+        if ($order->performerLookupStartsAt()->isFuture()) {
+            Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} - recherche prévue à partir de {$order->performerLookupStartsAt()}.");
+            return;
+        }
+
         $waitingInvitations = $order->orderInvitations;
         $invitationCount = $waitingInvitations->count();
 
@@ -74,7 +79,7 @@ class ProcessPendingOrderAssignments
             OrderInvitation::whereIn('id', $expiredInvitations->pluck('id'))->delete();
         }
 
-        if($order->created_at->addMinutes(self::INVITATION_TIMEOUT)->isPast()){
+        if($order->performerLookupDeadline()->isPast()){
             // Marquer la commande comme chauffeurs non trouvés
             $this->markAsNotFound($order);
         }else{

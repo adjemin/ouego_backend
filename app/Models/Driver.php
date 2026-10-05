@@ -113,6 +113,26 @@ class Driver extends Authenticatable  implements JWTSubject
         return $this->hasMany(Order::class, 'driver_id');
     }
 
+    public function orderInvitations(){
+        return $this->hasMany(OrderInvitation::class, 'driver_id');
+    }
+
+    /**
+     * Exclut les chauffeurs dont l'invitation pour cette commande est close (refusée, ou retirée par le système),
+     * pour laisser leur place à d'autres chauffeurs.
+     */
+    public function scopeWithoutClosedInvitationFor($query, ?int $orderId)
+    {
+        if ($orderId === null) {
+            return $query;
+        }
+
+        return $query->whereDoesntHave('orderInvitations', function ($q) use ($orderId) {
+            $q->where('order_id', $orderId)
+              ->where('is_waiting_acceptation', false);
+        });
+    }
+
     public function getDriverLicenseDocsAttribute($value){
         if($value == null){
             return [];
