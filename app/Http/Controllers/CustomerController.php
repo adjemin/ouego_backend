@@ -60,7 +60,7 @@ class CustomerController extends AppBaseController
         $customer = $this->customerRepository->find($id);
 
         if (empty($customer)) {
-            Flash::error('Customer not found');
+            Flash::error('Client introuvable');
 
             return redirect(route('customers.index'));
         }
@@ -76,7 +76,7 @@ class CustomerController extends AppBaseController
         $customer = $this->customerRepository->find($id);
 
         if (empty($customer)) {
-            Flash::error('Customer not found');
+            Flash::error('Client introuvable');
 
             return redirect(route('customers.index'));
         }
@@ -92,7 +92,7 @@ class CustomerController extends AppBaseController
         $customer = $this->customerRepository->find($id);
 
         if (empty($customer)) {
-            Flash::error('Customer not found');
+            Flash::error('Client introuvable');
 
             return redirect(route('customers.index'));
         }
@@ -114,7 +114,7 @@ class CustomerController extends AppBaseController
         $customer = $this->customerRepository->find($id);
 
         if (empty($customer)) {
-            Flash::error('Customer not found');
+            Flash::error('Client introuvable');
 
             return redirect(route('customers.index'));
         }

@@ -96,7 +96,7 @@ class OrderAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($orders->toArray(), 'Orders retrieved successfully');
+        return $this->sendResponse($orders->toArray(), 'Commandes récupérées avec succès');
     }
 
     /**
@@ -110,11 +110,11 @@ class OrderAPIController extends AppBaseController
         $input = $request->all();
 
         if(empty($request->input('payment_method_code'))){
-            return $this->sendError('payment_method_code is required', 400);
+            return $this->sendError('Le champ payment_method_code est obligatoire', 400);
         }
 
         if(empty($request->input('items'))){
-            return $this->sendError('items is required', 400);
+            return $this->sendError('Le champ items est obligatoire', 400);
         }
 
 
@@ -190,14 +190,14 @@ class OrderAPIController extends AppBaseController
 
             if(!array_key_exists('service_slug',$item)){
                 DB::rollBack();
-                return $this->sendError('service_slug is required', 400);
+                return $this->sendError('Le champ service_slug est obligatoire', 400);
             }
 
             $service = Service::where('slug', $item["service_slug"])->first();
 
             if($service == null){
                 DB::rollBack();
-                return $this->sendError('Service not found', 400);
+                return $this->sendError('Service introuvable', 400);
             }
 
             $meta_data = [];
@@ -236,12 +236,12 @@ class OrderAPIController extends AppBaseController
 
                  if(!array_key_exists('meta_data',$item)){
                     DB::rollBack();
-                    return $this->sendError('meta_data is required', 400);
+                    return $this->sendError('Le champ meta_data est obligatoire', 400);
                 }
 
                 if(!array_key_exists('route_points',$item)){
                     DB::rollBack();
-                    return $this->sendError('route_points is required', 400);
+                    return $this->sendError('Le champ route_points est obligatoire', 400);
                 }
 
                 $meta_data = $item['meta_data'];
@@ -251,17 +251,17 @@ class OrderAPIController extends AppBaseController
 
                 if(!array_key_exists('type_engin_slug',$meta_data)){
                     DB::rollBack();
-                    return $this->sendError('type_engin_slug is required', 400);
+                    return $this->sendError('Le champ type_engin_slug est obligatoire', 400);
                 }
 
                 if(!array_key_exists('engin_model',$meta_data)){
                     DB::rollBack();
-                    return $this->sendError('engin_model is required', 400);
+                    return $this->sendError('Le champ engin_model est obligatoire', 400);
                 }
 
                 if(!array_key_exists('delivery_type_code',$meta_data)){
                     DB::rollBack();
-                    return $this->sendError('delivery_type_code is required', 400);
+                    return $this->sendError('Le champ delivery_type_code est obligatoire', 400);
                 }
 
                 $delivery_type_code = array_key_exists('delivery_type_code', $meta_data)?$meta_data['delivery_type_code']:'EXPRESS';
@@ -351,22 +351,22 @@ class OrderAPIController extends AppBaseController
 
                  if(!array_key_exists('meta_data',$item)){
                     DB::rollBack();
-                    return $this->sendError('meta_data is required', 400);
+                    return $this->sendError('Le champ meta_data est obligatoire', 400);
                 }
 
                 if(!array_key_exists('route_points',$item)){
                     DB::rollBack();
-                    return $this->sendError('route_points is required', 400);
+                    return $this->sendError('Le champ route_points est obligatoire', 400);
                 }
 
                 if(!array_key_exists('delivery_price',$item)){
                     DB::rollBack();
-                    return $this->sendError('delivery_price is required', 400);
+                    return $this->sendError('Le champ delivery_price est obligatoire', 400);
                 }
 
                 if(!array_key_exists('carrier_id',$item)){
                     DB::rollBack();
-                    return $this->sendError('carrier_id is required', 400);
+                    return $this->sendError('Le champ carrier_id est obligatoire', 400);
                 }
 
                 $meta_data = $item['meta_data'];
@@ -376,37 +376,37 @@ class OrderAPIController extends AppBaseController
 
                 if(!array_key_exists('product_type_slug',$meta_data)){
                     DB::rollBack();
-                    return $this->sendError('product_type_slug is required', 400);
+                    return $this->sendError('Le champ product_type_slug est obligatoire', 400);
                 }
 
                 if(!array_key_exists('product_slug',$meta_data)){
                     DB::rollBack();
-                    return $this->sendError('product_slug is required', 400);
+                    return $this->sendError('Le champ product_slug est obligatoire', 400);
                 }
 
                 if(!array_key_exists('delivery_type_code',$meta_data)){
                     DB::rollBack();
-                    return $this->sendError('delivery_type_code is required', 400);
+                    return $this->sendError('Le champ delivery_type_code est obligatoire', 400);
                 }
 
                 if(!array_key_exists('quantity',$item)){
                     DB::rollBack();
-                    return $this->sendError('quantity is required', 400);
+                    return $this->sendError('Le champ quantity est obligatoire', 400);
                 }
 
                 if(!array_key_exists('product_type_slug', $meta_data)){
                     DB::rollBack();
-                    return $this->sendError('product_type_slug is required', 400);
+                    return $this->sendError('Le champ product_type_slug est obligatoire', 400);
                 }
 
                 if(!array_key_exists('product_slug', $meta_data)){
                     DB::rollBack();
-                    return $this->sendError('product_slug is required', 400);
+                    return $this->sendError('Le champ product_slug est obligatoire', 400);
                 }
 
                 if(!array_key_exists('delivery_type_code', $meta_data)){
                     DB::rollBack();
-                    return $this->sendError('delivery_type_code is required', 400);
+                    return $this->sendError('Le champ delivery_type_code est obligatoire', 400);
                 }
 
 
@@ -431,12 +431,12 @@ class OrderAPIController extends AppBaseController
                 $carrier =  Carrier::where(['id' => $item['carrier_id']])->first();
                 if(empty($carrier)) {
                     DB::rollBack();
-                    return $this->sendError('Carrier introuvable', 400);
+                    return $this->sendError('Carrière introuvable', 400);
                 }
 
                 if($product->slug == Product::SABLE_SLUG && !array_key_exists('pricing', $meta_data)){
                     DB::rollBack();
-                    return $this->sendError('pricing est requis pour le sable', 400);
+                    return $this->sendError('Le champ pricing est obligatoire pour le sable', 400);
                 }
 
                 if($product->slug == Product::SABLE_SLUG){
@@ -454,7 +454,7 @@ class OrderAPIController extends AppBaseController
                         intval($pricing['roues']) <= 0
                     ){
                         DB::rollBack();
-                        return $this->sendError('pricing invalide pour le sable', 400);
+                        return $this->sendError('Le champ pricing est invalide pour le sable', 400);
                     }
                 }
 
@@ -610,12 +610,12 @@ class OrderAPIController extends AppBaseController
 
                  if(!array_key_exists('meta_data',$item)){
                     DB::rollBack();
-                    return $this->sendError('meta_data is required', 400);
+                    return $this->sendError('Le champ meta_data est obligatoire', 400);
                 }
 
                 if(!array_key_exists('route_points',$item)){
                     DB::rollBack();
-                    return $this->sendError('route_points is required', 400);
+                    return $this->sendError('Le champ route_points est obligatoire', 400);
                 }
 
                 $meta_data = $item['meta_data'];
@@ -625,27 +625,27 @@ class OrderAPIController extends AppBaseController
 
                 if(!array_key_exists('type_engin_slug',$meta_data)){
                     DB::rollBack();
-                    return $this->sendError('type_engin_slug is required', 400);
+                    return $this->sendError('Le champ type_engin_slug est obligatoire', 400);
                 }
 
                 if(!array_key_exists('engin_model',$meta_data)){
                     DB::rollBack();
-                    return $this->sendError('engin_model is required', 400);
+                    return $this->sendError('Le champ engin_model est obligatoire', 400);
                 }
 
                 if(!array_key_exists('quantity',$item)){
                     DB::rollBack();
-                    return $this->sendError('quantity is required', 400);
+                    return $this->sendError('Le champ quantity est obligatoire', 400);
                 }
 
                 if(!array_key_exists('location_start_date',$item)){
                     DB::rollBack();
-                    return $this->sendError('location_start_date is required', 400);
+                    return $this->sendError('Le champ location_start_date est obligatoire', 400);
                 }
 
                 if(!array_key_exists('location_end_date',$item)){
                     DB::rollBack();
-                    return $this->sendError('location_end_date is required', 400);
+                    return $this->sendError('Le champ location_end_date est obligatoire', 400);
                 }
 
                 $location_start_date = Carbon::parse($item["location_start_date"]);
@@ -662,12 +662,12 @@ class OrderAPIController extends AppBaseController
 
                 if($typeEngin == null){
                     DB::rollBack();
-                    return $this->sendError('type_engin_slug not found', 400);
+                    return $this->sendError("Type d'engin introuvable", 400);
                 }
 
                 if($typeEnginModel == null){
                     DB::rollBack();
-                    return $this->sendError('engin_model not found', 400);
+                    return $this->sendError("Modèle d'engin introuvable", 400);
                 }
 
                 $quantity = max(1, $location_start_date->diffInDays($location_end_date));
@@ -879,7 +879,7 @@ class OrderAPIController extends AppBaseController
         $order = $this->orderRepository->find($order->id);
 
 
-        return $this->sendResponse($order->toArray(), 'Order saved successfully');
+        return $this->sendResponse($order->toArray(), 'Commande enregistrée avec succès');
     }
 
     public function pay($id, Request $request){
@@ -888,17 +888,17 @@ class OrderAPIController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
-            return $this->sendError('Order not found');
+            return $this->sendError('Commande introuvable');
         }
 
         $invoice = Invoice::where('order_id', $order->id)->first();
 
         if (empty($invoice)) {
-            return $this->sendError('Invoice not found');
+            return $this->sendError('Facture introuvable');
         }
 
         if($invoice->status == Invoice::PAID){
-            return $this->sendError('Invoice already paid', 400);
+            return $this->sendError('Facture déjà payée', 400);
         }
 
         //Create Payment
@@ -914,7 +914,7 @@ class OrderAPIController extends AppBaseController
             'is_completed' => false
         ]);
 
-        return $this->sendResponse($payment->toArray(), 'Payment saved successfully');
+        return $this->sendResponse($payment->toArray(), 'Paiement enregistré avec succès');
 
     }
 
@@ -928,10 +928,10 @@ class OrderAPIController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
-            return $this->sendError('Order not found');
+            return $this->sendError('Commande introuvable');
         }
 
-        return $this->sendResponse($order->toArray(), 'Order retrieved successfully');
+        return $this->sendResponse($order->toArray(), 'Commande récupérée avec succès');
     }
 
     /**
@@ -946,12 +946,12 @@ class OrderAPIController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
-            return $this->sendError('Order not found');
+            return $this->sendError('Commande introuvable');
         }
 
         $order = $this->orderRepository->update($input, $id);
 
-        return $this->sendResponse($order->toArray(), 'Order updated successfully');
+        return $this->sendResponse($order->toArray(), 'Commande mise à jour avec succès');
     }
 
     /**
@@ -966,12 +966,12 @@ class OrderAPIController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
-            return $this->sendError('Order not found');
+            return $this->sendError('Commande introuvable');
         }
 
         $order->delete();
 
-        return $this->sendSuccess('Order deleted successfully');
+        return $this->sendSuccess('Commande supprimée avec succès');
     }
 
     public function getCustomerOrders(Request $request){
@@ -980,7 +980,7 @@ class OrderAPIController extends AppBaseController
 
         $orders = Order::where('customer_id', $customer->id)->orderBy('created_at', 'desc')->take(10)->get();
 
-        return $this->sendResponse($orders->toArray(), 'Orders retrieved successfully');
+        return $this->sendResponse($orders->toArray(), 'Commandes récupérées avec succès');
 
     }
 
@@ -990,7 +990,7 @@ class OrderAPIController extends AppBaseController
 
         $orders = Order::where('driver_id', $driver->id)->orderBy('created_at', 'desc')->get();
 
-        return $this->sendResponse($orders->toArray(), 'Orders retrieved successfully');
+        return $this->sendResponse($orders->toArray(), 'Commandes récupérées avec succès');
 
     }
 
@@ -1029,12 +1029,12 @@ class OrderAPIController extends AppBaseController
 
                  if(!array_key_exists('meta_data', $request->all())){
 
-                    return $this->sendError('meta_data is required', 400);
+                    return $this->sendError('Le champ meta_data est obligatoire', 400);
                 }
 
                 if(!array_key_exists('route_points', $request->all())){
 
-                    return $this->sendError('route_points is required', 400);
+                    return $this->sendError('Le champ route_points est obligatoire', 400);
                 }
 
                 $meta_data = $request->input('meta_data');
@@ -1051,23 +1051,23 @@ class OrderAPIController extends AppBaseController
 
                 if(!array_key_exists('type_engin_slug',$meta_data)){
 
-                    return $this->sendError('type_engin_slug is required', 400);
+                    return $this->sendError('Le champ type_engin_slug est obligatoire', 400);
                 }
 
                 if(!array_key_exists('engin_model',$meta_data)){
 
-                    return $this->sendError('engin_model is required', 400);
+                    return $this->sendError('Le champ engin_model est obligatoire', 400);
                 }
 
                 if(!array_key_exists('delivery_type_code',$meta_data)){
 
-                    return $this->sendError('delivery_type_code is required', 400);
+                    return $this->sendError('Le champ delivery_type_code est obligatoire', 400);
                 }
 
                 $typeEnginModel = TypeEnginModel::where('slug', $meta_data['engin_model'])->first();
 
                 if(empty($typeEnginModel)){
-                    return $this->sendError('engin_model is required', 400);
+                    return $this->sendError('Le champ engin_model est obligatoire', 400);
                 }
 
                 $delivery_type_code = $meta_data['delivery_type_code'];
@@ -1231,7 +1231,7 @@ class OrderAPIController extends AppBaseController
                     ],
                     'discount' => $commercialDiscount['discount'],
                     'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
-                ], 'Order saved successfully');
+                ], 'Commande enregistrée avec succès');
 
 
     }
@@ -1270,12 +1270,12 @@ class OrderAPIController extends AppBaseController
 
 
         if(!array_key_exists('meta_data', $request->all())){
-            return $this->sendError('meta_data is required', 400);
+            return $this->sendError('Le champ meta_data est obligatoire', 400);
         }
 
         if(!array_key_exists('route_points', $request->all())){
 
-            return $this->sendError('route_points is required', 400);
+            return $this->sendError('Le champ route_points est obligatoire', 400);
         }
 
         $meta_data = $request->input('meta_data');
@@ -1292,23 +1292,23 @@ class OrderAPIController extends AppBaseController
 
         if(!array_key_exists('type_engin_slug',$meta_data)){
 
-            return $this->sendError('type_engin_slug is required', 400);
+            return $this->sendError('Le champ type_engin_slug est obligatoire', 400);
         }
 
         if(!array_key_exists('engin_model',$meta_data)){
 
-            return $this->sendError('engin_model is required', 400);
+            return $this->sendError('Le champ engin_model est obligatoire', 400);
         }
 
         if(!array_key_exists('delivery_type_code',$meta_data)){
 
-            return $this->sendError('delivery_type_code is required', 400);
+            return $this->sendError('Le champ delivery_type_code est obligatoire', 400);
         }
 
         $typeEnginModel = TypeEnginModel::where('slug', $meta_data['engin_model'])->first();
 
         if(empty($typeEnginModel)){
-            return $this->sendError('engin_model is required', 400);
+            return $this->sendError('Le champ engin_model est obligatoire', 400);
         }
 
         $delivery_type_code = $meta_data['delivery_type_code'];
@@ -1572,7 +1572,7 @@ class OrderAPIController extends AppBaseController
             ],
             'discount' => $commercialDiscount['discount'],
             'has_commercial_discount' => $commercialDiscount['has_commercial_discount'],
-        ], 'Order saved successfully');
+        ], 'Commande enregistrée avec succès');
 
 
     }
@@ -1681,7 +1681,7 @@ class OrderAPIController extends AppBaseController
          $typeEnginModel = TypeEnginModel::where('slug', $engin_model)->first();
 
          if(empty($typeEnginModel)){
-             return $this->sendError('engin_model is required', 400);
+             return $this->sendError('Le champ engin_model est obligatoire', 400);
          }
 
 
@@ -1742,11 +1742,11 @@ class OrderAPIController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
-            return $this->sendError('Order not found');
+            return $this->sendError('Commande introuvable');
         }
 
         if (empty($customer)) {
-            return $this->sendError('Unauthorized', 401);
+            return $this->sendError('Non autorisé', 401);
         }
 
         $input['is_draft'] = false;
@@ -1762,7 +1762,7 @@ class OrderAPIController extends AppBaseController
         $expressService = app(DriverAssignmentService::class);
         $expressService->sendInvitations($order, 10);
 
-        return $this->sendResponse($order->toArray(), 'Order updated successfully');
+        return $this->sendResponse($order->toArray(), 'Commande mise à jour avec succès');
     }
 
 
@@ -1789,7 +1789,7 @@ class OrderAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse($order->toArray(), 'Order retrieved successfully');
+        return $this->sendResponse($order->toArray(), 'Commande récupérée avec succès');
 
     }
 
@@ -1825,17 +1825,17 @@ class OrderAPIController extends AppBaseController
 
         if(!array_key_exists('meta_data', $request->all())){
 
-            return $this->sendError('meta_data is required', 400);
+            return $this->sendError('Le champ meta_data est obligatoire', 400);
         }
 
         if(!array_key_exists('quantity', $request->all())){
 
-            return $this->sendError('quantity is required', 400);
+            return $this->sendError('Le champ quantity est obligatoire', 400);
         }
 
         if(!array_key_exists('route_points', $request->all())){
 
-            return $this->sendError('route_points is required', 400);
+            return $this->sendError('Le champ route_points est obligatoire', 400);
         }
 
         $meta_data = $request->input('meta_data');
@@ -1852,17 +1852,17 @@ class OrderAPIController extends AppBaseController
 
         if(!array_key_exists('product_type_slug',$meta_data)){
 
-            return $this->sendError('product_type_slug is required', 400);
+            return $this->sendError('Le champ product_type_slug est obligatoire', 400);
         }
 
         if(!array_key_exists('product_slug',$meta_data)){
 
-            return $this->sendError('product_slug is required', 400);
+            return $this->sendError('Le champ product_slug est obligatoire', 400);
         }
 
         if(!array_key_exists('delivery_type_code',$meta_data)){
 
-            return $this->sendError('delivery_type_code is required', 400);
+            return $this->sendError('Le champ delivery_type_code est obligatoire', 400);
         }
 
         $delivery_type_code = $meta_data['delivery_type_code'];
@@ -1900,7 +1900,7 @@ class OrderAPIController extends AppBaseController
         $carriers = $this->carrierLocationService->findNearestCarriers($latitude, $longitude);
 
         if(count($carriers)==0){
-            return $this->sendError('Désolé, aucun carrier à proximité trouvé', 400);
+            return $this->sendError('Désolé, aucune carrière trouvée à proximité', 400);
         }
 
         $carrier = $carriers->first();
@@ -1983,7 +1983,7 @@ class OrderAPIController extends AppBaseController
             'delivery_type' => $delivery_type_code,
             'is_available' => $isAvailable,
             'error_message' => $message
-        ], 'Order saved successfully');
+        ], 'Commande enregistrée avec succès');
 
 
    }
@@ -2021,17 +2021,17 @@ class OrderAPIController extends AppBaseController
     try{
         if(!array_key_exists('meta_data', $request->all())){
 
-            return $this->sendError('meta_data is required', 400);
+            return $this->sendError('Le champ meta_data est obligatoire', 400);
         }
 
         if(!array_key_exists('quantity', $request->all())){
 
-            return $this->sendError('quantity is required', 400);
+            return $this->sendError('Le champ quantity est obligatoire', 400);
         }
 
         if(!array_key_exists('route_points', $request->all())){
 
-            return $this->sendError('route_points is required', 400);
+            return $this->sendError('Le champ route_points est obligatoire', 400);
         }
 
 
@@ -2051,17 +2051,17 @@ class OrderAPIController extends AppBaseController
 
         if(!array_key_exists('product_type_slug',$meta_data)){
 
-            return $this->sendError('product_type_slug is required', 400);
+            return $this->sendError('Le champ product_type_slug est obligatoire', 400);
         }
 
         if(!array_key_exists('product_slug',$meta_data)){
 
-            return $this->sendError('product_slug is required', 400);
+            return $this->sendError('Le champ product_slug est obligatoire', 400);
         }
 
         if(!array_key_exists('delivery_type_code',$meta_data)){
 
-            return $this->sendError('delivery_type_code is required', 400);
+            return $this->sendError('Le champ delivery_type_code est obligatoire', 400);
         }
 
         $delivery_type_code = $meta_data['delivery_type_code'];
@@ -2095,7 +2095,7 @@ class OrderAPIController extends AppBaseController
         $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
 
         if(count($carriers)==0){
-            return $this->sendError('Désolé, aucune carrière à proximité trouvé', 400);
+            return $this->sendError('Désolé, aucune carrière trouvée à proximité', 400);
         }
 
         $carrier = $carriers->first();
@@ -2186,7 +2186,7 @@ class OrderAPIController extends AppBaseController
             'delivery_type' => $delivery_type_code,
             'is_available' => $isAvailable,
             'error_message' => $message
-        ], 'Order saved successfully');
+        ], 'Commande enregistrée avec succès');
 
     }catch (\Exception $e){
         return $this->sendError($e->getMessage(), 400);
@@ -2224,15 +2224,15 @@ class OrderAPIController extends AppBaseController
 
     try{
         if(!array_key_exists('meta_data', $request->all())){
-            return $this->sendError('meta_data is required', 400);
+            return $this->sendError('Le champ meta_data est obligatoire', 400);
         }
 
         if(!array_key_exists('quantity', $request->all())){
-            return $this->sendError('quantity is required', 400);
+            return $this->sendError('Le champ quantity est obligatoire', 400);
         }
 
         if(!array_key_exists('route_points', $request->all())){
-            return $this->sendError('route_points is required', 400);
+            return $this->sendError('Le champ route_points est obligatoire', 400);
         }
 
         $quantity = $request->input('quantity');
@@ -2248,15 +2248,15 @@ class OrderAPIController extends AppBaseController
         }
 
         if(!array_key_exists('product_type_slug',$meta_data)){
-            return $this->sendError('product_type_slug is required', 400);
+            return $this->sendError('Le champ product_type_slug est obligatoire', 400);
         }
 
         if(!array_key_exists('product_slug',$meta_data)){
-            return $this->sendError('product_slug is required', 400);
+            return $this->sendError('Le champ product_slug est obligatoire', 400);
         }
 
         if(!array_key_exists('delivery_type_code',$meta_data)){
-            return $this->sendError('delivery_type_code is required', 400);
+            return $this->sendError('Le champ delivery_type_code est obligatoire', 400);
         }
 
         $delivery_type_code = $meta_data['delivery_type_code'];
@@ -2288,7 +2288,7 @@ class OrderAPIController extends AppBaseController
         $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
 
         if(count($carriers)==0){
-            return $this->sendError('Désolé, aucune carrière à proximité trouvé', 400);
+            return $this->sendError('Désolé, aucune carrière trouvée à proximité', 400);
         }
 
         $carrier = $carriers->first();
@@ -2371,7 +2371,7 @@ class OrderAPIController extends AppBaseController
             'delivery_type' => $delivery_type_code,
             'is_available' => $isAvailable,
             'error_message' => $message
-        ], 'Order saved successfully');
+        ], 'Commande enregistrée avec succès');
 
     }catch (\Exception $e){
         return $this->sendError($e->getMessage(), 400);
@@ -2412,17 +2412,17 @@ class OrderAPIController extends AppBaseController
     
         if(!array_key_exists('meta_data', $request->all())){
 
-            return $this->sendError('meta_data is required', 400);
+            return $this->sendError('Le champ meta_data est obligatoire', 400);
         }
 
         if(!array_key_exists('quantity', $request->all())){
 
-            return $this->sendError('quantity is required', 400);
+            return $this->sendError('Le champ quantity est obligatoire', 400);
         }
 
         if(!array_key_exists('route_points', $request->all())){
 
-            return $this->sendError('route_points is required', 400);
+            return $this->sendError('Le champ route_points est obligatoire', 400);
         }
 
         $meta_data = $request->input('meta_data');
@@ -2439,17 +2439,17 @@ class OrderAPIController extends AppBaseController
 
         if(!array_key_exists('product_type_slug',$meta_data)){
 
-            return $this->sendError('product_type_slug is required', 400);
+            return $this->sendError('Le champ product_type_slug est obligatoire', 400);
         }
 
         if(!array_key_exists('product_slug',$meta_data)){
 
-            return $this->sendError('product_slug is required', 400);
+            return $this->sendError('Le champ product_slug est obligatoire', 400);
         }
 
         if(!array_key_exists('delivery_type_code',$meta_data)){
 
-            return $this->sendError('delivery_type_code is required', 400);
+            return $this->sendError('Le champ delivery_type_code est obligatoire', 400);
         }
 
         $delivery_type_code = $meta_data['delivery_type_code'];
@@ -2483,7 +2483,7 @@ class OrderAPIController extends AppBaseController
         $carriers = $this->carrierLocationService->findNearestCarriersWithProduct($latitude, $longitude, $meta_data['product_type_slug']);
 
         if(count($carriers)==0){
-            return $this->sendError('Désolé, aucune carrière à proximité trouvé', 400);
+            return $this->sendError('Désolé, aucune carrière trouvée à proximité', 400);
         }
 
         $carrier = $carriers->first();
@@ -2573,7 +2573,7 @@ class OrderAPIController extends AppBaseController
             'delivery_type' => $delivery_type_code,
             'is_available' => $isAvailable,
             'error_message' => $message
-        ], 'Order saved successfully');
+        ], 'Commande enregistrée avec succès');
 
     } catch (\Throwable $th) {
         return $this->sendError($th->getMessage(), 400);
@@ -2590,7 +2590,7 @@ class OrderAPIController extends AppBaseController
     $order = $this->orderRepository->find($id);
 
     if (empty($order)) {
-        return $this->sendError('Order not found');
+        return $this->sendError('Commande introuvable');
     }
 
     if($order->driver_id != null && $order->started){
@@ -2622,7 +2622,7 @@ class OrderAPIController extends AppBaseController
         $orderInvitation->update();
     }
 
-    return $this->sendResponse($order->toArray(), 'Order updated successfully');
+    return $this->sendResponse($order->toArray(), 'Commande mise à jour avec succès');
 
   }
 
@@ -2632,16 +2632,16 @@ class OrderAPIController extends AppBaseController
     $order = $this->orderRepository->find($id);
 
     if (empty($order)) {
-        return $this->sendError('Order not found');
+        return $this->sendError('Commande introuvable');
     }
 
     $input = $request->all();
 
     if(!array_key_exists('rating', $input)){
-        return $this->sendError('Rating is required', 400);
+        return $this->sendError('Le champ rating est obligatoire', 400);
     }
     if(!is_numeric($input['rating']) || intval($input['rating']) < 1 || intval($input['rating']) > 5){
-        return $this->sendError('Rating must be a number between 1 and 5', 400);
+        return $this->sendError('La note doit être un nombre entre 1 et 5', 400);
     }
 
     $order->rating = intval($input['rating']);
@@ -2659,7 +2659,7 @@ class OrderAPIController extends AppBaseController
         }
     }
 
-    return $this->sendResponse($order->toArray(), 'Order rating updated successfully');
+    return $this->sendResponse($order->toArray(), 'Note de la commande mise à jour avec succès');
 
   }
 
@@ -2669,12 +2669,12 @@ class OrderAPIController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
-            return $this->sendError('Order not found');
+            return $this->sendError('Commande introuvable');
         }
 
         $orderHistories = $order->orderHistories;
 
-        return $this->sendResponse($orderHistories->toArray(), 'Order history retrieved successfully');
+        return $this->sendResponse($orderHistories->toArray(), 'Historique de la commande récupéré avec succès');
 
     }   
 

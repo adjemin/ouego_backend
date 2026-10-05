@@ -60,7 +60,7 @@ class PaymentController extends AppBaseController
         $payment = $this->paymentRepository->find($id);
 
         if (empty($payment)) {
-            Flash::error('Payment not found');
+            Flash::error('Paiement introuvable');
 
             return redirect(route('payments.index'));
         }
@@ -76,7 +76,7 @@ class PaymentController extends AppBaseController
         $payment = $this->paymentRepository->find($id);
 
         if (empty($payment)) {
-            Flash::error('Payment not found');
+            Flash::error('Paiement introuvable');
 
             return redirect(route('payments.index'));
         }
@@ -92,7 +92,7 @@ class PaymentController extends AppBaseController
         $payment = $this->paymentRepository->find($id);
 
         if (empty($payment)) {
-            Flash::error('Payment not found');
+            Flash::error('Paiement introuvable');
 
             return redirect(route('payments.index'));
         }
@@ -114,7 +114,7 @@ class PaymentController extends AppBaseController
         $payment = $this->paymentRepository->find($id);
 
         if (empty($payment)) {
-            Flash::error('Payment not found');
+            Flash::error('Paiement introuvable');
 
             return redirect(route('payments.index'));
         }

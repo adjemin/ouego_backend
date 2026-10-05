@@ -60,7 +60,7 @@ class TransactionController extends AppBaseController
         $transaction = $this->transactionRepository->find($id);
 
         if (empty($transaction)) {
-            Flash::error('Transaction not found');
+            Flash::error('Transaction introuvable');
 
             return redirect(route('transactions.index'));
         }
@@ -76,7 +76,7 @@ class TransactionController extends AppBaseController
         $transaction = $this->transactionRepository->find($id);
 
         if (empty($transaction)) {
-            Flash::error('Transaction not found');
+            Flash::error('Transaction introuvable');
 
             return redirect(route('transactions.index'));
         }
@@ -92,7 +92,7 @@ class TransactionController extends AppBaseController
         $transaction = $this->transactionRepository->find($id);
 
         if (empty($transaction)) {
-            Flash::error('Transaction not found');
+            Flash::error('Transaction introuvable');
 
             return redirect(route('transactions.index'));
         }
@@ -114,7 +114,7 @@ class TransactionController extends AppBaseController
         $transaction = $this->transactionRepository->find($id);
 
         if (empty($transaction)) {
-            Flash::error('Transaction not found');
+            Flash::error('Transaction introuvable');
 
             return redirect(route('transactions.index'));
         }

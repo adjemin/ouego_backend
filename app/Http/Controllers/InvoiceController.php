@@ -60,7 +60,7 @@ class InvoiceController extends AppBaseController
         $invoice = $this->invoiceRepository->find($id);
 
         if (empty($invoice)) {
-            Flash::error('Invoice not found');
+            Flash::error('Facture introuvable');
 
             return redirect(route('invoices.index'));
         }
@@ -76,7 +76,7 @@ class InvoiceController extends AppBaseController
         $invoice = $this->invoiceRepository->find($id);
 
         if (empty($invoice)) {
-            Flash::error('Invoice not found');
+            Flash::error('Facture introuvable');
 
             return redirect(route('invoices.index'));
         }
@@ -92,7 +92,7 @@ class InvoiceController extends AppBaseController
         $invoice = $this->invoiceRepository->find($id);
 
         if (empty($invoice)) {
-            Flash::error('Invoice not found');
+            Flash::error('Facture introuvable');
 
             return redirect(route('invoices.index'));
         }
@@ -114,7 +114,7 @@ class InvoiceController extends AppBaseController
         $invoice = $this->invoiceRepository->find($id);
 
         if (empty($invoice)) {
-            Flash::error('Invoice not found');
+            Flash::error('Facture introuvable');
 
             return redirect(route('invoices.index'));
         }

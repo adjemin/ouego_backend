@@ -60,7 +60,7 @@ class ProductEnginRelationController extends AppBaseController
         $productEnginRelation = $this->productEnginRelationRepository->find($id);
 
         if (empty($productEnginRelation)) {
-            Flash::error('Product Engin Relation not found');
+            Flash::error('Relation produit-engin introuvable');
 
             return redirect(route('productEnginRelations.index'));
         }
@@ -76,7 +76,7 @@ class ProductEnginRelationController extends AppBaseController
         $productEnginRelation = $this->productEnginRelationRepository->find($id);
 
         if (empty($productEnginRelation)) {
-            Flash::error('Product Engin Relation not found');
+            Flash::error('Relation produit-engin introuvable');
 
             return redirect(route('productEnginRelations.index'));
         }
@@ -92,7 +92,7 @@ class ProductEnginRelationController extends AppBaseController
         $productEnginRelation = $this->productEnginRelationRepository->find($id);
 
         if (empty($productEnginRelation)) {
-            Flash::error('Product Engin Relation not found');
+            Flash::error('Relation produit-engin introuvable');
 
             return redirect(route('productEnginRelations.index'));
         }
@@ -114,7 +114,7 @@ class ProductEnginRelationController extends AppBaseController
         $productEnginRelation = $this->productEnginRelationRepository->find($id);
 
         if (empty($productEnginRelation)) {
-            Flash::error('Product Engin Relation not found');
+            Flash::error('Relation produit-engin introuvable');
 
             return redirect(route('productEnginRelations.index'));
         }

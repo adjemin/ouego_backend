@@ -65,7 +65,7 @@ class PaymentAPIController extends AppBaseController
         $payment = $this->paymentRepository->find($id);
 
         if (empty($payment)) {
-            return $this->sendError('Payment not found');
+            return $this->sendError('Paiement introuvable');
         }
 
         return $this->sendResponse($payment->toArray(), 'Payment retrieved successfully');
@@ -83,7 +83,7 @@ class PaymentAPIController extends AppBaseController
         $payment = $this->paymentRepository->find($id);
 
         if (empty($payment)) {
-            return $this->sendError('Payment not found');
+            return $this->sendError('Paiement introuvable');
         }
 
         $payment = $this->paymentRepository->update($input, $id);
@@ -103,7 +103,7 @@ class PaymentAPIController extends AppBaseController
         $payment = $this->paymentRepository->find($id);
 
         if (empty($payment)) {
-            return $this->sendError('Payment not found');
+            return $this->sendError('Paiement introuvable');
         }
 
         $payment->delete();

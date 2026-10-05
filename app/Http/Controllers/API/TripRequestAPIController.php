@@ -21,7 +21,7 @@ class TripRequestAPIController extends Controller
         $orderInvitation = TripDriverAttempt::find($id);
 
         if (empty($orderInvitation)) {
-            return $this->sendError('Order Attempt not found', 400);
+            return $this->sendError("Tentative d'attribution introuvable", 400);
         }
 
         if($orderInvitation->status != TripDriverAttempt::ACCEPTED){
@@ -29,14 +29,14 @@ class TripRequestAPIController extends Controller
         }
 
         if($$orderInvitation->tripRequest->status == TripRequest::ACCEPTED){
-            return $this->sendError('Order already accepted', 400);
+            return $this->sendError('Commande déjà acceptée', 400);
         }
         
         $order = Order::find($orderInvitation->order_id);
         if($order != null && $order->is_completed){
             $orderInvitation->status = TripDriverAttempt::TIMEOUT;
             $orderInvitation->save();
-            return $this->sendError('Order already completed', 400);
+            return $this->sendError('Commande déjà terminée', 400);
 
         }
 
@@ -136,7 +136,7 @@ class TripRequestAPIController extends Controller
         $orderInvitation = OrderInvitation::find($id);
 
         if (empty($orderInvitation)) {
-            return $this->sendError('Order Invitation not found');
+            return $this->sendError('Invitation introuvable');
         }
 
         if($orderInvitation->is_waiting_acceptation){

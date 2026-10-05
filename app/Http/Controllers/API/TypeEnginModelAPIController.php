@@ -88,7 +88,7 @@ class TypeEnginModelAPIController extends AppBaseController
         $typeEnginModel = $this->typeEnginModelRepository->find($id);
 
         if (empty($typeEnginModel)) {
-            return $this->sendError('Type Engin Model not found');
+            return $this->sendError("Modèle de type d'engin introuvable");
         }
 
         return $this->sendResponse($typeEnginModel->toArray(), 'Type Engin Model retrieved successfully');
@@ -106,7 +106,7 @@ class TypeEnginModelAPIController extends AppBaseController
         $typeEnginModel = $this->typeEnginModelRepository->find($id);
 
         if (empty($typeEnginModel)) {
-            return $this->sendError('Type Engin Model not found');
+            return $this->sendError("Modèle de type d'engin introuvable");
         }
 
         $typeEnginModel = $this->typeEnginModelRepository->update($input, $id);
@@ -126,7 +126,7 @@ class TypeEnginModelAPIController extends AppBaseController
         $typeEnginModel = $this->typeEnginModelRepository->find($id);
 
         if (empty($typeEnginModel)) {
-            return $this->sendError('Type Engin Model not found');
+            return $this->sendError("Modèle de type d'engin introuvable");
         }
 
         $typeEnginModel->delete();

@@ -60,7 +60,7 @@ class OrderInvitationController extends AppBaseController
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
         if (empty($orderInvitation)) {
-            Flash::error('Order Invitation not found');
+            Flash::error('Invitation introuvable');
 
             return redirect(route('orderInvitations.index'));
         }
@@ -76,7 +76,7 @@ class OrderInvitationController extends AppBaseController
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
         if (empty($orderInvitation)) {
-            Flash::error('Order Invitation not found');
+            Flash::error('Invitation introuvable');
 
             return redirect(route('orderInvitations.index'));
         }
@@ -92,7 +92,7 @@ class OrderInvitationController extends AppBaseController
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
         if (empty($orderInvitation)) {
-            Flash::error('Order Invitation not found');
+            Flash::error('Invitation introuvable');
 
             return redirect(route('orderInvitations.index'));
         }
@@ -114,7 +114,7 @@ class OrderInvitationController extends AppBaseController
         $orderInvitation = $this->orderInvitationRepository->find($id);
 
         if (empty($orderInvitation)) {
-            Flash::error('Order Invitation not found');
+            Flash::error('Invitation introuvable');
 
             return redirect(route('orderInvitations.index'));
         }

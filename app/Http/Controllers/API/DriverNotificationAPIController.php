@@ -66,7 +66,7 @@ class DriverNotificationAPIController extends AppBaseController
         $driverNotifications = $this->driverNotificationRepository->find($id);
 
         if (empty($driverNotifications)) {
-            return $this->sendError('Driver Notifications not found');
+            return $this->sendError('Notification du chauffeur introuvable');
         }
 
         return $this->sendResponse($driverNotifications->toArray(), 'Driver Notifications retrieved successfully');
@@ -84,7 +84,7 @@ class DriverNotificationAPIController extends AppBaseController
         $driverNotifications = $this->driverNotificationRepository->find($id);
 
         if (empty($driverNotifications)) {
-            return $this->sendError('Driver Notifications not found');
+            return $this->sendError('Notification du chauffeur introuvable');
         }
 
         $driverNotifications = $this->driverNotificationRepository->update($input, $id);
@@ -104,7 +104,7 @@ class DriverNotificationAPIController extends AppBaseController
         $driverNotifications = $this->driverNotificationRepository->find($id);
 
         if (empty($driverNotifications)) {
-            return $this->sendError('Driver Notifications not found');
+            return $this->sendError('Notification du chauffeur introuvable');
         }
 
         $driverNotifications->delete();
@@ -125,7 +125,7 @@ class DriverNotificationAPIController extends AppBaseController
             if($request->get('is_driver') == true){
                 $driver = Driver::find($id);
                 if($driver == null){
-                    return $this->sendError('Driver not found');
+                    return $this->sendError('Chauffeur introuvable');
                 }
                 $notification = new DriverNotification([
                     "id" => 100,
@@ -144,7 +144,7 @@ class DriverNotificationAPIController extends AppBaseController
             }else{
                 $customer = Customer::find($id);
                 if($customer == null){
-                    return $this->sendError('Customer not found');
+                    return $this->sendError('Client introuvable');
                 }
 
                 $notification = new CustomerNotification([

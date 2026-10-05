@@ -60,7 +60,7 @@ class ServiceController extends AppBaseController
         $service = $this->serviceRepository->find($id);
 
         if (empty($service)) {
-            Flash::error('Service not found');
+            Flash::error('Service introuvable');
 
             return redirect(route('services.index'));
         }
@@ -76,7 +76,7 @@ class ServiceController extends AppBaseController
         $service = $this->serviceRepository->find($id);
 
         if (empty($service)) {
-            Flash::error('Service not found');
+            Flash::error('Service introuvable');
 
             return redirect(route('services.index'));
         }
@@ -92,7 +92,7 @@ class ServiceController extends AppBaseController
         $service = $this->serviceRepository->find($id);
 
         if (empty($service)) {
-            Flash::error('Service not found');
+            Flash::error('Service introuvable');
 
             return redirect(route('services.index'));
         }
@@ -114,7 +114,7 @@ class ServiceController extends AppBaseController
         $service = $this->serviceRepository->find($id);
 
         if (empty($service)) {
-            Flash::error('Service not found');
+            Flash::error('Service introuvable');
 
             return redirect(route('services.index'));
         }

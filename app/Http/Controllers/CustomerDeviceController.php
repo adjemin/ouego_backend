@@ -60,7 +60,7 @@ class CustomerDeviceController extends AppBaseController
         $customerDevice = $this->customerDeviceRepository->find($id);
 
         if (empty($customerDevice)) {
-            Flash::error('Customer Device not found');
+            Flash::error('Appareil du client introuvable');
 
             return redirect(route('customerDevices.index'));
         }
@@ -76,7 +76,7 @@ class CustomerDeviceController extends AppBaseController
         $customerDevice = $this->customerDeviceRepository->find($id);
 
         if (empty($customerDevice)) {
-            Flash::error('Customer Device not found');
+            Flash::error('Appareil du client introuvable');
 
             return redirect(route('customerDevices.index'));
         }
@@ -92,7 +92,7 @@ class CustomerDeviceController extends AppBaseController
         $customerDevice = $this->customerDeviceRepository->find($id);
 
         if (empty($customerDevice)) {
-            Flash::error('Customer Device not found');
+            Flash::error('Appareil du client introuvable');
 
             return redirect(route('customerDevices.index'));
         }
@@ -114,7 +114,7 @@ class CustomerDeviceController extends AppBaseController
         $customerDevice = $this->customerDeviceRepository->find($id);
 
         if (empty($customerDevice)) {
-            Flash::error('Customer Device not found');
+            Flash::error('Appareil du client introuvable');
 
             return redirect(route('customerDevices.index'));
         }

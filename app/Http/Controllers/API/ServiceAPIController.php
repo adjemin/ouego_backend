@@ -38,7 +38,7 @@ class ServiceAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($services->toArray(), 'Services retrieved successfully');
+        return $this->sendResponse($services->toArray(), 'Services récupérés avec succès');
     }
 
     /**
@@ -50,19 +50,19 @@ class ServiceAPIController extends AppBaseController
         $input = $request->all();
 
         if(!array_key_exists('name', $input)){
-            return $this->sendError('name is required', 400);
+            return $this->sendError('Le champ name est obligatoire', 400);
         }
 
         $input['slug'] = Str::slug($input['name']);
 
         $service = Service::where('slug', $input['slug'])->first();
         if($service != null){
-            return $this->sendError('This service already exist', 400);
+            return $this->sendError('Ce service existe déjà', 400);
         }
 
         $service = $this->serviceRepository->create($input);
 
-        return $this->sendResponse($service->toArray(), 'Service saved successfully');
+        return $this->sendResponse($service->toArray(), 'Service enregistré avec succès');
     }
 
     /**
@@ -75,10 +75,10 @@ class ServiceAPIController extends AppBaseController
         $service = $this->serviceRepository->find($id);
 
         if (empty($service)) {
-            return $this->sendError('Service not found');
+            return $this->sendError('Service introuvable');
         }
 
-        return $this->sendResponse($service->toArray(), 'Service retrieved successfully');
+        return $this->sendResponse($service->toArray(), 'Service récupéré avec succès');
     }
 
     /**
@@ -93,12 +93,12 @@ class ServiceAPIController extends AppBaseController
         $service = $this->serviceRepository->find($id);
 
         if (empty($service)) {
-            return $this->sendError('Service not found');
+            return $this->sendError('Service introuvable');
         }
 
         $service = $this->serviceRepository->update($input, $id);
 
-        return $this->sendResponse($service->toArray(), 'Service updated successfully');
+        return $this->sendResponse($service->toArray(), 'Service mis à jour avec succès');
     }
 
     /**
@@ -113,11 +113,11 @@ class ServiceAPIController extends AppBaseController
         $service = $this->serviceRepository->find($id);
 
         if (empty($service)) {
-            return $this->sendError('Service not found');
+            return $this->sendError('Service introuvable');
         }
 
         $service->delete();
 
-        return $this->sendSuccess('Service deleted successfully');
+        return $this->sendSuccess('Service supprimé avec succès');
     }
 }

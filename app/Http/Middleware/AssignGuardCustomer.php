@@ -60,7 +60,7 @@ class AssignGuardCustomer
                         'code' => 401,
                         'status' => 'UNAUTHORIZED',
                         'success' => false,
-                        'message' =>  'Authorization Token not found'
+                        'message' =>  "Jeton d'authentification introuvable"
                     ],401);
 
                 }
@@ -70,7 +70,7 @@ class AssignGuardCustomer
                 'code' => 401,
                 'status' => 'UNAUTHORIZED',
                 'success' => false,
-                'message' =>  'Authorization Token not found'
+                'message' =>  "Jeton d'authentification introuvable"
             ],401);
         }
 

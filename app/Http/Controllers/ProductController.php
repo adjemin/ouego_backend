@@ -60,7 +60,7 @@ class ProductController extends AppBaseController
         $product = $this->productRepository->find($id);
 
         if (empty($product)) {
-            Flash::error('Product not found');
+            Flash::error('Produit introuvable');
 
             return redirect(route('products.index'));
         }
@@ -76,7 +76,7 @@ class ProductController extends AppBaseController
         $product = $this->productRepository->find($id);
 
         if (empty($product)) {
-            Flash::error('Product not found');
+            Flash::error('Produit introuvable');
 
             return redirect(route('products.index'));
         }
@@ -92,7 +92,7 @@ class ProductController extends AppBaseController
         $product = $this->productRepository->find($id);
 
         if (empty($product)) {
-            Flash::error('Product not found');
+            Flash::error('Produit introuvable');
 
             return redirect(route('products.index'));
         }
@@ -114,7 +114,7 @@ class ProductController extends AppBaseController
         $product = $this->productRepository->find($id);
 
         if (empty($product)) {
-            Flash::error('Product not found');
+            Flash::error('Produit introuvable');
 
             return redirect(route('products.index'));
         }

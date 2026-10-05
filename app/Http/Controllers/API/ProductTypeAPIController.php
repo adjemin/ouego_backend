@@ -35,7 +35,7 @@ class ProductTypeAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($productTypes->toArray(), 'Product Types retrieved successfully');
+        return $this->sendResponse($productTypes->toArray(), 'Types de produit récupérés avec succès');
     }
 
     /**
@@ -47,19 +47,19 @@ class ProductTypeAPIController extends AppBaseController
         $input = $request->all();
 
         if(!array_key_exists('name', $input)){
-            return $this->sendError('name is required', 400);
+            return $this->sendError('Le champ name est obligatoire', 400);
         }
 
         $input['slug'] = Str::slug($input['name']);
 
         $productType = ProductType::where('slug', $input['slug'])->first();
         if($productType != null){
-            return $this->sendError('This product_type already exist', 400);
+            return $this->sendError('Ce type de produit existe déjà', 400);
         }
 
         $productType = $this->productTypeRepository->create($input);
 
-        return $this->sendResponse($productType->toArray(), 'Product Type saved successfully');
+        return $this->sendResponse($productType->toArray(), 'Type de produit enregistré avec succès');
     }
 
     /**
@@ -72,10 +72,10 @@ class ProductTypeAPIController extends AppBaseController
         $productType = $this->productTypeRepository->find($id);
 
         if (empty($productType)) {
-            return $this->sendError('Product Type not found');
+            return $this->sendError('Type de produit introuvable');
         }
 
-        return $this->sendResponse($productType->toArray(), 'Product Type retrieved successfully');
+        return $this->sendResponse($productType->toArray(), 'Type de produit récupéré avec succès');
     }
 
     /**
@@ -90,7 +90,7 @@ class ProductTypeAPIController extends AppBaseController
         $productType = $this->productTypeRepository->find($id);
 
         if (empty($productType)) {
-            return $this->sendError('Product Type not found');
+            return $this->sendError('Type de produit introuvable');
         }
 
         if(array_key_exists('name', $input)){
@@ -99,14 +99,14 @@ class ProductTypeAPIController extends AppBaseController
 
             $productType = ProductType::where('slug', $input['slug'])->first();
             if($productType != null){
-                return $this->sendError('This product_type already exist', 400);
+                return $this->sendError('Ce type de produit existe déjà', 400);
             }
 
         }
 
         $productType = $this->productTypeRepository->update($input, $id);
 
-        return $this->sendResponse($productType->toArray(), 'ProductType updated successfully');
+        return $this->sendResponse($productType->toArray(), 'Type de produit mis à jour avec succès');
     }
 
     /**
@@ -121,11 +121,11 @@ class ProductTypeAPIController extends AppBaseController
         $productType = $this->productTypeRepository->find($id);
 
         if (empty($productType)) {
-            return $this->sendError('Product Type not found');
+            return $this->sendError('Type de produit introuvable');
         }
 
         $productType->delete();
 
-        return $this->sendSuccess('Product Type deleted successfully');
+        return $this->sendSuccess('Type de produit supprimé avec succès');
     }
 }

@@ -60,7 +60,7 @@ class DeliveryTypeController extends AppBaseController
         $deliveryType = $this->deliveryTypeRepository->find($id);
 
         if (empty($deliveryType)) {
-            Flash::error('Delivery Type not found');
+            Flash::error('Type de livraison introuvable');
 
             return redirect(route('deliveryTypes.index'));
         }
@@ -76,7 +76,7 @@ class DeliveryTypeController extends AppBaseController
         $deliveryType = $this->deliveryTypeRepository->find($id);
 
         if (empty($deliveryType)) {
-            Flash::error('Delivery Type not found');
+            Flash::error('Type de livraison introuvable');
 
             return redirect(route('deliveryTypes.index'));
         }
@@ -92,7 +92,7 @@ class DeliveryTypeController extends AppBaseController
         $deliveryType = $this->deliveryTypeRepository->find($id);
 
         if (empty($deliveryType)) {
-            Flash::error('Delivery Type not found');
+            Flash::error('Type de livraison introuvable');
 
             return redirect(route('deliveryTypes.index'));
         }
@@ -114,7 +114,7 @@ class DeliveryTypeController extends AppBaseController
         $deliveryType = $this->deliveryTypeRepository->find($id);
 
         if (empty($deliveryType)) {
-            Flash::error('Delivery Type not found');
+            Flash::error('Type de livraison introuvable');
 
             return redirect(route('deliveryTypes.index'));
         }

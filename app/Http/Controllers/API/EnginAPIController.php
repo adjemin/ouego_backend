@@ -60,7 +60,7 @@ class EnginAPIController extends AppBaseController
         $engin = $this->enginRepository->find($id);
 
         if (empty($engin)) {
-            return $this->sendError('Engin not found');
+            return $this->sendError('Engin introuvable');
         }
 
         return $this->sendResponse($engin->toArray(), 'Engin retrieved successfully');
@@ -78,7 +78,7 @@ class EnginAPIController extends AppBaseController
         $engin = $this->enginRepository->find($id);
 
         if (empty($engin)) {
-            return $this->sendError('Engin not found');
+            return $this->sendError('Engin introuvable');
         }
 
         $engin = $this->enginRepository->update($input, $id);
@@ -98,7 +98,7 @@ class EnginAPIController extends AppBaseController
         $engin = $this->enginRepository->find($id);
 
         if (empty($engin)) {
-            return $this->sendError('Engin not found');
+            return $this->sendError('Engin introuvable');
         }
 
         $engin->delete();

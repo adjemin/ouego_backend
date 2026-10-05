@@ -60,7 +60,7 @@ class DriverOtpAPIController extends AppBaseController
         $driverOtp = $this->driverOtpRepository->find($id);
 
         if (empty($driverOtp)) {
-            return $this->sendError('Driver Otp not found');
+            return $this->sendError('OTP du chauffeur introuvable');
         }
 
         return $this->sendResponse($driverOtp->toArray(), 'Driver Otp retrieved successfully');
@@ -78,7 +78,7 @@ class DriverOtpAPIController extends AppBaseController
         $driverOtp = $this->driverOtpRepository->find($id);
 
         if (empty($driverOtp)) {
-            return $this->sendError('Driver Otp not found');
+            return $this->sendError('OTP du chauffeur introuvable');
         }
 
         $driverOtp = $this->driverOtpRepository->update($input, $id);
@@ -98,7 +98,7 @@ class DriverOtpAPIController extends AppBaseController
         $driverOtp = $this->driverOtpRepository->find($id);
 
         if (empty($driverOtp)) {
-            return $this->sendError('Driver Otp not found');
+            return $this->sendError('OTP du chauffeur introuvable');
         }
 
         $driverOtp->delete();

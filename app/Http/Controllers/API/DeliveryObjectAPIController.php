@@ -53,7 +53,7 @@ class DeliveryObjectAPIController extends AppBaseController
         $deliveryObject = DeliveryObject::find($id);
 
         if (empty($deliveryObject)) {
-            return $this->sendError('Delivery Object not found');
+            return $this->sendError('Objet de livraison introuvable');
         }
 
         return $this->sendResponse($deliveryObject->toArray(), 'Delivery Object retrieved successfully');
@@ -72,7 +72,7 @@ class DeliveryObjectAPIController extends AppBaseController
         $deliveryObject = DeliveryObject::find($id);
 
         if (empty($deliveryObject)) {
-            return $this->sendError('Delivery Object not found');
+            return $this->sendError('Objet de livraison introuvable');
         }
 
         $deliveryObject->update($input);
@@ -91,7 +91,7 @@ class DeliveryObjectAPIController extends AppBaseController
         $deliveryObject = DeliveryObject::find($id);
 
         if (empty($deliveryObject)) {
-            return $this->sendError('Delivery Object not found');
+            return $this->sendError('Objet de livraison introuvable');
         }
 
         $deliveryObject->delete();

@@ -60,7 +60,7 @@ class EnginController extends AppBaseController
         $engin = $this->enginRepository->find($id);
 
         if (empty($engin)) {
-            Flash::error('Engin not found');
+            Flash::error('Engin introuvable');
 
             return redirect(route('engins.index'));
         }
@@ -76,7 +76,7 @@ class EnginController extends AppBaseController
         $engin = $this->enginRepository->find($id);
 
         if (empty($engin)) {
-            Flash::error('Engin not found');
+            Flash::error('Engin introuvable');
 
             return redirect(route('engins.index'));
         }
@@ -92,7 +92,7 @@ class EnginController extends AppBaseController
         $engin = $this->enginRepository->find($id);
 
         if (empty($engin)) {
-            Flash::error('Engin not found');
+            Flash::error('Engin introuvable');
 
             return redirect(route('engins.index'));
         }
@@ -114,7 +114,7 @@ class EnginController extends AppBaseController
         $engin = $this->enginRepository->find($id);
 
         if (empty($engin)) {
-            Flash::error('Engin not found');
+            Flash::error('Engin introuvable');
 
             return redirect(route('engins.index'));
         }

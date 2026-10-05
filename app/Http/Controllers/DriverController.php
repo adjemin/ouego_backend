@@ -60,7 +60,7 @@ class DriverController extends AppBaseController
         $driver = $this->driverRepository->find($id);
 
         if (empty($driver)) {
-            Flash::error('Driver not found');
+            Flash::error('Chauffeur introuvable');
 
             return redirect(route('drivers.index'));
         }
@@ -76,7 +76,7 @@ class DriverController extends AppBaseController
         $driver = $this->driverRepository->find($id);
 
         if (empty($driver)) {
-            Flash::error('Driver not found');
+            Flash::error('Chauffeur introuvable');
 
             return redirect(route('drivers.index'));
         }
@@ -92,7 +92,7 @@ class DriverController extends AppBaseController
         $driver = $this->driverRepository->find($id);
 
         if (empty($driver)) {
-            Flash::error('Driver not found');
+            Flash::error('Chauffeur introuvable');
 
             return redirect(route('drivers.index'));
         }
@@ -114,7 +114,7 @@ class DriverController extends AppBaseController
         $driver = $this->driverRepository->find($id);
 
         if (empty($driver)) {
-            Flash::error('Driver not found');
+            Flash::error('Chauffeur introuvable');
 
             return redirect(route('drivers.index'));
         }

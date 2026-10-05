@@ -180,7 +180,7 @@ class DriverRefusalTest extends AggregatOrderTestCase
 
         $this->refuse(Driver::factory()->create(), $invitation)
             ->assertStatus(404)
-            ->assertJsonPath('message', 'Order Invitation not found');
+            ->assertJsonPath('message', 'Invitation introuvable');
 
         $invitation->refresh();
         $this->assertTrue($invitation->is_waiting_acceptation);
@@ -196,7 +196,7 @@ class DriverRefusalTest extends AggregatOrderTestCase
         $this->withHeaders(['Authorization' => "Bearer {$token}"])
             ->putJson("/api/v1/drivers/orders_invitations/{$invitation->id}/accept")
             ->assertStatus(400)
-            ->assertJsonPath('message', 'Order Invitation not found');
+            ->assertJsonPath('message', 'Invitation introuvable');
 
         $this->assertTrue($invitation->fresh()->is_waiting_acceptation);
         $this->assertNull($this->order->fresh()->driver_id);

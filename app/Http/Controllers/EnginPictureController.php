@@ -60,7 +60,7 @@ class EnginPictureController extends AppBaseController
         $enginPicture = $this->enginPictureRepository->find($id);
 
         if (empty($enginPicture)) {
-            Flash::error('Engin Picture not found');
+            Flash::error("Photo de l'engin introuvable");
 
             return redirect(route('enginPictures.index'));
         }
@@ -76,7 +76,7 @@ class EnginPictureController extends AppBaseController
         $enginPicture = $this->enginPictureRepository->find($id);
 
         if (empty($enginPicture)) {
-            Flash::error('Engin Picture not found');
+            Flash::error("Photo de l'engin introuvable");
 
             return redirect(route('enginPictures.index'));
         }
@@ -92,7 +92,7 @@ class EnginPictureController extends AppBaseController
         $enginPicture = $this->enginPictureRepository->find($id);
 
         if (empty($enginPicture)) {
-            Flash::error('Engin Picture not found');
+            Flash::error("Photo de l'engin introuvable");
 
             return redirect(route('enginPictures.index'));
         }
@@ -114,7 +114,7 @@ class EnginPictureController extends AppBaseController
         $enginPicture = $this->enginPictureRepository->find($id);
 
         if (empty($enginPicture)) {
-            Flash::error('Engin Picture not found');
+            Flash::error("Photo de l'engin introuvable");
 
             return redirect(route('enginPictures.index'));
         }

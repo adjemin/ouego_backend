@@ -60,7 +60,7 @@ class EnginPictureAPIController extends AppBaseController
         $enginPicture = $this->enginPictureRepository->find($id);
 
         if (empty($enginPicture)) {
-            return $this->sendError('Engin Picture not found');
+            return $this->sendError("Photo de l'engin introuvable");
         }
 
         return $this->sendResponse($enginPicture->toArray(), 'Engin Picture retrieved successfully');
@@ -78,7 +78,7 @@ class EnginPictureAPIController extends AppBaseController
         $enginPicture = $this->enginPictureRepository->find($id);
 
         if (empty($enginPicture)) {
-            return $this->sendError('Engin Picture not found');
+            return $this->sendError("Photo de l'engin introuvable");
         }
 
         $enginPicture = $this->enginPictureRepository->update($input, $id);
@@ -98,7 +98,7 @@ class EnginPictureAPIController extends AppBaseController
         $enginPicture = $this->enginPictureRepository->find($id);
 
         if (empty($enginPicture)) {
-            return $this->sendError('Engin Picture not found');
+            return $this->sendError("Photo de l'engin introuvable");
         }
 
         $enginPicture->delete();

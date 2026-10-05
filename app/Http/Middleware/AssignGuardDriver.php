@@ -40,7 +40,7 @@ class AssignGuardDriver
                 return $this->handleAuthException($e);
             }
         } else {
-            return $this->errorResponse('Authorization Token not found', 401);
+            return $this->errorResponse("Jeton d'authentification introuvable", 401);
         }
     }
 
@@ -59,7 +59,7 @@ class AssignGuardDriver
                 return $this->errorResponse('Token has expired and cannot be refreshed', 401);
             }
         } else {
-            return $this->errorResponse('Authorization Token not found', 401);
+            return $this->errorResponse("Jeton d'authentification introuvable", 401);
         }
     }
 
