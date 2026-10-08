@@ -10,8 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use App\Models\DriverDevice;
 use App\Models\NotificationDeliveryStatus;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
+use App\Utilities\FirebaseMessagingUtils;
 use Kreait\Firebase\Factory;
 
 class SendTestPushNotificationJob
@@ -46,8 +45,6 @@ class SendTestPushNotificationJob
             $notification = [
                 'title' => 'Test Notification Ouego Pro',
                 'body' => 'Ceci est une notification de test. ' . now()->format('H:i:s'),
-                'sound' => 'default',
-                'badge' => '1',
                 'type' => 'test',
                 'id' => uniqid('notification_')
             ];
@@ -64,20 +61,15 @@ class SendTestPushNotificationJob
             // Ajout d'un messageId unique pour le suivi
             $messageId = uniqid('msg_');
 
-            $message = CloudMessage::withTarget('token', $device->firebase_id)
-             ->withNotification(Notification::fromArray($notification));
-             /*->withData(array(
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'id' => "".$notification['id'],
-                    'status' => 'done',
-                    'notification_type' => "".$notification['type'],
-                    'notification_id' => "".$notification['id'],
-                    'meta_data_id' => "".$notification['id'],
-                    //'notification' => json_encode($customerNotification),
-                    "title" => "".$notification['title'],
-                    "body" => "".$notification['body'],
-                    'message_id' => $messageId
-                ));*/
+            $message = FirebaseMessagingUtils::buildMessage(
+                $device->firebase_id,
+                $notification['title'],
+                $notification['body'],
+                $notification['type'],
+                $notification['id'],
+                $notification['id'],
+                ['message_id' => $messageId]
+            );
 
             $result = $messaging->send($message);
 

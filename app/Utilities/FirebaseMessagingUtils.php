@@ -4,12 +4,59 @@ namespace App\Utilities;
 
 use Exception;
 use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
 use Kreait\Laravel\Firebase\Facades\Firebase;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
 
 class FirebaseMessagingUtils{
+
+    /**
+     * Construit le message FCM (HTTP v1) commun à toutes les notifications push.
+     * sound, badge et priority n'existent pas dans le bloc "notification" commun :
+     * ils sont portés par les configs android et apns.
+     */
+    public static function buildMessage($firebaseId, $title, $body, $type, $id, $dataId, array $extraData = []): CloudMessage
+    {
+        $id = "".$id;
+        $type = "".$type;
+
+        return CloudMessage::fromArray([
+            'token' => $firebaseId,
+            'notification' => [
+                'title' => "".$title,
+                'body' => "".$body,
+            ],
+            'android' => [
+                'priority' => 'high',
+                'notification' => [
+                    'sound' => 'notification_sound',
+                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                ],
+            ],
+            'apns' => [
+                'headers' => [
+                    'apns-priority' => '10',
+                ],
+                'payload' => [
+                    'aps' => [
+                        'sound' => 'notification_sound',
+                        'badge' => 1,
+                    ],
+                ],
+            ],
+            'data' => array_merge([
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
+                'id' => $id,
+                'status' => 'done',
+                'type' => $type,
+                'notification_type' => $type,
+                'notification_id' => $id,
+                'meta_data_id' => "".$dataId,
+                'title' => "".$title,
+                'body' => "".$body,
+            ], $extraData),
+        ]);
+    }
 
     public static function sendNotification($title, $body, $type, $customerNotification, $firebaseId, $isPro = true) {
 
@@ -26,34 +73,20 @@ class FirebaseMessagingUtils{
             /** @var  $messaging */
             //$messaging = Firebase::project('app')->messaging();
 
-            $message = CloudMessage::withTarget('token', $firebaseId)
-                ->withNotification(Notification::fromArray([
-                    'title' => $title,
-                    'body' => $body,
-                    'sound' => 'notification_sound',
-                    'badge' => '1',
-                    'type' => "".$customerNotification["type"],
-                    'id' => "".($customerNotification["id"]??""),
-                ]))
-                ->withHighestPossiblePriority()
-                ->withData(array(
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'id' => "".($customerNotification["id"]??""),
-                    'status' => 'done',
-                    'notification_type' => "".$customerNotification["type"],
-                    'notification_id' => "".($customerNotification["id"]??""),
-                    'meta_data_id' => "".$customerNotification["data_id"],
-                    //'notification' => json_encode($customerNotification),
-                    "title" => $title,
-                    "body" => $body,
-                ));
+            $message = self::buildMessage(
+                $firebaseId,
+                $title,
+                $body,
+                $customerNotification["type"] ?? $type,
+                $customerNotification["id"] ?? "",
+                $customerNotification["data_id"] ?? ""
+            );
 
              $messaging->send($message);
 
              return true;
 
         }catch (Exception $e){
-            dd($e);
             // En cas d'erreur, logger l'exception et retourner une réponse d'erreur
             Log::error($e);
             return  false;
