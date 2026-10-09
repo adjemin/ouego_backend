@@ -499,8 +499,13 @@ class DriverAPIController extends AppBaseController
                 return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
             }
 
+            // Compte de test : OTP fixe, pas d'envoi de SMS
+            $isTestPhone = in_array($request->phone, config('otp.test_phones'), true);
+
             // Générer un OTP à 6 chiffres
-            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $otp = $isTestPhone
+                ? config('otp.test_code')
+                : str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
             // Créer ou mettre à jour l'entrée DriverOtp
             $customerOTP = DriverOtp::updateOrCreate(
@@ -508,15 +513,17 @@ class DriverAPIController extends AppBaseController
                 [
                     'otp' => $otp,
                     'otp_expires_at' => Carbon::now()->addMinutes(5),
-                    'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
+                    'is_test_mode' => $isTestPhone
                 ]
             );
 
-            try {
-                // Envoyer l'OTP par SMS
-                $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
-            } catch (\Throwable $th) {
-                Log::error("Failed to send OTP SMS: " . $th->getMessage());
+            if (!$isTestPhone) {
+                try {
+                    // Envoyer l'OTP par SMS
+                    $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
+                } catch (\Throwable $th) {
+                    Log::error("Failed to send OTP SMS: " . $th->getMessage());
+                }
             }
             
             return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
