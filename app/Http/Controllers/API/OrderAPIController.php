@@ -2610,17 +2610,11 @@ class OrderAPIController extends AppBaseController
     // Register order history
     $order->newOrderHistory(Order::CANCELLED, $customer->table, $customer->id);
 
-    //Get OrderInvitations for this order and update is_waiting_acceptation to false
-    $orderInvitations = \App\Models\OrderInvitation::where([
-        'order_id' => $order->id,
-        "is_waiting_acceptation" => true
-    ])->get();
-
-    //Update each OrderInvitation
-    foreach($orderInvitations as $orderInvitation){
-        $orderInvitation->is_waiting_acceptation = false;
-        $orderInvitation->update();
-    }
+    // Retirer la commande de la liste des chauffeurs invités
+    \App\Models\OrderInvitation::cancelWaiting(
+        \App\Models\OrderInvitation::where('order_id', $order->id),
+        \App\Events\OrderInvitationCancelled::ORDER_CANCELLED
+    );
 
     return $this->sendResponse($order->toArray(), 'Commande mise à jour avec succès');
 

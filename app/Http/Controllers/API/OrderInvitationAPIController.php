@@ -14,6 +14,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Collection;
 use App\Models\CustomerNotification;
 use App\Events\CustomerNotificationCreated;
+use App\Events\OrderInvitationCancelled;
 use App\Services\DriverAssignmentService;
 use Illuminate\Support\Facades\Log;
 
@@ -168,14 +169,11 @@ class OrderInvitationAPIController extends AppBaseController
             $orderInvitation->save();
 
             // TODO Vérifier s'il y a d'autres invitations et marquer comme rejeter
-            OrderInvitation::where([
-                "order_id" => $orderInvitation->order_id,
-                "is_waiting_acceptation" => true
-            ])
-            ->update([
-                "is_waiting_acceptation" => false,
-                "rejection_time" => now()
-            ]);
+            OrderInvitation::cancelWaiting(
+                OrderInvitation::where('order_id', $orderInvitation->order_id),
+                OrderInvitationCancelled::TAKEN_BY_ANOTHER_DRIVER,
+                ['rejection_time' => now()]
+            );
 
             /** @var Order $order */
             $order = $orderInvitation->getOrderAttribute();

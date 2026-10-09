@@ -170,6 +170,11 @@ class Order extends Model
             if ($order->wasChanged(['status', 'driver_id'])) {
                 OrderStatusUpdated::dispatch($order, $order->getOriginal('status'));
             }
+
+            // Champs affichés dans l'invitation du chauffeur (OrderInvitation::broadcastPayload)
+            if ($order->wasChanged(['reference', 'service_slug', 'delivery_type_code', 'currency_code'])) {
+                OrderInvitation::notifyWaitingDriversOfUpdate($order->id);
+            }
         });
     }
 

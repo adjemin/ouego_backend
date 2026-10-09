@@ -59,6 +59,16 @@ class Invoice extends Model
 
     ];
 
+    protected static function booted(): void
+    {
+        // La rémunération du chauffeur est affichée dans ses invitations en attente
+        static::updated(function (Invoice $invoice) {
+            if ($invoice->order_id && $invoice->wasChanged('driver_due')) {
+                OrderInvitation::notifyWaitingDriversOfUpdate($invoice->order_id);
+            }
+        });
+    }
+
 
      /**
      * Generate ID

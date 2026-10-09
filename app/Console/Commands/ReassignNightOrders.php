@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Order;
 use App\Models\OrderInvitation;
+use App\Events\OrderInvitationCancelled;
 use App\Models\DeliveryType;
 use App\Models\Service;
 use App\Services\DriverAssignmentService;
@@ -53,9 +54,10 @@ class ReassignNightOrders extends Command
             try {
                 // Supprimer les invitations en attente : ces chauffeurs pourront être réinvités.
                 // L'invitation acceptée par le chauffeur retiré reste close : il n'est pas réinvité.
-                OrderInvitation::where('order_id', $order->id)
-                    ->where('is_waiting_acceptation', true)
-                    ->delete();
+                OrderInvitation::deleteWaiting(
+                    OrderInvitation::where('order_id', $order->id),
+                    OrderInvitationCancelled::REASSIGNED
+                );
 
                 // Réinitialiser le chauffeur assigné
                 $order->update([
