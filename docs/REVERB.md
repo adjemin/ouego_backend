@@ -72,7 +72,7 @@ Tous les canaux sont **privés** : le client doit s'authentifier avant de s'abon
 |---|---|---|---|
 | `private-orders.{orderId}` | Le client propriétaire de la commande | `POST /api/v1/broadcasting/auth` (JWT client) | `order.status.updated` |
 | `private-customers.{customerId}` | Le client lui-même | `POST /api/v1/broadcasting/auth` (JWT client) | `order.created`, `order.status.updated` |
-| `private-drivers.{driverId}` | Le chauffeur lui-même | `POST /api/v1/drivers/broadcasting/auth` (JWT chauffeur) | `order.invitation.created` |
+| `private-drivers.{driverId}` | Le chauffeur lui-même | `POST /api/v1/drivers/broadcasting/auth` (JWT chauffeur) | `order.invitation.created`, `order.invitation.updated`, `order.invitation.cancelled` |
 
 Autorisations : `routes/channels.php`. Routes d'auth : `app/Providers/BroadcastServiceProvider.php`.
 
@@ -142,6 +142,45 @@ quand un chauffeur est invité sur une commande. Non envoyé si l'invitation n'e
 }
 ```
 
+### `order.invitation.updated` — `app/Events/OrderInvitationUpdated.php`
+
+Déclenché pour chaque invitation encore en attente quand une information affichée au chauffeur change :
+`reference`, `service_slug`, `delivery_type_code` ou `currency_code` de la commande (hook `updated` du
+modèle `Order`), ou `driver_due` de la facture (hook `updated` du modèle `Invoice`). Un simple changement
+de statut ne le déclenche pas.
+
+Payload identique à `order.invitation.created`, figé au moment du changement : l'app remplace
+l'invitation `invitation_id` dans sa liste.
+
+> Aucune route de l'API ne modifie aujourd'hui ces champs pendant la recherche de chauffeur : l'event
+> est prêt pour le jour où ce sera le cas. Les changements de `route_points` ne sont pas couverts.
+
+### `order.invitation.cancelled` — `app/Events/OrderInvitationCancelled.php`
+
+Déclenché quand une invitation en attente n'est plus disponible pour le chauffeur : l'app la retire
+de sa liste. Passe par `OrderInvitation::cancelWaiting()` / `deleteWaiting()`, qui traitent les invitations
+une à une (un `update()` / `delete()` en masse ne déclencherait aucun event).
+
+```json
+{
+  "invitation_id": 15,
+  "order_id": 42,
+  "reason": "taken_by_another_driver",
+  "cancelled_at": "2026-09-28T10:05:00+00:00"
+}
+```
+
+| `reason` | Situation | Où |
+|---|---|---|
+| `order_cancelled` | Le client annule la commande | `OrderAPIController::cancel` |
+| `taken_by_another_driver` | Un autre chauffeur a accepté (le chauffeur qui accepte ne le reçoit pas) | `OrderInvitationAPIController::accept` |
+| `expired` | L'invitation a expiré, ou la recherche de chauffeur s'est terminée sans succès | `ProcessPendingOrderAssignments` |
+| `reassigned` | Commande de nuit remise en recherche | `ReassignNightOrders` |
+
+Le payload est figé à la création : l'invitation peut être supprimée avant le passage du worker.
+Une invitation sans `driver_id` ne déclenche rien. Le refus par le chauffeur lui-même n'est pas diffusé :
+la réponse de `refuse` lui renvoie déjà sa liste à jour.
+
 ## Tester
 
 ### 1. Tests automatisés
@@ -159,6 +198,7 @@ php artisan test tests/Feature/Realtime
 | `OrderStatusBroadcastTest.php` | `order.status.updated` et le canal `orders.{id}` |
 | `CustomerOrdersBroadcastTest.php` | `order.created` et le canal `customers.{id}` |
 | `DriverInvitationsBroadcastTest.php` | `order.invitation.created` et le canal `drivers.{id}` |
+| `DriverInvitationLifecycleBroadcastTest.php` | `order.invitation.cancelled` (chaque `reason`) et `order.invitation.updated` |
 
 Voir aussi `docs/TESTING.md`.
 
@@ -238,6 +278,12 @@ App\Events\OrderCreated::dispatch(App\Models\Order::find(42));
 // order.invitation.created (drivers.{driverId}) : l'invitation doit être en attente
 $invitation = App\Models\OrderInvitation::where('driver_id', 1)->where('is_waiting_acceptation', true)->latest()->first();
 event(new App\Events\OrderAssigned($invitation));
+
+// order.invitation.updated (drivers.{driverId}) : modifier la rémunération d'une commande en recherche
+App\Models\Invoice::where('order_id', $invitation->order_id)->first()->update(['driver_due' => 250000]);
+
+// order.invitation.cancelled (drivers.{driverId})
+App\Events\OrderInvitationCancelled::dispatch($invitation, App\Events\OrderInvitationCancelled::ORDER_CANCELLED);
 ```
 
 On peut aussi passer par l'API : créer une commande (`POST /api/v1/orders/create`), l'annuler
@@ -350,7 +396,8 @@ Réponse attendue :
 
 - Clé : `REVERB_APP_KEY`. Hôte/port : ceux du serveur Reverb (en prod `wss://<domaine reverb>:443`).
 - Canaux privés : préfixe `private-`, auth via l'endpoint client ou chauffeur avec le header `Authorization: Bearer <jwt>`.
-- Nom d'event à écouter : `order.status.updated`, `order.created`, `order.invitation.created`.
+- Nom d'event à écouter : `order.status.updated`, `order.created`, `order.invitation.created`,
+  `order.invitation.updated`, `order.invitation.cancelled`.
   Avec Laravel Echo, préfixer d'un point (`.listen('.order.status.updated', …)`) car les events utilisent `broadcastAs()`.
 - Toute librairie cliente Pusher fonctionne (pusher-js, Laravel Echo, clients Pusher Flutter/Dart…) en pointant l'hôte sur Reverb.
 

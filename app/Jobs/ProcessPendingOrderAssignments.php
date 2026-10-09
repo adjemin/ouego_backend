@@ -12,6 +12,7 @@ use App\Services\DriverAssignmentService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use App\Models\OrderInvitation;
+use App\Events\OrderInvitationCancelled;
 
 // class ProcessPendingOrderAssignments implements ShouldQueue
 class ProcessPendingOrderAssignments
@@ -75,7 +76,11 @@ class ProcessPendingOrderAssignments
         });
 
         if ($expiredInvitations->isNotEmpty()) {
-            // Supprimer SEULEMENT les invitations expirées
+            // Supprimer SEULEMENT les invitations expirées ; celles encore en attente sont retirées de la liste des chauffeurs
+            OrderInvitation::deleteWaiting(
+                OrderInvitation::whereIn('id', $expiredInvitations->pluck('id')),
+                OrderInvitationCancelled::EXPIRED
+            );
             OrderInvitation::whereIn('id', $expiredInvitations->pluck('id'))->delete();
         }
 
@@ -101,6 +106,12 @@ class ProcessPendingOrderAssignments
             'is_successful' =>false
         ]);
         $order->newOrderHistory(Order::PERFORMER_NOT_FOUND, 'system', null);
+
+        // La recherche est terminée : les invitations restantes ne peuvent plus être acceptées
+        OrderInvitation::cancelWaiting(
+            OrderInvitation::where('order_id', $order->id),
+            OrderInvitationCancelled::EXPIRED
+        );
         Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} marquée comme PERFORMER_NOT_FOUND.");
         
     }
