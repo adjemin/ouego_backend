@@ -276,9 +276,6 @@ Route::prefix('v1/')->group(function () {
   //  ->except(['create', 'edit']);
 
 
-Route::resource('driver-otps', App\Http\Controllers\API\DriverOtpAPIController::class)
-    ->except(['create', 'edit']);
-
 Route::resource('driver-carriers', App\Http\Controllers\API\DriverCarrierAPIController::class)
     ->except(['create', 'edit']);
 
