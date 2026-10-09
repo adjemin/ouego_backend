@@ -450,10 +450,11 @@ class DriverAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $driver = Driver::where('id', $id)->first();
+        $driver = auth('api-drivers')->user();
 
-        if (empty($driver)) {
-            return $this->sendError('Chauffeur introuvable');
+        // {id} est conservé pour l'app : un chauffeur ne peut modifier que sa propre disponibilité
+        if ((int) $id !== $driver->id) {
+            return $this->sendError('Action non autorisée', 403);
         }
 
         if(!array_key_exists('latitude', $input)){
