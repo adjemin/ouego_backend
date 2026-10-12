@@ -27,7 +27,6 @@ use MtnSmsCloud\MTNSMSApi;
 use App\Models\DriverOtp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 use App\Services\OrangeSMSService;
 use App\Models\Order;
 use App\Models\DriverDevice;

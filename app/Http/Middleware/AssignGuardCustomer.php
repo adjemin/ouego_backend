@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Http\Request;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AssignGuardCustomer
 {
@@ -23,7 +22,6 @@ class AssignGuardCustomer
         if($guard != null){
             //auth('api-customers')->shouldUse($guard);
             try {
-                //$user = JWTAuth::parseToken()->authenticate();
                 $user = auth('api-customers')->userOrFail();
 
                 // Gestion des compte bloque

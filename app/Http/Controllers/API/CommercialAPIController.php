@@ -5,15 +5,10 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCommercialAPIRequest;
 use App\Http\Requests\API\UpdateCommercialAPIRequest;
 use App\Models\Commercial;
-use App\Models\Transaction;
-use App\Models\Invoice;
-use App\Models\Payment;
 use App\Repositories\CommercialRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 
 /**
  * Class CommercialAPIController

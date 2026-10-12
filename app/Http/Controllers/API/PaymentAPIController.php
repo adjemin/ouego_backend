@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePaymentAPIRequest;
 use App\Http\Requests\API\UpdatePaymentAPIRequest;
 use App\Models\Payment;
-use App\Models\Order;
 use App\Models\Invoice;
 use App\Models\Driver;
 use App\Models\Customer;

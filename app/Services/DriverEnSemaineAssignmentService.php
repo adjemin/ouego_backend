@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderInvitation;

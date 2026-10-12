@@ -9,7 +9,6 @@ use App\Models\RoutePoint;
 use App\Models\Carrier;
 use App\Models\DriverCarrier;
 use Illuminate\Support\Facades\Log;
-use App\Models\Setting;
 use App\Models\DeliveryType;
 
 
