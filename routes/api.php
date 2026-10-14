@@ -60,11 +60,11 @@ Route::prefix('v1/')->group(function () {
 
 
     //Confirmer une course (client)
-    Route::put('orders/{id}/confirm', [App\Http\Controllers\API\OrderAPIController::class, 'confirm']);
+    Route::put('orders/{id}/confirm', [App\Http\Controllers\API\OrderAPIController::class, 'confirm'])->middleware("auth.customer:api-customers");
 
-    Route::put('orders/{id}/cancel', [App\Http\Controllers\API\OrderAPIController::class, 'cancel']);
+    Route::put('orders/{id}/cancel', [App\Http\Controllers\API\OrderAPIController::class, 'cancel'])->middleware("auth.customer:api-customers");
 
-    Route::put('orders/{id}/rating', [App\Http\Controllers\API\OrderAPIController::class, 'rating']);
+    Route::put('orders/{id}/rating', [App\Http\Controllers\API\OrderAPIController::class, 'rating'])->middleware("auth.customer:api-customers");
 
 
     // Historique des commandes
@@ -75,7 +75,7 @@ Route::prefix('v1/')->group(function () {
     Route::get('orders/{id}/info', [App\Http\Controllers\API\OrderAPIController::class, 'show']);
 
     //Rechercher d'un livreur
-    Route::put('orders/{id}/perform_driver_lookup', [App\Http\Controllers\API\OrderAPIController::class, 'performDriverLookup']);
+    Route::put('orders/{id}/perform_driver_lookup', [App\Http\Controllers\API\OrderAPIController::class, 'performDriverLookup'])->middleware("auth.customer:api-customers");
 
     Route::get('customers/orders/list', [App\Http\Controllers\API\OrderAPIController::class, 'getCustomerOrders'])->middleware("auth.customer:api-customers");
 

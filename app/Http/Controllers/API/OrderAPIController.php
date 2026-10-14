@@ -53,6 +53,42 @@ class OrderAPIController extends AppBaseController
         $this->orangeSMSService  = $orangeSMSService;
     }
 
+    /**
+     * Commande du client connecté, ou null si elle n'existe pas ou appartient à un autre client.
+     */
+    private function findCustomerOrder($id): ?Order
+    {
+        $customer = auth('api-customers')->user();
+
+        /** @var Order|null $order */
+        $order = $this->orderRepository->find($id);
+
+        if (empty($order) || empty($customer) || $order->customer_id !== $customer->id) {
+            return null;
+        }
+
+        return $order;
+    }
+
+    /**
+     * Le client propriétaire, le chauffeur assigné et les chauffeurs invités peuvent consulter la commande.
+     */
+    private function canViewOrder(Order $order): bool
+    {
+        $customer = auth('api-customers')->user();
+        if ($customer) {
+            return $order->customer_id === $customer->id;
+        }
+
+        $driver = auth('api-drivers')->user();
+        if ($driver) {
+            return $order->driver_id === $driver->id
+                || OrderInvitation::where('order_id', $order->id)->where('driver_id', $driver->id)->exists();
+        }
+
+        return false;
+    }
+
     private function getCommercialDiscount($customer): array
     {
         $discount = 0;
@@ -884,8 +920,7 @@ class OrderAPIController extends AppBaseController
 
     public function pay($id, Request $request){
 
-        /** @var Order $order */
-        $order = $this->orderRepository->find($id);
+        $order = $this->findCustomerOrder($id);
 
         if (empty($order)) {
             return $this->sendError('Commande introuvable');
@@ -928,6 +963,14 @@ class OrderAPIController extends AppBaseController
         $order = $this->orderRepository->find($id);
 
         if (empty($order)) {
+            return $this->sendError('Commande introuvable');
+        }
+
+        if (!$this->canViewOrder($order)) {
+            if (!auth('api-customers')->check() && !auth('api-drivers')->check()) {
+                return $this->sendError("Jeton d'authentification introuvable", 401);
+            }
+
             return $this->sendError('Commande introuvable');
         }
 
@@ -1738,15 +1781,10 @@ class OrderAPIController extends AppBaseController
 
         $customer = auth('api-customers')->user();
 
-        /** @var Order $order */
-        $order = $this->orderRepository->find($id);
+        $order = $this->findCustomerOrder($id);
 
         if (empty($order)) {
             return $this->sendError('Commande introuvable');
-        }
-
-        if (empty($customer)) {
-            return $this->sendError('Non autorisé', 401);
         }
 
         $input['is_draft'] = false;
@@ -1767,8 +1805,7 @@ class OrderAPIController extends AppBaseController
 
 
     public function performDriverLookup($id, Request $request){
-        /** @var Order $order */
-        $order = $this->orderRepository->find($id);
+        $order = $this->findCustomerOrder($id);
 
         if (empty($order)) {
             return $this->sendError('Commande introuvable', 400);
@@ -2586,8 +2623,7 @@ class OrderAPIController extends AppBaseController
 
     $customer = auth('api-customers')->user();
 
-    /** @var Order $order */
-    $order = $this->orderRepository->find($id);
+    $order = $this->findCustomerOrder($id);
 
     if (empty($order)) {
         return $this->sendError('Commande introuvable');
@@ -2622,8 +2658,7 @@ class OrderAPIController extends AppBaseController
 
   public function rating($id, Request $request){
 
-    /** @var Order $order */
-    $order = $this->orderRepository->find($id);
+    $order = $this->findCustomerOrder($id);
 
     if (empty($order)) {
         return $this->sendError('Commande introuvable');
@@ -2659,8 +2694,7 @@ class OrderAPIController extends AppBaseController
 
     public function getOrderHistory($id, Request $request){
 
-        /** @var Order $order */
-        $order = $this->orderRepository->find($id);
+        $order = $this->findCustomerOrder($id);
 
         if (empty($order)) {
             return $this->sendError('Commande introuvable');
