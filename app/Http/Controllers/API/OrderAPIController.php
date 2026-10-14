@@ -19,9 +19,7 @@ use App\Models\RoutePoint;
 use App\Models\Invoice;
 use App\Models\Driver;
 use App\Models\Carrier;
-use App\Models\DriverNotification;
 use App\Models\DeliveryType;
-use App\Utilities\DriverNotificationsUtils;
 use App\Repositories\OrderRepository;   
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,7 +29,7 @@ use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Services\DriverAssignmentService;
 use App\Services\CarrierLocationService;
-use App\Services\OrangeSMSService;
+use App\Jobs\SendSms;
 use Illuminate\Support\Facades\DB;
 /**
  * Class OrderAPIController
@@ -40,17 +38,14 @@ class OrderAPIController extends AppBaseController
 {
     private OrderRepository $orderRepository;
     private CarrierLocationService $carrierLocationService;
-    private OrangeSMSService $orangeSMSService;
 
     public function __construct(
         OrderRepository $orderRepo, 
-        CarrierLocationService $carrierLocationService,
-        OrangeSMSService $orangeSMSService
+        CarrierLocationService $carrierLocationService
     )
     {
         $this->orderRepository = $orderRepo;
         $this->carrierLocationService = $carrierLocationService;
-        $this->orangeSMSService  = $orangeSMSService;
     }
 
     /**
@@ -191,6 +186,20 @@ class OrderAPIController extends AppBaseController
 
         DB::beginTransaction();
 
+        try {
+            return $this->persistOrder($request, $customer, $items);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Crée la commande, ses articles, ses points de passage et sa facture dans la transaction ouverte par store().
+     * Un champ invalide annule la transaction et renvoie une erreur.
+     */
+    private function persistOrder(CreateOrderAPIRequest $request, $customer, array $items): JsonResponse
+    {
         $order = Order::create([
             "reference" => Order::generateReference(),
             "customer_id" => $customer->id,
@@ -311,7 +320,6 @@ class OrderAPIController extends AppBaseController
                 $manutention_pricing = array_key_exists('manutention_pricing', $meta_data)?$meta_data['manutention_pricing']:0; 
 
                 $order->delivery_type_code = $delivery_type_code;
-                $order->save();
 
                 $commission_min = doubleval(Setting::get('OUEGO_COMMISSION_COURSE_MIN'));
                 $commission = doubleval(Setting::get('COURSE_COMMISSION_OUEGO'));
@@ -348,7 +356,6 @@ class OrderAPIController extends AppBaseController
                 ]);
 
                 $order->service_slug = $service->slug;
-                $order->save();
 
 
             }
@@ -450,7 +457,6 @@ class OrderAPIController extends AppBaseController
 
                 $delivery_price = intval($item['delivery_price']);
                 $order->delivery_price =  $delivery_price;
-                $order->save();
 
                 $productType = ProductType::where(['slug' => $meta_data['product_type_slug']])->first();
                 if(empty($productType)) {
@@ -584,7 +590,6 @@ class OrderAPIController extends AppBaseController
                 ]);
 
                 $order->service_slug = $service->slug;
-                $order->save();
 
                 //Créer une RoutePoint avec carrier_id
                 $sourceRoutePoint = RoutePoint::create([
@@ -755,7 +760,6 @@ class OrderAPIController extends AppBaseController
                 ]);
 
                 $order->service_slug = $service->slug;
-                $order->save();
 
 
             }
@@ -820,7 +824,6 @@ class OrderAPIController extends AppBaseController
 
             if($order_item->service_slug == Service::COURSE){
                 $order->is_ride = true;
-                $order->save();
 
                 $order_price = $order_price + $order_item->order_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
@@ -829,7 +832,6 @@ class OrderAPIController extends AppBaseController
 
             if($order_item->service_slug == Service::AGREGATS_CONSTRUCTION){
                 $order->is_product = true;
-                $order->save();
 
                 $order_price = $order_price + $order_item->order_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
@@ -838,7 +840,6 @@ class OrderAPIController extends AppBaseController
 
             if($order_item->service_slug == Service::LOCATION){
                 $order->is_location = true;
-                $order->save();
 
                 $order_price = $order_price + $order_item->order_price;
                 $delivery_price = $delivery_price + $order_item->delivery_price;
@@ -882,7 +883,7 @@ class OrderAPIController extends AppBaseController
                         $invoice_total = max(0, $invoice_total - $discount);
                         $commercial->creditBalance($creditAmount);
                         $coupon = $customer->code_commercial;
-                        $this->orangeSMSService->sendSMS("+" . $commercial->phone, "OUEGO: Une nouvelle commande d'un client est arrivée. Votre compte a été credité de {$creditAmount} XOF. Votre nouveau solde est de {$commercial->current_balance} XOF.");
+                        SendSms::dispatch("+" . $commercial->phone, "OUEGO: Une nouvelle commande d'un client est arrivée. Votre compte a été credité de {$creditAmount} XOF. Votre nouveau solde est de {$commercial->current_balance} XOF.")->afterCommit();
                     }
                 }
             }
