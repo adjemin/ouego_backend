@@ -42,20 +42,13 @@ class Setting extends Model
     // Get key
     public static function get($key)
     {
-        // Tous les paramètres en une seule requête, au lieu d'une requête par appel
-        $values = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, fn () => Setting::pluck('value', 'name')->all());
-
-        return $values[$key] ?? null;
+        return self::getAll()[$key] ?? null;
     }
     // Array data
-    public static function getAll()
+    public static function getAll(): array
     {
-        $data = [];
-        $settings = Setting::all();
-        foreach($settings as $setting) {
-            $data[$setting->key] = $setting->value;
-        }
-        return $data;
+        // Tous les paramètres en une seule requête, au lieu d'une requête par appel
+        return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, fn () => Setting::pluck('value', 'name')->all());
     }
 
 
@@ -76,16 +69,9 @@ class Setting extends Model
     public static function updateValue($key, $value)
     {
         if ($key && $value) {
-            $setting = self::get($key);
-            if (! $setting) {
+            Setting::updateOrCreate(['name' => $key], ['value' => $value]);
 
-                $setting = Setting::create(['name' => $key, 'value' => $value]);
-                if ($setting) {
-                    return true;
-                }
-            }
-            $setting->value = $value;
-            $setting->save();
+            return true;
         }
         return false;
     }

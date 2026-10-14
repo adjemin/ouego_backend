@@ -39,6 +39,26 @@ class SettingsCacheTest extends TestCase
     }
 
     /** @test */
+    public function get_all_returns_the_settings_by_name()
+    {
+        Setting::create(['name' => 'A', 'value' => '1']);
+        Setting::create(['name' => 'B', 'value' => '2']);
+
+        $this->assertSame(['A' => '1', 'B' => '2'], Setting::getAll());
+    }
+
+    /** @test */
+    public function update_value_creates_or_updates_the_setting()
+    {
+        $this->assertTrue(Setting::updateValue('JOURNEE_CUTOFF_HOUR', '12'));
+        $this->assertSame('12', Setting::get('JOURNEE_CUTOFF_HOUR'));
+
+        $this->assertTrue(Setting::updateValue('JOURNEE_CUTOFF_HOUR', '14'));
+        $this->assertSame('14', Setting::get('JOURNEE_CUTOFF_HOUR'));
+        $this->assertSame(1, Setting::where('name', 'JOURNEE_CUTOFF_HOUR')->count());
+    }
+
+    /** @test */
     public function delivery_types_are_cached_by_slug()
     {
         $this->seed(DeliveryTypesSeeder::class);

@@ -200,7 +200,7 @@ class TripService
             }
 
             // Recherche des chauffeurs avec l'algorithme de pondération
-            $driversData = $this->orderAssignmentService->aggregatExpressOrderAssignment(
+            $driversData = $this->orderAssignmentService->findAggregatNearestDrivers(
                 $product->carrier_id, 
                 $order->id, 
                 $order->service_slug, 
