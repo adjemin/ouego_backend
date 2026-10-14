@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class DeliveryType extends Model
 {
@@ -53,6 +54,28 @@ class DeliveryType extends Model
     public static array $rules = [
 
     ];
+
+    const CACHE_KEY = 'delivery_types.by_slug';
+    const CACHE_TTL = 300;
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => self::flushCache());
+        static::deleted(fn () => self::flushCache());
+        static::restored(fn () => self::flushCache());
+    }
+
+    public static function flushCache(): void
+    {
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    public static function findBySlug(?string $slug): ?self
+    {
+        $types = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, fn () => self::all()->keyBy('slug'));
+
+        return $types->get($slug);
+    }
 
     public static function isExpressAvailable(?Carbon $at = null): bool
     {

@@ -171,7 +171,7 @@ class PricingUtils{
 
     public static function applyDeliveryPricing(float $amount, string $delivery_type): float
     {
-        $config = DeliveryType::where('slug', $delivery_type)->first();
+        $config = DeliveryType::findBySlug($delivery_type);
 
         if (!$config) {
             return $amount;

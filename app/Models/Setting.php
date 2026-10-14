@@ -3,10 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Setting extends Model
 {
     public $table = 'settings';
+
+    const CACHE_KEY = 'settings.values';
+    // Borne la durée d'une valeur périmée quand le cache n'est pas partagé entre conteneurs (api, worker, cron)
+    const CACHE_TTL = 300;
 
     public $fillable = [
         'name',
@@ -22,16 +27,25 @@ class Setting extends Model
 
     ];
 
+    protected static function booted(): void
+    {
+        static::saved(fn () => self::flushCache());
+        static::deleted(fn () => self::flushCache());
+    }
+
+    public static function flushCache(): void
+    {
+        Cache::forget(self::CACHE_KEY);
+    }
+
         /*** HELPERS ***/
     // Get key
     public static function get($key)
     {
-        $value = null;
-        $setting = Setting::where('name', $key)->first();
-        if ($setting) {
-            $value = $setting->value;
-        }
-        return $value;
+        // Tous les paramètres en une seule requête, au lieu d'une requête par appel
+        $values = Cache::remember(self::CACHE_KEY, self::CACHE_TTL, fn () => Setting::pluck('value', 'name')->all());
+
+        return $values[$key] ?? null;
     }
     // Array data
     public static function getAll()

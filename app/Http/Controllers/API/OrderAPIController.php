@@ -1184,7 +1184,7 @@ class OrderAPIController extends AppBaseController
                     "distance" => $current_distance,
                     "duration" => $duration,
                     "amount" => $amount,
-                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+                    "delivery_type" => DeliveryType::findBySlug($delivery_type_code),
                     "is_available" => $expressIsAvalable,
                     "error_message" => $expressMessage
                 ];
@@ -1207,7 +1207,7 @@ class OrderAPIController extends AppBaseController
                     "distance" => $current_distance,
                     "duration" => $duration,
                     "amount" => $amount,
-                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+                    "delivery_type" => DeliveryType::findBySlug($delivery_type_code),
                     "is_available" => $isJourneeAvailable,
                     "error_message" => $journeeErrorMessage
                 ];
@@ -1234,7 +1234,7 @@ class OrderAPIController extends AppBaseController
                     "distance" => $current_distance,
                     "duration" => $duration,
                     "amount" => $amount,
-                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+                    "delivery_type" => DeliveryType::findBySlug($delivery_type_code),
                     "is_available" => $isDeNuitAvailable,
                     "error_message" => $deNuitErrorMessage
                 ];
@@ -1257,7 +1257,7 @@ class OrderAPIController extends AppBaseController
                     "distance" => $current_distance,
                     "duration" => $duration,
                     "amount" => $amount,
-                    "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+                    "delivery_type" => DeliveryType::findBySlug($delivery_type_code),
                     "is_available" => $isEnSemaineAvailable,
                     "error_message" => $enSemaineErrorMessage
                 ];
@@ -1525,7 +1525,7 @@ class OrderAPIController extends AppBaseController
             "distance" => $current_distance,
             "duration" => $duration,
             "amount" => $amount,
-            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+            "delivery_type" => DeliveryType::findBySlug($delivery_type_code),
             "is_available" => $expressIsAvalable,
             "error_message" => $expressMessage
         ];
@@ -1547,7 +1547,7 @@ class OrderAPIController extends AppBaseController
             "distance" => $current_distance,
             "duration" => $duration,
             "amount" => $amount,
-            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+            "delivery_type" => DeliveryType::findBySlug($delivery_type_code),
             "is_available" => $isJourneeAvailable,
             "error_message" => $journeeErrorMessage
         ];
@@ -1574,7 +1574,7 @@ class OrderAPIController extends AppBaseController
             "distance" => $current_distance,
             "duration" => $duration,
             "amount" => $amount,
-            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+            "delivery_type" => DeliveryType::findBySlug($delivery_type_code),
             "is_available" => $isDeNuitAvailable,
             "error_message" => $deNuitErrorMessage
         ];
@@ -1598,7 +1598,7 @@ class OrderAPIController extends AppBaseController
             "distance" => $current_distance,
             "duration" => $duration,
             "amount" => $amount,
-            "delivery_type" => DeliveryType::where('slug', $delivery_type_code)->first(),
+            "delivery_type" => DeliveryType::findBySlug($delivery_type_code),
             "is_available" => $isEnSemaineAvailable,
             "error_message" => $enSemaineErrorMessage
         ];

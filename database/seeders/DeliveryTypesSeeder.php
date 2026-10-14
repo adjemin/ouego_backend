@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\DeliveryType;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -62,5 +63,8 @@ class DeliveryTypesSeeder extends Seeder
                 $type
             );
         }
+
+        // updateOrInsert ne déclenche pas les événements du modèle
+        DeliveryType::flushCache();
     }
 }
