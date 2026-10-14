@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SerializesAppendedRelations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Engin extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, SerializesAppendedRelations;
 
     public $table = 'engins';
 
@@ -66,8 +67,18 @@ class Engin extends Model
 
     ];
 
+    public function serializedRelations(): array
+    {
+        return ['pictures'];
+    }
+
+    public function pictures()
+    {
+        return $this->hasMany(EnginPicture::class, 'engin_id', 'id');
+    }
+
     public function getPicturesAttribute(){
-        return EnginPicture::where('engin_id', $this->id)->get();
+        return $this->serializedRelation('pictures');
     }
 
 

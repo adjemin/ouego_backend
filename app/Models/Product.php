@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SerializationScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -47,7 +48,10 @@ class Product extends Model
     ];
 
     public function getProductTypesAttribute(){
-        return ProductType::where('product_id', $this->id)->get();
+        return SerializationScope::remember(
+            "Product.product_types:{$this->id}",
+            fn () => ProductType::where('product_id', $this->id)->get()
+        );
     }
 
 

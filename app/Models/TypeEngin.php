@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SerializationScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -36,7 +37,10 @@ class TypeEngin extends Model
 
     public function getModelsAttribute(){
 
-        return TypeEnginModel::where('type_engin_slug', $this->slug)->get();
+        return SerializationScope::remember(
+            "TypeEngin.models:{$this->slug}",
+            fn () => TypeEnginModel::where('type_engin_slug', $this->slug)->get()
+        );
 
     }
 

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SerializationScope;
+use App\Models\Concerns\SerializesAppendedRelations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderItem extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, SerializesAppendedRelations;
 
     public $table = 'order_items';
 
@@ -55,17 +57,44 @@ class OrderItem extends Model
 
     ];
 
-    public function getRoutePointsAttribute()
+    public function serializedRelations(): array
     {
-        return RoutePoint::where(['order_id' => $this->order_id])->orderBy('visit_order', 'ASC')->get();
+        return ['service', 'routePoints.histories', 'carrier'];
     }
 
+    // Points de passage de la commande de l'article
+    public function routePoints()
+    {
+        return $this->hasMany(RoutePoint::class, 'order_id', 'order_id')->orderBy('visit_order', 'ASC');
+    }
+
+    public function getRoutePointsAttribute()
+    {
+        return $this->serializedRelation('routePoints');
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class, 'service_slug', 'slug');
+    }
 
     public function getServiceAttribute()
     {
-        return Service::where([
-            'slug' => $this->service_slug
-        ])->first();
+        return $this->serializedRelation('service');
+    }
+
+    /**
+     * Élément du catalogue référencé dans meta_data, partagé entre les articles d'une même sérialisation.
+     * Pendant la sérialisation, il est converti en tableau tout de suite : sinon json_encode le convertirait
+     * après coup, hors de la sérialisation, avec une requête par article.
+     */
+    private static function catalogEntry(string $model, string $slug)
+    {
+        return SerializationScope::remember("{$model}:{$slug}", function () use ($model, $slug) {
+            $entry = $model::where('slug', $slug)->first();
+
+            return SerializationScope::active() ? $entry?->toArray() : $entry;
+        });
     }
 
     public function getMetaDataAttribute($value){
@@ -77,11 +106,11 @@ class OrderItem extends Model
             if($this->service_slug ==  "course"){
 
                 if(array_key_exists('type_engin_slug', $json_array)){
-                    $json_array['type_engin'] = TypeEngin::where('slug', $json_array['type_engin_slug'])->first();
+                    $json_array['type_engin'] = self::catalogEntry(TypeEngin::class, $json_array['type_engin_slug']);
                 }
 
                 if( array_key_exists('engin_model', $json_array)){
-                    $json_array['engin_model_object'] = TypeEnginModel::where('slug', $json_array['engin_model'])->first();
+                    $json_array['engin_model_object'] = self::catalogEntry(TypeEnginModel::class, $json_array['engin_model']);
                 }
 
             }
@@ -89,22 +118,22 @@ class OrderItem extends Model
             if($this->service_slug ==  "agregats-construction"){
 
                 if(array_key_exists('product_slug', $json_array)){
-                    $json_array['product'] = Product::where('slug', $json_array['product_slug'])->first();
+                    $json_array['product'] = self::catalogEntry(Product::class, $json_array['product_slug']);
                 }
 
                 if( array_key_exists('product_type_slug', $json_array)){
-                    $json_array['product_type'] = ProductType::where('slug', $json_array['product_type_slug'])->first();
+                    $json_array['product_type'] = self::catalogEntry(ProductType::class, $json_array['product_type_slug']);
                 }
             }
 
             if($this->service_slug ==  "location"){
 
                 if(array_key_exists('type_engin_slug', $json_array)){
-                    $json_array['type_engin'] = TypeEngin::where('slug', $json_array['type_engin_slug'])->first();
+                    $json_array['type_engin'] = self::catalogEntry(TypeEngin::class, $json_array['type_engin_slug']);
                 }
 
                 if( array_key_exists('engin_model', $json_array)){
-                    $json_array['engin_model_object'] = TypeEnginModel::where('slug', $json_array['engin_model'])->first();
+                    $json_array['engin_model_object'] = self::catalogEntry(TypeEnginModel::class, $json_array['engin_model']);
                 }
             }
 
@@ -135,10 +164,7 @@ class OrderItem extends Model
 
     public function getCarrierAttribute()
     {
-        if ($this->carrier_id) {
-            return Carrier::where('id', $this->carrier_id)->first();
-        }
-        return null;
+        return $this->serializedRelation('carrier');
     }
 
     public function carrier()

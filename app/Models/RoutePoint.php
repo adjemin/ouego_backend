@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SerializesAppendedRelations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RoutePoint extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, SerializesAppendedRelations;
 
     public $table = 'route_points';
 
@@ -98,8 +99,18 @@ class RoutePoint extends Model
         return  $this->type == "source"? "Ramassage":"Livraison";
     }
 
+    public function serializedRelations(): array
+    {
+        return ['histories'];
+    }
+
+    public function histories()
+    {
+        return $this->hasMany(RoutePointHistory::class, 'route_point_id', 'id');
+    }
+
     public function getHistoriesAttribute(){
-        return RoutePointHistory::where(['route_point_id' => $this->id])->get();
+        return $this->serializedRelation('histories');
     }
 
 
