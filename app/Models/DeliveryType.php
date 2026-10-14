@@ -90,6 +90,38 @@ class DeliveryType extends Model
         return true;
     }
 
+    // Commandes « de nuit » : passées de 07h00 à 19h30, livrées pendant la nuit
+    const DE_NUIT_UNAVAILABLE_MESSAGE = "L’option Course De nuit est disponible uniquement de 07H00 à 19H30.";
+
+    public static function isDeNuitAvailable(?Carbon $at = null): bool
+    {
+        $at = $at ?? now();
+
+        return !($at->lt($at->copy()->setTime(7, 0)) || $at->gt($at->copy()->setTime(19, 30)));
+    }
+
+    // Commandes « en semaine » : passées uniquement du lundi au jeudi
+    const DE_SEMAINE_UNAVAILABLE_MESSAGE = "Les courses en semaine ne peuvent être lancées que du lundi au jeudi.";
+
+    public static function isDeSemaineAvailable(?Carbon $at = null): bool
+    {
+        return ($at ?? now())->dayOfWeekIso <= 4;
+    }
+
+    /**
+     * Raison pour laquelle le type de livraison ne peut pas être commandé maintenant, ou null s'il est disponible.
+     */
+    public static function unavailabilityMessage(?string $deliveryTypeCode): ?string
+    {
+        return match (true) {
+            $deliveryTypeCode === self::TYPE_EXPRESS && !self::isExpressAvailable() => self::EXPRESS_UNAVAILABLE_MESSAGE,
+            $deliveryTypeCode === self::TYPE_EN_JOURNEE && !self::isEnJourneeAvailable() => self::enJourneeUnavailableMessage(),
+            $deliveryTypeCode === self::TYPE_DE_NUIT && !self::isDeNuitAvailable() => self::DE_NUIT_UNAVAILABLE_MESSAGE,
+            $deliveryTypeCode === self::TYPE_DE_SEMAINE && !self::isDeSemaineAvailable() => self::DE_SEMAINE_UNAVAILABLE_MESSAGE,
+            default => null,
+        };
+    }
+
     public static function enJourneeCutoffHour(): int
     {
         $value = Setting::get('JOURNEE_CUTOFF_HOUR');

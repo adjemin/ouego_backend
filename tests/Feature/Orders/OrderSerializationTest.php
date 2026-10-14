@@ -130,6 +130,11 @@ class OrderSerializationTest extends AggregatOrderTestCase
     {
         $json = $this->callEndpoint($endpoint)->assertOk()->json('data');
 
+        // Les commandes ont la même date de création (horloge figée) : leur ordre n'est pas déterministe
+        if ($endpoint === 'customer_orders') {
+            usort($json, fn ($a, $b) => strcmp($a['service_slug'], $b['service_slug']));
+        }
+
         $this->assertMatchesSnapshot($endpoint, $this->normalize($json));
     }
 
