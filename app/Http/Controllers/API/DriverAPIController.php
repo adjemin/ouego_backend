@@ -324,6 +324,43 @@ class DriverAPIController extends AppBaseController
     }
 
 
+    /**
+     * Suppression du compte par le chauffeur connecté.
+     * DELETE /drivers/account
+     *
+     * Soft delete : une nouvelle inscription avec le même numéro restaure le compte (voir register()).
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        /** @var Driver $driver */
+        $driver = auth('api-drivers')->user();
+
+        if (Order::where('driver_id', $driver->id)->inProgress()->exists()) {
+            return $this->sendError('Vous avez une commande en cours, vous ne pouvez pas supprimer votre compte', 400);
+        }
+
+        if ((float) $driver->current_balance != 0) {
+            return $this->sendError('Votre solde doit être à zéro pour supprimer votre compte, veuillez contacter le support', 400);
+        }
+
+        DB::transaction(function () use ($driver) {
+            // Libère les commandes en attente de sa réponse pour que la recherche passe à d'autres chauffeurs
+            OrderInvitation::where('driver_id', $driver->id)
+                ->where('is_waiting_acceptation', true)
+                ->update(['is_waiting_acceptation' => false, 'rejection_time' => now()]);
+
+            DriverDevice::where('driver_id', $driver->id)->delete();
+
+            $driver->is_available = false;
+            $driver->save();
+            $driver->delete();
+        });
+
+        auth('api-drivers')->logout();
+
+        return $this->sendSuccess('Compte supprimé avec succès');
+    }
+
     public function refresh()
     {
         try {

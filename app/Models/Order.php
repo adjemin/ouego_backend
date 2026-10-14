@@ -372,8 +372,24 @@ class Order extends Model
     }
 
 
+    /**
+     * Commandes ni terminées, ni annulées, ni en échec : elles empêchent la suppression du compte.
+     */
+    public function scopeInProgress($q)
+    {
+        return $q->where('is_completed', false)
+                ->where(fn ($qq) => $qq->where('is_draft', false)->orWhereNull('is_draft'))
+                ->whereNotIn('status', [
+                    self::CANCELLED,
+                    self::CANCELLED_WITH_PAYMENT,
+                    self::CANCELLED_BY_TAXI,
+                    self::FAILED,
+                    self::PERFORMER_NOT_FOUND,
+                ]);
+    }
+
     // Order scops for driver
-   
+
     public function scopeActive($q)
     {
         return $q->where('is_draft', false)

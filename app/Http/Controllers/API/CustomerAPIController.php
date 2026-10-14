@@ -18,6 +18,8 @@ use App\Models\Commercial;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
 use App\Models\CustomerDevice;
+use App\Models\Order;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -320,6 +322,32 @@ class CustomerAPIController extends AppBaseController
 
     }
 
+
+    /**
+     * Suppression du compte par le client connecté.
+     * DELETE /customers/account
+     *
+     * Soft delete : une nouvelle inscription avec le même numéro restaure le compte (voir register()).
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        /** @var Customer $customer */
+        $customer = auth('api-customers')->user();
+
+        if (Order::where('customer_id', $customer->id)->inProgress()->exists()) {
+            return $this->sendError('Vous avez une commande en cours, vous ne pouvez pas supprimer votre compte', 400);
+        }
+
+        DB::transaction(function () use ($customer) {
+            // forceDelete : firebase_id est unique, une ligne soft-deleted bloquerait la réinscription depuis le même appareil
+            CustomerDevice::where('customer_id', $customer->id)->forceDelete();
+            $customer->delete();
+        });
+
+        auth('api-customers')->logout();
+
+        return $this->sendSuccess('Compte supprimé avec succès');
+    }
 
     public function refresh()
     {

@@ -32,6 +32,7 @@ Route::prefix('v1/')->group(function () {
     Route::post('customers/refresh', [App\Http\Controllers\API\CustomerAPIController::class, 'refresh'])->middleware("auth.customer:api-customers");
     Route::put('customers/edit_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'update'])->middleware("auth.customer:api-customers");
     Route::get('customers/get_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'getProfil'])->middleware("auth.customer:api-customers");
+    Route::delete('customers/account', [App\Http\Controllers\API\CustomerAPIController::class, 'deleteAccount'])->middleware("auth.customer:api-customers");
 
     Route::post('customers/devices/create', [App\Http\Controllers\API\CustomerDeviceAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
@@ -122,6 +123,7 @@ Route::prefix('v1/')->group(function () {
     Route::post('drivers/refresh', [App\Http\Controllers\API\DriverAPIController::class, 'refresh'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/edit_profil', [App\Http\Controllers\API\DriverAPIController::class, 'update'])->middleware("auth.driver:api-drivers");
     Route::get('drivers/get_profil', [App\Http\Controllers\API\DriverAPIController::class, 'getProfil'])->middleware("auth.driver:api-drivers");
+    Route::delete('drivers/account', [App\Http\Controllers\API\DriverAPIController::class, 'deleteAccount'])->middleware("auth.driver:api-drivers");
 
     Route::post('drivers/cars/create', [App\Http\Controllers\API\DriverAPIController::class, 'createCar'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/cars/{id}/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateCar'])->middleware("auth.driver:api-drivers");
