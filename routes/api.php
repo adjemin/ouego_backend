@@ -27,7 +27,7 @@ Route::prefix('v1/')->group(function () {
 
     //Inscription par téléphone (Client)
     Route::post('customers/register', [App\Http\Controllers\API\CustomerAPIController::class, 'register']);
-    Route::post('customers/login', [App\Http\Controllers\API\CustomerAPIController::class, 'login']);
+    // Route::post('customers/login', [App\Http\Controllers\API\CustomerAPIController::class, 'login']);
     Route::post('customers/logout', [App\Http\Controllers\API\CustomerAPIController::class, 'logout'])->middleware("auth.customer:api-customers");
     Route::post('customers/refresh', [App\Http\Controllers\API\CustomerAPIController::class, 'refresh'])->middleware("auth.customer:api-customers");
     Route::put('customers/edit_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'update'])->middleware("auth.customer:api-customers");
@@ -113,7 +113,7 @@ Route::prefix('v1/')->group(function () {
 
     //Inscription par téléphone Driver
     Route::post('drivers/register', [App\Http\Controllers\API\DriverAPIController::class, 'register']);
-    Route::post('drivers/login', [App\Http\Controllers\API\DriverAPIController::class, 'login']);
+    // Route::post('drivers/login', [App\Http\Controllers\API\DriverAPIController::class, 'login']);
 
     Route::post('drivers/send-otp', [App\Http\Controllers\API\DriverAPIController::class, 'sendOTP']);
 
@@ -140,7 +140,7 @@ Route::prefix('v1/')->group(function () {
     Route::put('drivers/orders_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse'])->middleware("auth.driver:api-drivers");
 
 
-    Route::put('drivers/availabilities/{id}/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateAvailability']);
+    Route::put('drivers/availabilities/{id}/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateAvailability'])->middleware("auth.driver:api-drivers");
 
     Route::get('drivers/notifications/list', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/notifications/{id}/update', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'update'])->middleware("auth.driver:api-drivers");
@@ -149,8 +149,8 @@ Route::prefix('v1/')->group(function () {
     Route::post('drivers/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'addCarrierToDriver'])->middleware("auth.driver:api-drivers");
     Route::delete('drivers/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'removeCarrierFromDriver'])->middleware("auth.driver:api-drivers");
 
-    Route::post('drivers/transactions/balance/deposit', [App\Http\Controllers\API\DriverAPIController::class, 'depositBalance']);
-    Route::post('drivers/transactions/balance/withdraw', [App\Http\Controllers\API\DriverAPIController::class, 'withdrawBalance']);
+    Route::post('drivers/transactions/balance/deposit', [App\Http\Controllers\API\DriverAPIController::class, 'depositBalance'])->middleware("auth.driver:api-drivers");
+    Route::post('drivers/transactions/balance/withdraw', [App\Http\Controllers\API\DriverAPIController::class, 'withdrawBalance'])->middleware("auth.driver:api-drivers");
     Route::get('drivers/earnings/daily', [App\Http\Controllers\API\DriverAPIController::class, 'getDailyEarnings'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/zone-base/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateZoneBase'])->middleware("auth.driver:api-drivers");
     Route::get('drivers/order-invitations/pending', [App\Http\Controllers\API\DriverAPIController::class, 'getPendingOrderInvitations'])->middleware("auth.driver:api-drivers");

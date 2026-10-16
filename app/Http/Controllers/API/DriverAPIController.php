@@ -486,9 +486,12 @@ class DriverAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $driver = Driver::where('id', $id)->first();
+        /** @var Driver $driver */
+        $driver = auth('api-drivers')->user();
 
-        if (empty($driver)) {
+        // Un chauffeur ne met à jour que sa propre disponibilité et sa position (utilisées pour l'attribution des commandes).
+        // L'{id} est conservé dans l'URL pour la compatibilité avec l'app ; un autre identifiant répond comme un chauffeur inexistant.
+        if ((string) $id !== (string) $driver->id) {
             return $this->sendError('Chauffeur introuvable');
         }
 
@@ -691,8 +694,8 @@ class DriverAPIController extends AppBaseController
 
         try{
             // Validation des données d'entrée
+            // Le portefeuille est toujours celui du chauffeur connecté : un driver_id envoyé par l'app est ignoré
             $validator = Validator::make($request->all(), [
-                'driver_id' => 'required|exists:drivers,id',
                 'amount' => 'required|numeric|min:100'
             ]);
 
@@ -704,8 +707,8 @@ class DriverAPIController extends AppBaseController
             $input = $request->all();
             $amount = intval($input['amount']);
 
-            // Récupérer le chauffeur
-            $driver = Driver::findOrFail($input['driver_id']);
+            /** @var Driver $driver */
+            $driver = auth('api-drivers')->user();
 
             DB::beginTransaction();
 
@@ -766,8 +769,8 @@ class DriverAPIController extends AppBaseController
 
         try{
             // Validation des données d'entrée
+            // Le portefeuille est toujours celui du chauffeur connecté : un driver_id envoyé par l'app est ignoré
             $validator = Validator::make($request->all(), [
-                'driver_id' => 'required|exists:drivers,id',
                 'amount' => 'required|numeric|min:100'
             ]);
 
@@ -780,8 +783,8 @@ class DriverAPIController extends AppBaseController
             $input = $request->all();
             $amount = intval($input['amount']);
 
-            // Récupérer le chauffeur
-            $driver = Driver::findOrFail($input['driver_id']);
+            /** @var Driver $driver */
+            $driver = auth('api-drivers')->user();
 
             if(intval($driver->current_balance) < $amount){
                 return $this->sendError('Solde insuffisant',400);
