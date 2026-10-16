@@ -1,0 +1,55 @@
+name: Tests
+
+# Non-régression : toute PR vers develop/main doit garder la suite au vert.
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Même base que docker-compose.test.yml (PostGIS requis par les migrations)
+    services:
+      db-test:
+        image: postgis/postgis:16-3.4-alpine
+        env:
+          POSTGRES_USER: ouego_test
+          POSTGRES_PASSWORD: ouego_test
+          POSTGRES_DB: ouego_test
+        ports:
+          - 5435:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U ouego_test -d ouego_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, pgsql, pcntl, bcmath, gd, intl, zip, sodium
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache/files
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Run tests
+        run: php artisan test

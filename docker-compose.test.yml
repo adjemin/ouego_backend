@@ -14,7 +14,9 @@ services:
     tmpfs:
       - /var/lib/postgresql/data   # données en RAM : rapide, éphémère
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ouego_test -d ouego_test']
+      # -h 127.0.0.1 : pendant l'init PostGIS, le serveur temporaire n'écoute que sur le socket
+      # puis redémarre ; tester en TCP évite de déclarer la base prête trop tôt.
+      test: ['CMD-SHELL', 'pg_isready -h 127.0.0.1 -U ouego_test -d ouego_test']
       interval: 2s
       timeout: 3s
-      retries: 20
+      retries: 30
