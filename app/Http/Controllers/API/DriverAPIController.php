@@ -323,6 +323,43 @@ class DriverAPIController extends AppBaseController
     }
 
 
+    /**
+     * Suppression du compte par le chauffeur connecté.
+     * DELETE /drivers/account
+     *
+     * Soft delete : une nouvelle inscription avec le même numéro restaure le compte (voir register()).
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        /** @var Driver $driver */
+        $driver = auth('api-drivers')->user();
+
+        if (Order::where('driver_id', $driver->id)->inProgress()->exists()) {
+            return $this->sendError('Vous avez une commande en cours, vous ne pouvez pas supprimer votre compte', 400);
+        }
+
+        if ((float) $driver->current_balance != 0) {
+            return $this->sendError('Votre solde doit être à zéro pour supprimer votre compte, veuillez contacter le support', 400);
+        }
+
+        DB::transaction(function () use ($driver) {
+            // Libère les commandes en attente de sa réponse pour que la recherche passe à d'autres chauffeurs
+            OrderInvitation::where('driver_id', $driver->id)
+                ->where('is_waiting_acceptation', true)
+                ->update(['is_waiting_acceptation' => false, 'rejection_time' => now()]);
+
+            DriverDevice::where('driver_id', $driver->id)->delete();
+
+            $driver->is_available = false;
+            $driver->save();
+            $driver->delete();
+        });
+
+        auth('api-drivers')->logout();
+
+        return $this->sendSuccess('Compte supprimé avec succès');
+    }
+
     public function refresh()
     {
         try {
@@ -498,8 +535,13 @@ class DriverAPIController extends AppBaseController
                 return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
             }
 
+            // Compte de test : OTP fixe, pas d'envoi de SMS
+            $isTestPhone = in_array($request->phone, config('otp.test_phones'), true);
+
             // Générer un OTP à 6 chiffres
-            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $otp = $isTestPhone
+                ? config('otp.test_code')
+                : str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
             // Créer ou mettre à jour l'entrée DriverOtp
             $customerOTP = DriverOtp::updateOrCreate(
@@ -507,15 +549,17 @@ class DriverAPIController extends AppBaseController
                 [
                     'otp' => $otp,
                     'otp_expires_at' => Carbon::now()->addMinutes(5),
-                    'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
+                    'is_test_mode' => $isTestPhone
                 ]
             );
 
-            try {
-                // Envoyer l'OTP par SMS
-                $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
-            } catch (\Throwable $th) {
-                Log::error("Failed to send OTP SMS: " . $th->getMessage());
+            if (!$isTestPhone) {
+                try {
+                    // Envoyer l'OTP par SMS
+                    $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
+                } catch (\Throwable $th) {
+                    Log::error("Failed to send OTP SMS: " . $th->getMessage());
+                }
             }
             
             return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');

@@ -18,6 +18,8 @@ use App\Models\Commercial;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
 use App\Models\CustomerDevice;
+use App\Models\Order;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -321,6 +323,32 @@ class CustomerAPIController extends AppBaseController
     }
 
 
+    /**
+     * Suppression du compte par le client connecté.
+     * DELETE /customers/account
+     *
+     * Soft delete : une nouvelle inscription avec le même numéro restaure le compte (voir register()).
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        /** @var Customer $customer */
+        $customer = auth('api-customers')->user();
+
+        if (Order::where('customer_id', $customer->id)->inProgress()->exists()) {
+            return $this->sendError('Vous avez une commande en cours, vous ne pouvez pas supprimer votre compte', 400);
+        }
+
+        DB::transaction(function () use ($customer) {
+            // forceDelete : firebase_id est unique, une ligne soft-deleted bloquerait la réinscription depuis le même appareil
+            CustomerDevice::where('customer_id', $customer->id)->forceDelete();
+            $customer->delete();
+        });
+
+        auth('api-customers')->logout();
+
+        return $this->sendSuccess('Compte supprimé avec succès');
+    }
+
     public function refresh()
     {
         $customer = auth('api-customers')->user();
@@ -372,8 +400,13 @@ class CustomerAPIController extends AppBaseController
                 return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
             }
 
+            // Compte de test : OTP fixe, pas d'envoi de SMS
+            $isTestPhone = in_array($request->phone, config('otp.test_phones'), true);
+
             // Générer un OTP à 6 chiffres
-            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $otp = $isTestPhone
+                ? config('otp.test_code')
+                : str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
             // Créer ou mettre à jour l'entrée CustomerOTP
             $customerOTP = CustomerOTP::updateOrCreate(
@@ -381,15 +414,17 @@ class CustomerAPIController extends AppBaseController
                 [
                     'otp' => $otp,
                     'otp_expires_at' => Carbon::now()->addMinutes(5),
-                    'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
+                    'is_test_mode' => $isTestPhone
                 ]
             );
 
-            try{
-                // Envoyer l'OTP par SMS
-                $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
-            } catch (\Exception $e) {
-                Log::error("Failed to send OTP SMS: " . $e->getMessage());
+            if (!$isTestPhone) {
+                try{
+                    // Envoyer l'OTP par SMS
+                    $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
+                } catch (\Exception $e) {
+                    Log::error("Failed to send OTP SMS: " . $e->getMessage());
+                }
             }
             
             return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
