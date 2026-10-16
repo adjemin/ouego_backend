@@ -55,7 +55,7 @@ class TypeEnginModelAPIController extends AppBaseController
             $input['slug'] = $input['slug'].'-'.Str::slug($input['subtitle']);
         }
 
-        if(strlen($input['subtitle']) < 1){
+        if(strlen($input['subtitle'] ?? '') < 1){
             if(array_key_exists('nombre_roues', $input) && strlen($input['nombre_roues']) > 0){
                 $input['slug'] = $input['slug'].'-'.Str::slug($input['nombre_roues']);
             }

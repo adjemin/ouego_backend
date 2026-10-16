@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\API;
 
-use App\Models\CustomerAddress;
 use InfyOm\Generator\Request\APIRequest;
 
 class CreateCustomerAddressAPIRequest extends APIRequest
@@ -24,6 +23,10 @@ class CreateCustomerAddressAPIRequest extends APIRequest
      */
     public function rules()
     {
-        return CustomerAddress::$rules;
+        return [
+            'address_name' => 'required|string',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ];
     }
 }
