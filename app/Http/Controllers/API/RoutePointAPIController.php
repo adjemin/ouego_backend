@@ -146,20 +146,23 @@ class RoutePointAPIController extends AppBaseController
         $driver = auth('api-drivers')->user();
 
         $input = $request->json()->all();
-        $input_route_point = [];
-        $input_route_point['status'] = $input['status'];
 
 
         /** @var RoutePoint $routePoint */
         $routePoint = $this->routePointRepository->find($id);
 
-        if (empty($routePoint)) {
+        // Seul le chauffeur assigné à la commande fait avancer ses points d'arrêt.
+        // Même réponse qu'un point inexistant, pour ne pas révéler les commandes des autres chauffeurs.
+        if (empty($routePoint) || Order::find($routePoint->order_id)?->driver_id !== $driver->id) {
             return $this->sendError("Point d'arrêt introuvable", 400);
         }
 
         if (!array_key_exists('status', $input) || empty($input['status'])) {
             return $this->sendError('Le champ status est obligatoire', 400);
         }
+
+        $input_route_point = [];
+        $input_route_point['status'] = $input['status'];
 
         if(!in_array($input['status'], [
             RoutePoint::ACCEPTED,
