@@ -12,6 +12,7 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        return $request->expectsJson() ? null : route('login');
+        // Plus de page de connexion web : un appel non authentifié reçoit une 401, sans redirection
+        return null;
     }
 }
