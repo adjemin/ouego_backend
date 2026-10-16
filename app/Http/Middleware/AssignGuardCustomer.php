@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Http\Request;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
 use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AssignGuardCustomer
 {
@@ -22,21 +21,10 @@ class AssignGuardCustomer
     {
         if($guard != null){
             //auth('api-customers')->shouldUse($guard);
+            // Seule l'authentification est interceptée : une exception levée plus loin par le contrôleur
+            // doit remonter en erreur serveur, pas être transformée en 401.
             try {
-                //$user = JWTAuth::parseToken()->authenticate();
                 $user = auth('api-customers')->userOrFail();
-
-                // Gestion des compte bloque
-                if($user->is_blocked){
-                    return response()->json([
-                        'code' => 403,
-                        'status' => 'UNAUTHORIZED',
-                        'success' => false,
-                        'message' => 'Votre compte a été bloqué, veuillez contacter le support'
-                    ],403);
-                }
-                
-                return $next($request);
             } catch (Exception $e) {
                 if ($e instanceof TokenInvalidException) {
                     return response()->json([
@@ -65,6 +53,18 @@ class AssignGuardCustomer
 
                 }
             }
+
+            // Gestion des compte bloque
+            if($user->is_blocked){
+                return response()->json([
+                    'code' => 403,
+                    'status' => 'UNAUTHORIZED',
+                    'success' => false,
+                    'message' => 'Votre compte a été bloqué, veuillez contacter le support'
+                ],403);
+            }
+
+            return $next($request);
         }else{
             return response()->json([
                 'code' => 401,

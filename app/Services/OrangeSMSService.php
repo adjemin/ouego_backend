@@ -15,10 +15,10 @@ class OrangeSMSService
 
     public function __construct()
     {
-        $this->clientId = env('SMS_CLIENT_ID', 'dgZ7g3Kko3rkpafn5YDjvnoSF5KQf3h2');
-        $this->clientSecret = env('SMS_SECRET', 'lcv6fudZElh7RTwt3uFmTKXsKxjmxEwmsdqJuSRpXgTk');
-        $this->senderPhoneNumber = env('SENDER_PHONE_NUMBER', '+2250000');
-        $this->senderName = env('SENDER_NAME', 'OUEGO');
+        $this->clientId = config('services.orange_sms.client_id');
+        $this->clientSecret = config('services.orange_sms.secret');
+        $this->senderPhoneNumber = config('services.orange_sms.sender_phone_number');
+        $this->senderName = config('services.orange_sms.sender_name');
         $this->baseUrl = 'https://api.orange.com';
         $this->accessToken = null;
         $this->tokenExpiresAt = null;

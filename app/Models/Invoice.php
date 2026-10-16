@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SerializesAppendedRelations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
 
-    use SoftDeletes;
+    use SoftDeletes, SerializesAppendedRelations;
 
     const UNPAID = "UNPAID";
     const PAID = "PAID";
@@ -81,8 +82,18 @@ class Invoice extends Model
         return $service.'-'.$record.'-'.$orderId.'-'.$customerId.'-'.time();
     }
 
+    public function serializedRelations(): array
+    {
+        return ['payments'];
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'invoice_id', 'id');
+    }
+
     public function getPaymentsAttribute(){
-        return Payment::where('invoice_id', $this->id)->get();
+        return $this->serializedRelation('payments');
     }
 
 }

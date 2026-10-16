@@ -1,0 +1,416 @@
+{
+    "course": {
+        "express": {
+            "mardi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "mardi 15h (après la limite journée)": [
+                "1 semaine",
+                "3 nuits",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "mardi 02h": [
+                "1 journée",
+                "1 semaine",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "vendredi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "samedi 10h": [
+                "1 journée",
+                "3 nuits",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ]
+        },
+        "en-journee": {
+            "mardi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "mardi 15h (après la limite journée)": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "mardi 02h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "vendredi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "samedi 10h": [
+                "1 journée",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ]
+        },
+        "en-semaine": {
+            "mardi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "location finit aujourd'hui"
+            ],
+            "mardi 15h (après la limite journée)": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "location finit aujourd'hui"
+            ],
+            "mardi 02h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "location finit aujourd'hui"
+            ],
+            "vendredi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "samedi 10h": [
+                "1 journée",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ]
+        },
+        "de-nuit": {
+            "mardi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "mardi 15h (après la limite journée)": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "mardi 02h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "vendredi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ],
+            "samedi 10h": [
+                "1 journée",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée"
+            ]
+        }
+    },
+    "agregat": {
+        "express": {
+            "mardi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "mardi 15h (après la limite journée)": [
+                "1 semaine",
+                "3 nuits",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "mardi 02h": [
+                "1 journée",
+                "1 semaine",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "vendredi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "samedi 10h": [
+                "1 journée",
+                "3 nuits",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ]
+        },
+        "en-journee": {
+            "mardi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "mardi 15h (après la limite journée)": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "mardi 02h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "vendredi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "samedi 10h": [
+                "1 journée",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ]
+        },
+        "en-semaine": {
+            "mardi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "location finit aujourd'hui",
+                "loin"
+            ],
+            "mardi 15h (après la limite journée)": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "location finit aujourd'hui",
+                "loin"
+            ],
+            "mardi 02h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "location finit aujourd'hui",
+                "loin"
+            ],
+            "vendredi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "samedi 10h": [
+                "1 journée",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ]
+        },
+        "de-nuit": {
+            "mardi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "mardi 15h (après la limite journée)": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "mardi 02h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "vendredi 10h": [
+                "1 journée",
+                "1 semaine",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ],
+            "samedi 10h": [
+                "1 journée",
+                "3 nuits",
+                "course démarrée",
+                "express en attente",
+                "journée terminée",
+                "libre",
+                "location annulée",
+                "loin"
+            ]
+        }
+    }
+}

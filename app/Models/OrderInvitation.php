@@ -5,13 +5,14 @@ namespace App\Models;
 use App\Events\OrderAssigned;
 use App\Events\OrderInvitationCancelled;
 use App\Events\OrderInvitationUpdated;
+use App\Models\Concerns\SerializesAppendedRelations;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderInvitation extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, SerializesAppendedRelations;
 
     const PENDING = "pending";
     const NOTIFIED = "notified";
@@ -50,8 +51,15 @@ class OrderInvitation extends Model
 
     ];
 
+    public function serializedRelations(): array
+    {
+        $orderRelations = array_map(fn ($relation) => "order.{$relation}", (new Order)->serializedRelations());
+
+        return ['order', ...$orderRelations];
+    }
+
     public function getOrderAttribute(){
-        return Order::where('id', $this->order_id)->first();
+        return $this->serializedRelation('order');
     }
 
     public function order(){

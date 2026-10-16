@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Events\OrderCreated;
 use App\Events\OrderStatusUpdated;
+use App\Models\Concerns\SerializesAppendedRelations;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, SerializesAppendedRelations;
 
     public $table = 'orders';
 
@@ -199,8 +200,27 @@ class Order extends Model
         return $ref;
     }
 
+    public function serializedRelations(): array
+    {
+        return [
+            'customer',
+            'driver.zoneBase',
+            'service',
+            'items.service',
+            'items.routePoints.histories',
+            'items.carrier',
+            'invoice.payments',
+            'routePoints.histories',
+        ];
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(OrderItem::class, 'order_id', 'id');
+    }
+
     public function getItemsAttribute(){
-        return OrderItem::where('order_id', $this->id)->get();
+        return $this->serializedRelation('items');
     }
 
     public function invoice(){
@@ -208,12 +228,17 @@ class Order extends Model
     }
 
     public function getInvoiceAttribute(){
-        return Invoice::where('order_id', $this->id)->first();
+        return $this->serializedRelation('invoice');
+    }
+
+    public function routePoints(): HasMany
+    {
+        return $this->hasMany(RoutePoint::class, 'order_id', 'id')->orderBy('visit_order', 'ASC');
     }
 
     public function getRoutePointsAttribute()
     {
-        return RoutePoint::where(['order_id' => $this->id])->orderBy('visit_order', 'ASC')->get();
+        return $this->serializedRelation('routePoints');
     }
 
     public function customer(){
@@ -222,14 +247,16 @@ class Order extends Model
 
     public function getCustomerAttribute()
     {
+        return $this->serializedRelation('customer');
+    }
 
-        return Customer::where(['id' => $this->customer_id])->first();
+    public function driver(){
+        return $this->belongsTo(Driver::class, 'driver_id', 'id');
     }
 
     public function getDriverAttribute()
     {
-
-        return Driver::where(['id' => $this->driver_id])->first();
+        return $this->serializedRelation('driver');
     }
 
     public function getSource()
@@ -249,9 +276,13 @@ class Order extends Model
     }
 
 
+    public function service(){
+        return $this->belongsTo(Service::class, 'service_slug', 'slug');
+    }
+
     public function getServiceAttribute()
     {
-        return Service::where('slug', $this->service_slug)->first();
+        return $this->serializedRelation('service');
     }
 
     //chargeDriver()

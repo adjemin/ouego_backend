@@ -5,8 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCarrierAPIRequest;
 use App\Http\Requests\API\UpdateCarrierAPIRequest;
 use App\Models\Carrier;
-use App\Models\Driver;
-use App\Models\DriverCarrier;
 use App\Repositories\CarrierRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

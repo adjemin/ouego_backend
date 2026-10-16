@@ -1,0 +1,1388 @@
+{
+    "course": {
+        "mardi 08h (express fermé)": {
+            "0 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 40300,
+                            "delivery_type": "EXPRESS",
+                            "is_available": false,
+                            "error_message": "L’option Course Express n'est pas disponible de 06H00 à 09H00 et de 17H00 à 19H30."
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 20200,
+                            "delivery_type": "en-journee",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 100800,
+                            "delivery_type": "de-nuit",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 13500,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            },
+            "1 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 50300,
+                            "delivery_type": "EXPRESS",
+                            "is_available": false,
+                            "error_message": "L’option Course Express n'est pas disponible de 06H00 à 09H00 et de 17H00 à 19H30."
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 25200,
+                            "delivery_type": "en-journee",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 125800,
+                            "delivery_type": "de-nuit",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 16800,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            },
+            "2 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 56500,
+                            "delivery_type": "EXPRESS",
+                            "is_available": false,
+                            "error_message": "L’option Course Express n'est pas disponible de 06H00 à 09H00 et de 17H00 à 19H30."
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 28300,
+                            "delivery_type": "en-journee",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 141300,
+                            "delivery_type": "de-nuit",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 18900,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            }
+        },
+        "mardi 10h": {
+            "0 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 40300,
+                            "delivery_type": "EXPRESS",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 20200,
+                            "delivery_type": "en-journee",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 100800,
+                            "delivery_type": "de-nuit",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 13500,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            },
+            "1 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 50300,
+                            "delivery_type": "EXPRESS",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 25200,
+                            "delivery_type": "en-journee",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 125800,
+                            "delivery_type": "de-nuit",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 16800,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            },
+            "2 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 56500,
+                            "delivery_type": "EXPRESS",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 28300,
+                            "delivery_type": "en-journee",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 141300,
+                            "delivery_type": "de-nuit",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 18900,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            }
+        },
+        "mardi 15h (journée fermée)": {
+            "0 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 40300,
+                            "delivery_type": "EXPRESS",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 20200,
+                            "delivery_type": "en-journee",
+                            "is_available": false,
+                            "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 100800,
+                            "delivery_type": "de-nuit",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 13500,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            },
+            "1 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 50300,
+                            "delivery_type": "EXPRESS",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 25200,
+                            "delivery_type": "en-journee",
+                            "is_available": false,
+                            "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 125800,
+                            "delivery_type": "de-nuit",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 16800,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            },
+            "2 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 56500,
+                            "delivery_type": "EXPRESS",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 28300,
+                            "delivery_type": "en-journee",
+                            "is_available": false,
+                            "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 141300,
+                            "delivery_type": "de-nuit",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 18900,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            }
+        },
+        "mardi 20h (nuit fermée)": {
+            "0 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 40300,
+                            "delivery_type": "EXPRESS",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 20200,
+                            "delivery_type": "en-journee",
+                            "is_available": false,
+                            "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 100800,
+                            "delivery_type": "de-nuit",
+                            "is_available": false,
+                            "error_message": "L’option Course De nuit est disponible uniquement de 07H00 à 19H30."
+                        },
+                        {
+                            "distance": 12.3,
+                            "duration": "25 mins",
+                            "amount": 13500,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            },
+            "1 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 50300,
+                            "delivery_type": "EXPRESS",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 25200,
+                            "delivery_type": "en-journee",
+                            "is_available": false,
+                            "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 125800,
+                            "delivery_type": "de-nuit",
+                            "is_available": false,
+                            "error_message": "L’option Course De nuit est disponible uniquement de 07H00 à 19H30."
+                        },
+                        {
+                            "distance": 24.6,
+                            "duration": "50 mins",
+                            "amount": 16800,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            },
+            "2 arrêt(s)": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "pricings": [
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 56500,
+                            "delivery_type": "EXPRESS",
+                            "is_available": true,
+                            "error_message": null
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 28300,
+                            "delivery_type": "en-journee",
+                            "is_available": false,
+                            "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 141300,
+                            "delivery_type": "de-nuit",
+                            "is_available": false,
+                            "error_message": "L’option Course De nuit est disponible uniquement de 07H00 à 19H30."
+                        },
+                        {
+                            "distance": 36.900000000000006,
+                            "duration": "75 mins",
+                            "amount": 18900,
+                            "delivery_type": "en-semaine",
+                            "is_available": true,
+                            "error_message": null
+                        }
+                    ],
+                    "discount": 0,
+                    "has_commercial_discount": false
+                }
+            }
+        }
+    },
+    "gravier": {
+        "mardi 08h (express fermé)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 75000,
+                    "amount_with_discount": 75000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": false,
+                    "error_message": "L’option Course Express n'est pas disponible de 06H00 à 09H00 et de 17H00 à 19H30."
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 37500,
+                    "amount_with_discount": 37500,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 187500,
+                    "amount_with_discount": 187500,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 25000,
+                    "amount_with_discount": 25000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        },
+        "mardi 10h": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 75000,
+                    "amount_with_discount": 75000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 37500,
+                    "amount_with_discount": 37500,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 187500,
+                    "amount_with_discount": 187500,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 25000,
+                    "amount_with_discount": 25000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        },
+        "mardi 15h (journée fermée)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 75000,
+                    "amount_with_discount": 75000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 37500,
+                    "amount_with_discount": 37500,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": false,
+                    "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 187500,
+                    "amount_with_discount": 187500,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 25000,
+                    "amount_with_discount": 25000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        },
+        "mardi 20h (nuit fermée)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 75000,
+                    "amount_with_discount": 75000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 37500,
+                    "amount_with_discount": 37500,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": false,
+                    "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 187500,
+                    "amount_with_discount": 187500,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": false,
+                    "error_message": "L’option Course De nuit est disponible uniquement de 07H00 à 19H30."
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 25000,
+                    "amount_with_discount": 25000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        }
+    },
+    "ciment": {
+        "mardi 08h (express fermé)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 44000,
+                    "amount_with_discount": 44000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": false,
+                    "error_message": "L’option Course Express n'est pas disponible de 06H00 à 09H00 et de 17H00 à 19H30."
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 22000,
+                    "amount_with_discount": 22000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 110000,
+                    "amount_with_discount": 110000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 14700,
+                    "amount_with_discount": 14700,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        },
+        "mardi 10h": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 44000,
+                    "amount_with_discount": 44000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 22000,
+                    "amount_with_discount": 22000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 110000,
+                    "amount_with_discount": 110000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 14700,
+                    "amount_with_discount": 14700,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        },
+        "mardi 15h (journée fermée)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 44000,
+                    "amount_with_discount": 44000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 22000,
+                    "amount_with_discount": 22000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": false,
+                    "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 110000,
+                    "amount_with_discount": 110000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 14700,
+                    "amount_with_discount": 14700,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        },
+        "mardi 20h (nuit fermée)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 44000,
+                    "amount_with_discount": 44000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 22000,
+                    "amount_with_discount": 22000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": false,
+                    "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 110000,
+                    "amount_with_discount": 110000,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": false,
+                    "error_message": "L’option Course De nuit est disponible uniquement de 07H00 à 19H30."
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 14700,
+                    "amount_with_discount": 14700,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12.3 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        }
+    },
+    "sable": {
+        "mardi 08h (express fermé)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 32300,
+                    "amount_with_discount": 32300,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": false,
+                    "error_message": "L’option Course Express n'est pas disponible de 06H00 à 09H00 et de 17H00 à 19H30."
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 16200,
+                    "amount_with_discount": 16200,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 80800,
+                    "amount_with_discount": 80800,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 10800,
+                    "amount_with_discount": 10800,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        },
+        "mardi 10h": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 32300,
+                    "amount_with_discount": 32300,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 16200,
+                    "amount_with_discount": 16200,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 80800,
+                    "amount_with_discount": 80800,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 10800,
+                    "amount_with_discount": 10800,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        },
+        "mardi 15h (journée fermée)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 32300,
+                    "amount_with_discount": 32300,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 16200,
+                    "amount_with_discount": 16200,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": false,
+                    "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 80800,
+                    "amount_with_discount": 80800,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 10800,
+                    "amount_with_discount": 10800,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        },
+        "mardi 20h (nuit fermée)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 32300,
+                    "amount_with_discount": 32300,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "EXPRESS",
+                    "is_available": true,
+                    "error_message": null
+                }
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 16200,
+                    "amount_with_discount": 16200,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-journee",
+                    "is_available": false,
+                    "error_message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+                }
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 80800,
+                    "amount_with_discount": 80800,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "de-nuit",
+                    "is_available": false,
+                    "error_message": "L’option Course De nuit est disponible uniquement de 07H00 à 19H30."
+                }
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès",
+                "data": {
+                    "carrier": "Carrière Test",
+                    "amount": 10800,
+                    "amount_with_discount": 10800,
+                    "discount": 0,
+                    "has_commercial_discount": false,
+                    "distance": "12 km",
+                    "duration": "25 mins",
+                    "delivery_type": "en-semaine",
+                    "is_available": true,
+                    "error_message": null
+                }
+            }
+        }
+    },
+    "création course": {
+        "mardi 08h (express fermé)": {
+            "EXPRESS": {
+                "status": 404,
+                "message": "L’option Course Express n'est pas disponible de 06H00 à 09H00 et de 17H00 à 19H30."
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            }
+        },
+        "mardi 10h": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            },
+            "en-journee": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            }
+        },
+        "mardi 15h (journée fermée)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            },
+            "en-journee": {
+                "status": 404,
+                "message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+            },
+            "de-nuit": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            }
+        },
+        "mardi 20h (nuit fermée)": {
+            "EXPRESS": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            },
+            "en-journee": {
+                "status": 404,
+                "message": "Vous pouvez passer une course en journée uniquement de 06H00 à 12H00."
+            },
+            "de-nuit": {
+                "status": 404,
+                "message": "L’option Course De nuit est disponible uniquement de 07H00 à 19H30."
+            },
+            "en-semaine": {
+                "status": 200,
+                "message": "Commande enregistrée avec succès"
+            }
+        }
+    }
+}

@@ -9,8 +9,6 @@ use App\Models\Zone;
 class GoogleMapsAPIUtils
 {
 
-    #const  GOOGLE_MAP_API_KEY = "AIzaSyAP8YmQymC20lzQgLrTWfLznDw4p3tnn-g";
-
     /**
      * Calcule la distance entre deux points en utilisant l'API Google Maps Distance Matrix.
      * ATTENTION : Cette méthode consomme l'API Google Maps. Préférez distanceHaversine() pour les calculs internes.
@@ -37,7 +35,7 @@ class GoogleMapsAPIUtils
                 'destinations' => $destinations[0].','.$destinations[1],
                 'language' => 'en',
                 'mode' => 'driving',
-                'key'=> env('GOOGLE_MAP_API_KEY',"AIzaSyAP8YmQymC20lzQgLrTWfLznDw4p3tnn-g")
+                'key'=> config('services.google_maps.key')
             ]);
 
             $res = $response->json();
@@ -77,7 +75,7 @@ class GoogleMapsAPIUtils
 
     function trouverZoneParPointGoogleMaps(float $latitude, float $longitude): ?string
     {
-        $apiKey = env('GOOGLE_MAP_API_KEY', 'AIzaSyAP8YmQymC20lzQgLrTWfLznDw4p3tnn-g');
+        $apiKey = config('services.google_maps.key');
         $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng={$latitude},{$longitude}&key={$apiKey}";
     
         $response = Http::get($url);

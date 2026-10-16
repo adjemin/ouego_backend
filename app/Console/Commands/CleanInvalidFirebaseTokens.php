@@ -5,7 +5,8 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\CustomerDevice;
 use Illuminate\Support\Facades\Log;
-use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Exception\MessagingException;
+
 
 class CleanInvalidFirebaseTokens extends Command
 {

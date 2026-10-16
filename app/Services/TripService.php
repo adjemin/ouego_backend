@@ -1,20 +1,13 @@
 <?php 
 namespace App\Services;
 
-use App\Models\Carrier;
 use App\Models\TripRequest;
 use App\Models\TripDriverAttempt;
-use App\Notifications\RideRequestNotification;
 use App\Jobs\AssignTimeoutCheck;
 use App\Models\Order;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Log;
-use App\Notifications\NoDriverFoundNotification;
 use App\Models\Driver;
 use App\Models\OrderInvitation;
-use App\Models\RoutePoint;
 use App\Events\OrderAssigned;
-use App\Utils\CustomerNotificationsUtils;
 use App\Models\CustomerNotification;
 use App\Events\CustomerNotificationCreated;
 
@@ -207,7 +200,7 @@ class TripService
             }
 
             // Recherche des chauffeurs avec l'algorithme de pondération
-            $driversData = $this->orderAssignmentService->aggregatExpressOrderAssignment(
+            $driversData = $this->orderAssignmentService->findAggregatNearestDrivers(
                 $product->carrier_id, 
                 $order->id, 
                 $order->service_slug, 
