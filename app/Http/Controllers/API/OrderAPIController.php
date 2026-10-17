@@ -909,8 +909,8 @@ class OrderAPIController extends AppBaseController
             'invoice_id' => $invoice->id,
             'user_id' => $order->customer_id,
             'payment_reference' => Payment::generateReference(),
-            'amount' => 100,
-            'currency_code' => 'XOF',
+            'amount' => $invoice->total,
+            'currency_code' => $invoice->currency_code ?? 'XOF',
             'status' => Payment::STATUS_PENDING,
             'is_waiting' => true,
             'is_completed' => false

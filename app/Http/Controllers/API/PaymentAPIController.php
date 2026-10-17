@@ -114,8 +114,8 @@ class PaymentAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $transaction_reference = $input['transaction_id'];
-        $status = $input['status'];
+        $transaction_reference = $input['transaction_id'] ?? null;
+        $status = $input['status'] ?? null;
 
         if (empty($transaction_reference)) {
             return response()->json([

@@ -20,3 +20,19 @@ php artisan test --filter=NomDuTest
 - Test **unitaire pur** (sans base, sans app) : étendre `PHPUnit\Framework\TestCase`.
 - Test **d'intégration** (routes API, services + base) : étendre `Tests\TestCase` dans `tests/Feature`, données via factories (`database/factories`).
 - Services externes (Firebase, SMS, Google Maps) : à mocker (`Http::fake()`, `Event::fake()`, `Queue::fake()`, Mockery).
+
+## Non-régression
+
+La CI (`.github/workflows/tests.yml`) lance toute la suite sur chaque PR et push vers `develop` / `main`,
+avec la même base PostGIS que `docker-compose.test.yml`. Une PR dont un test échoue ne doit pas être fusionnée
+(à rendre obligatoire dans GitHub : *Settings → Branches → Require status checks → `phpunit`*).
+
+- **Filet large** : `tests/Feature/Regression/ApiRoutesSmokeTest` appelle chaque route `api/*` (corps vide,
+  identifiants inexistants, avec le bon type d'utilisateur) et échoue si l'une répond en 5xx.
+  Toute nouvelle route est couverte automatiquement ; une exclusion se justifie dans `SKIPPED`.
+- **Parcours critiques** :
+  - `Feature/Auth/OtpAuthenticationFlowTest` : OTP → jeton → profil → refresh → logout (client et chauffeur) ;
+  - `Feature/Orders/OrderDeliveryLifecycleTest` : acceptation → enlèvement → livraison → règlement chauffeur → note ;
+  - `Feature/Payments/DriverWalletPaymentFlowTest` : dépôt / retrait et webhook de paiement (crédit unique, échecs) ;
+  - création, estimation, confirmation, annulation : `Feature/Orders/Aggregats/*`.
+- **Règle** : chaque bug corrigé arrive avec le test qui l'aurait détecté.

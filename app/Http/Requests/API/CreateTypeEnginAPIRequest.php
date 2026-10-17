@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\API;
 
-use App\Models\TypeEngin;
 use InfyOm\Generator\Request\APIRequest;
 
 class CreateTypeEnginAPIRequest extends APIRequest
@@ -24,6 +23,8 @@ class CreateTypeEnginAPIRequest extends APIRequest
      */
     public function rules()
     {
-        return TypeEngin::$rules;
+        return [
+            'name' => 'required|string',
+        ];
     }
 }

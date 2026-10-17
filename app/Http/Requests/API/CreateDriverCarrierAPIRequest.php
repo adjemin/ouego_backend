@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\API;
 
-use App\Models\DriverCarrier;
 use InfyOm\Generator\Request\APIRequest;
 
 class CreateDriverCarrierAPIRequest extends APIRequest
@@ -24,6 +23,9 @@ class CreateDriverCarrierAPIRequest extends APIRequest
      */
     public function rules()
     {
-        return DriverCarrier::$rules;
+        return [
+            'driver_id' => 'required|exists:drivers,id',
+            'carrier_id' => 'required|exists:carriers,id',
+        ];
     }
 }
