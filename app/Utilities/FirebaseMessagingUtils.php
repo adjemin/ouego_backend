@@ -39,7 +39,8 @@ class FirebaseMessagingUtils{
                 ],
                 'payload' => [
                     'aps' => [
-                        'sound' => 'notification_sound',
+                        'sound' => 'notification_sound.wav',
+                        'interruption-level' => 'time-sensitive',
                         'badge' => 1,
                     ],
                 ],
