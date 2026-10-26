@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Events\OrderCreated;
 use App\Events\OrderStatusUpdated;
+use App\Jobs\SendSms;
 use App\Models\Concerns\SerializesAppendedRelations;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -307,6 +308,35 @@ class Order extends Model
 
         }
 
+    }
+
+    // Crédite le commercial dont le code a été appliqué sur la facture, une seule fois par commande
+    public function creditCommercial(){
+
+        $invoice = $this->getInvoiceAttribute();
+        if($invoice == null || empty($invoice->coupon)){
+            return;
+        }
+
+        $commercial = Commercial::where('code', $invoice->coupon)->first();
+        if($commercial == null){
+            return;
+        }
+
+        $alreadyCredited = Transaction::where([
+            'user_id' => $commercial->id,
+            'user_source' => $commercial->getTable(),
+            'type' => Transaction::TYPE_CREDIT,
+            'order_id' => $this->id
+        ])->exists();
+        if($alreadyCredited){
+            return;
+        }
+
+        $creditAmount = doubleval(Setting::get('COMMERCIAL_CREDIT_AMOUNT') ?? 2500);
+        $commercial->creditBalance($creditAmount, $this->id);
+
+        SendSms::dispatch("+" . $commercial->phone, "OUEGO: La commande #{$this->id} de votre client a été livrée. Votre compte a été credité de {$creditAmount} XOF. Votre nouveau solde est de {$commercial->current_balance} XOF.")->afterCommit();
     }
 
     // Ajout de la relation orderInvitations
