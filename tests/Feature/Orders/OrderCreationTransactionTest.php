@@ -41,17 +41,22 @@ class OrderCreationTransactionTest extends AggregatOrderTestCase
     }
 
     /** @test */
-    public function the_commercial_sms_is_queued_instead_of_blocking_the_request()
+    public function the_commercial_code_discounts_the_order_without_crediting_the_commercial_yet()
     {
         Queue::fake();
 
-        Commercial::create(['name' => 'Commercial Test', 'phone' => '2250100000000', 'code' => 'COM1', 'current_balance' => 0, 'is_active' => true]);
+        $commercial = Commercial::create(['name' => 'Commercial Test', 'phone' => '2250100000000', 'code' => 'COM1', 'current_balance' => 0, 'is_active' => true]);
         $this->customer->update(['code_commercial' => 'COM1']);
 
-        $this->createOrder($this->courseItem())->assertOk();
+        $response = $this->createOrder($this->courseItem())->assertOk();
 
-        Queue::assertPushed(SendSms::class, fn (SendSms $job) => $job->phoneNumber === '+2250100000000'
-            && str_contains($job->message, 'Votre compte a été credité'));
+        $invoice = Order::findOrFail($response->json('data.id'))->invoice;
+        $this->assertSame('COM1', $invoice->coupon);
+        $this->assertGreaterThan(0, $invoice->discount);
+
+        // Le commercial n'est crédité qu'à la livraison
+        $this->assertEquals(0, $commercial->fresh()->current_balance);
+        Queue::assertNotPushed(SendSms::class);
     }
 
     /** @test */

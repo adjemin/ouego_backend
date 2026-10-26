@@ -406,6 +406,7 @@ class RoutePointAPIController extends AppBaseController
                 $order->completion_time = now();
                 $order->save();
                 $order->chargeDriver();
+                $order->creditCommercial();
 
                 // Register order history
                 $order->newOrderHistory(Order::DELIVERED_FINISH, $driver->table, $driver->id); 
@@ -419,6 +420,8 @@ class RoutePointAPIController extends AppBaseController
                         ]);
                     }
                 }
+
+                
 
             }
         }

@@ -28,7 +28,6 @@ use App\Utilities\PricingUtils;
 use App\Utilities\GoogleMapsAPIUtils;
 use App\Services\DriverAssignmentService;
 use App\Services\CarrierLocationService;
-use App\Jobs\SendSms;
 use Illuminate\Support\Facades\DB;
 /**
  * Class OrderAPIController
@@ -837,7 +836,6 @@ class OrderAPIController extends AppBaseController
                 $endDate = Carbon::parse($customer->created_at)->addDays($endDays)->format('Y-m-d');
                 $maxOrders = intval(Setting::get('COMMERCIAL_MAX_ORDERS') ?? 5);
                 $discountAmount = doubleval(Setting::get('COMMERCIAL_DISCOUNT_AMOUNT') ?? 2500);
-                $creditAmount = doubleval(Setting::get('COMMERCIAL_CREDIT_AMOUNT') ?? 2500);
 
                 if (Carbon::now()->lte(Carbon::parse($endDate))) {
                     $discountedOrdersCount = Invoice::where('customer_id', $customer->id)
@@ -847,9 +845,8 @@ class OrderAPIController extends AppBaseController
                     if ($discountedOrdersCount < $maxOrders) {
                         $discount = $discountAmount;
                         $invoice_total = max(0, $invoice_total - $discount);
-                        $commercial->creditBalance($creditAmount);
+                        // Le commercial est crédité à la livraison (Order::creditCommercial)
                         $coupon = $customer->code_commercial;
-                        SendSms::dispatch("+" . $commercial->phone, "OUEGO: Une nouvelle commande d'un client est arrivée. Votre compte a été credité de {$creditAmount} XOF. Votre nouveau solde est de {$commercial->current_balance} XOF.")->afterCommit();
                     }
                 }
             }

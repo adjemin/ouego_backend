@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Orders;
 
+use App\Jobs\SendSms;
+use App\Models\Commercial;
 use App\Models\Driver;
 use App\Models\Invoice;
 use App\Models\Order;
@@ -10,6 +12,7 @@ use App\Models\RoutePoint;
 use App\Models\Service;
 use App\Services\DriverAssignmentService;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 use Tests\Feature\Orders\Aggregats\AggregatOrderTestCase;
 
 /**
@@ -154,6 +157,62 @@ class OrderDeliveryLifecycleTest extends AggregatOrderTestCase
         // Le paiement en ligne passe par le webhook : la livraison ne marque pas la facture payée
         $this->assertSame(Invoice::UNPAID, $invoice->fresh()->status);
         $this->assertEquals(50000 + $invoice->driver_due, $this->driver->fresh()->current_balance);
+    }
+
+    /** @test */
+    public function the_commercial_is_credited_only_once_the_order_is_delivered()
+    {
+        Queue::fake();
+        $commercial = Commercial::create(['name' => 'Commercial Test', 'phone' => '2250100000000', 'code' => 'COM1', 'current_balance' => 0, 'is_active' => true]);
+        $this->customer->update(['code_commercial' => 'COM1']);
+
+        $this->acceptedOrder('cash');
+        $this->assertSame('COM1', $this->order->invoice->coupon);
+        [$source, $destination] = $this->routePoints();
+
+        foreach ([[$source, RoutePoint::STARTED], [$source, RoutePoint::ARRIVED], [$source, RoutePoint::SUCCESS],
+            [$destination, RoutePoint::ARRIVED]] as [$point, $status]) {
+            $this->updateRoutePoint($point, $status);
+        }
+        $this->assertEquals(0, $commercial->fresh()->current_balance);
+        Queue::assertNotPushed(SendSms::class);
+
+        $this->updateRoutePoint($destination, RoutePoint::SUCCESS);
+
+        $this->assertEquals(2500, $commercial->fresh()->current_balance);
+        $this->assertDatabaseHas('transactions', ['user_id' => $commercial->id, 'user_source' => 'commercials', 'order_id' => $this->order->id]);
+        Queue::assertPushed(SendSms::class, fn (SendSms $job) => $job->phoneNumber === '+2250100000000'
+            && str_contains($job->message, 'Votre compte a été credité de 2500 XOF'));
+    }
+
+    /** @test */
+    public function the_commercial_is_not_credited_twice_for_the_same_order()
+    {
+        Queue::fake();
+        $commercial = Commercial::create(['name' => 'Commercial Test', 'phone' => '2250100000000', 'code' => 'COM1', 'current_balance' => 0, 'is_active' => true]);
+        $this->customer->update(['code_commercial' => 'COM1']);
+
+        $this->acceptedOrder('cash');
+        $this->deliver();
+
+        [, $destination] = $this->routePoints();
+        $this->updateRoutePoint($destination, RoutePoint::SUCCESS);
+
+        $this->assertEquals(2500, $commercial->fresh()->current_balance);
+        Queue::assertPushed(SendSms::class, 1);
+    }
+
+    /** @test */
+    public function an_order_without_commercial_code_credits_no_commercial()
+    {
+        Queue::fake();
+        $commercial = Commercial::create(['name' => 'Commercial Test', 'phone' => '2250100000000', 'code' => 'COM1', 'current_balance' => 0, 'is_active' => true]);
+
+        $this->acceptedOrder('cash');
+        $this->deliver();
+
+        $this->assertEquals(0, $commercial->fresh()->current_balance);
+        Queue::assertNotPushed(SendSms::class);
     }
 
     /** @test */
