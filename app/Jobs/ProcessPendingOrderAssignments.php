@@ -12,6 +12,7 @@ use App\Services\DriverAssignmentService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use App\Models\OrderInvitation;
+use App\Events\OrderInvitationCancelled;
 
 // class ProcessPendingOrderAssignments implements ShouldQueue
 class ProcessPendingOrderAssignments
@@ -24,15 +25,14 @@ class ProcessPendingOrderAssignments
     // Nombre maximum d'invitations avant abandon
     private const MAX_INVITATIONS = 5;
     
-    // Délai d'attente pour une réponse (en minutes)
-    private const INVITATION_TIMEOUT = 5;
+    // Durée de vie d'une invitation sans réponse (en minutes)
     private const INVITATION_RETRY = 2;
 
     public function handle()
     {
         Log::info("ProcessPendingOrderAssignments: Debut de recherche de commandes en attentes");
         // Optimisation : eager loading pour éviter N+1
-        $pendingOrders = Order::with(['orderInvitations' => function($query) {
+        $pendingOrders = Order::with(['orderItems', 'orderInvitations' => function($query) {
                 $query->where('is_waiting_acceptation', true);
             }])
             ->where('status', Order::PERFORMER_LOOKUP)
@@ -61,6 +61,12 @@ class ProcessPendingOrderAssignments
 
     private function processOrder(Order $order)
     {
+        // Commande de nuit passée en journée : la recherche n'a pas encore commencé
+        if ($order->performerLookupStartsAt()->isFuture()) {
+            Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} - recherche prévue à partir de {$order->performerLookupStartsAt()}.");
+            return;
+        }
+
         $waitingInvitations = $order->orderInvitations;
         $invitationCount = $waitingInvitations->count();
 
@@ -70,11 +76,15 @@ class ProcessPendingOrderAssignments
         });
 
         if ($expiredInvitations->isNotEmpty()) {
-            // Supprimer SEULEMENT les invitations expirées
+            // Supprimer SEULEMENT les invitations expirées ; celles encore en attente sont retirées de la liste des chauffeurs
+            OrderInvitation::deleteWaiting(
+                OrderInvitation::whereIn('id', $expiredInvitations->pluck('id')),
+                OrderInvitationCancelled::EXPIRED
+            );
             OrderInvitation::whereIn('id', $expiredInvitations->pluck('id'))->delete();
         }
 
-        if($order->created_at->addMinutes(self::INVITATION_TIMEOUT)->isPast()){
+        if($order->performerLookupDeadline()->isPast()){
             // Marquer la commande comme chauffeurs non trouvés
             $this->markAsNotFound($order);
         }else{
@@ -96,6 +106,12 @@ class ProcessPendingOrderAssignments
             'is_successful' =>false
         ]);
         $order->newOrderHistory(Order::PERFORMER_NOT_FOUND, 'system', null);
+
+        // La recherche est terminée : les invitations restantes ne peuvent plus être acceptées
+        OrderInvitation::cancelWaiting(
+            OrderInvitation::where('order_id', $order->id),
+            OrderInvitationCancelled::EXPIRED
+        );
         Log::info("ProcessPendingOrderAssignments: Commande #{$order->id} marquée comme PERFORMER_NOT_FOUND.");
         
     }

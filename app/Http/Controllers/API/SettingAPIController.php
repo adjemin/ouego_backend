@@ -60,7 +60,7 @@ class SettingAPIController extends AppBaseController
         $setting = $this->settingRepository->find($id);
 
         if (empty($setting)) {
-            return $this->sendError('Setting not found');
+            return $this->sendError('Paramètre introuvable');
         }
 
         return $this->sendResponse($setting->toArray(), 'Setting retrieved successfully');
@@ -78,7 +78,7 @@ class SettingAPIController extends AppBaseController
         $setting = $this->settingRepository->find($id);
 
         if (empty($setting)) {
-            return $this->sendError('Setting not found');
+            return $this->sendError('Paramètre introuvable');
         }
 
         $setting = $this->settingRepository->update($input, $id);
@@ -98,7 +98,7 @@ class SettingAPIController extends AppBaseController
         $setting = $this->settingRepository->find($id);
 
         if (empty($setting)) {
-            return $this->sendError('Setting not found');
+            return $this->sendError('Paramètre introuvable');
         }
 
         $setting->delete();

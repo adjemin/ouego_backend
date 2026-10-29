@@ -55,13 +55,13 @@ class SendOrderAssignmentNotification
             try {
                 // Tentative d'envoi de la notification
                 SendPushNotificationDriver::dispatch($device->firebase_id, $notification);
-            } catch (Kreait\Firebase\Exception\Messaging\NotFound $e) {
+            } catch (\Kreait\Firebase\Exception\Messaging\NotFound $e) {
                 // Le token n'est plus valide, nous le supprimons
                 $device->forceDelete();
-                \Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $event->orderInvitation->driver_id);
+                Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $event->orderInvitation->driver_id);
             } catch (\Exception $e) {
                 // Gestion des autres exceptions
-                \Log::error("SendOrderAssignmentNotification: Erreur lors de l'envoi de la notification: " . $e->getMessage());
+                Log::error("SendOrderAssignmentNotification: Erreur lors de l'envoi de la notification: " . $e->getMessage());
             }
         }
 

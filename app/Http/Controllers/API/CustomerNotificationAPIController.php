@@ -60,7 +60,7 @@ class CustomerNotificationAPIController extends AppBaseController
         $customerNotification = $this->customerNotificationRepository->find($id);
 
         if (empty($customerNotification)) {
-            return $this->sendError('Customer Notification not found');
+            return $this->sendError('Notification du client introuvable');
         }
 
         return $this->sendResponse($customerNotification->toArray(), 'Customer Notification retrieved successfully');
@@ -78,7 +78,7 @@ class CustomerNotificationAPIController extends AppBaseController
         $customerNotification = $this->customerNotificationRepository->find($id);
 
         if (empty($customerNotification)) {
-            return $this->sendError('Customer Notification not found');
+            return $this->sendError('Notification du client introuvable');
         }
 
         $customerNotification = $this->customerNotificationRepository->update($input, $id);
@@ -98,7 +98,7 @@ class CustomerNotificationAPIController extends AppBaseController
         $customerNotification = $this->customerNotificationRepository->find($id);
 
         if (empty($customerNotification)) {
-            return $this->sendError('Customer Notification not found');
+            return $this->sendError('Notification du client introuvable');
         }
 
         $customerNotification->delete();

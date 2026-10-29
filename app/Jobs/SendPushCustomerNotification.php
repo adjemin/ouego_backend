@@ -8,8 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\CustomerNotification;
-use Kreait\Firebase\Messaging\CloudMessage;
-use Kreait\Firebase\Messaging\Notification;
+use App\Utilities\FirebaseMessagingUtils;
 use Kreait\Firebase\Factory;
 use Illuminate\Support\Facades\Log;
 
@@ -39,28 +38,21 @@ class SendPushCustomerNotification
      */
     public function handle(): void
     {
-        try {
-            $serviceAccount = config('firebase.ouego.dev');
-            $factory = (new Factory)->withServiceAccount($serviceAccount);
-            $messaging = $factory->createMessaging();
+        // Les exceptions (dont NotFound pour un token invalide) remontent au listener
+        // SendCustomerPushNotification, qui supprime l'appareil concerné.
+        $serviceAccount = config('firebase.ouego.dev');
+        $factory = (new Factory)->withServiceAccount($serviceAccount);
+        $messaging = $factory->createMessaging();
 
-            $message = CloudMessage::withTarget('token', $this->firebaseId)
-                ->withData([
-                    'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
-                    'id' => (string)$this->customerNotification->id,
-                    'status' => 'done',
-                    'notification_type' => (string)$this->customerNotification->type,
-                    'notification_id' => (string)$this->customerNotification->id,
-                    'meta_data_id' => (string)$this->customerNotification->data_id,
-                    "title" => $this->customerNotification->title,
-                    "body" => $this->customerNotification->subtitle
-                ]);
+        $message = FirebaseMessagingUtils::buildMessage(
+            $this->firebaseId,
+            $this->customerNotification->title,
+            $this->customerNotification->subtitle,
+            $this->customerNotification->type,
+            $this->customerNotification->id,
+            $this->customerNotification->data_id
+        );
 
-            $result = $messaging->send($message);
-        } catch (Kreait\Firebase\Exception\Messaging\NotFound $e) {
-            // Le token n'est plus valide            throw $e; // Relancer l'exception pour que le job échoue et soit potentiellement retryé
-        } catch (\Exception $e) {
-            throw $e;
-        }
+        $messaging->send($message);
     }
 }

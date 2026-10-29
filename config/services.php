@@ -31,4 +31,15 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'google_maps' => [
+        'key' => env('GOOGLE_MAP_API_KEY'),
+    ],
+
+    'orange_sms' => [
+        'client_id' => env('SMS_CLIENT_ID'),
+        'secret' => env('SMS_SECRET'),
+        'sender_phone_number' => env('SENDER_PHONE_NUMBER', '+2250000'),
+        'sender_name' => env('SENDER_NAME', 'OUEGO'),
+    ],
+
 ];

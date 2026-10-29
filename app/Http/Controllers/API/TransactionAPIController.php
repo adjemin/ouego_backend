@@ -69,7 +69,7 @@ class TransactionAPIController extends AppBaseController
         $transaction = $this->transactionRepository->find($id);
 
         if (empty($transaction)) {
-            return $this->sendError('Transaction not found');
+            return $this->sendError('Transaction introuvable');
         }
 
         return $this->sendResponse($transaction->toArray(), 'Transaction retrieved successfully');
@@ -87,7 +87,7 @@ class TransactionAPIController extends AppBaseController
         $transaction = $this->transactionRepository->find($id);
 
         if (empty($transaction)) {
-            return $this->sendError('Transaction not found');
+            return $this->sendError('Transaction introuvable');
         }
 
         $transaction = $this->transactionRepository->update($input, $id);
@@ -107,7 +107,7 @@ class TransactionAPIController extends AppBaseController
         $transaction = $this->transactionRepository->find($id);
 
         if (empty($transaction)) {
-            return $this->sendError('Transaction not found');
+            return $this->sendError('Transaction introuvable');
         }
 
         $transaction->delete();

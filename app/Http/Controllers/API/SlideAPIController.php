@@ -60,7 +60,7 @@ class SlideAPIController extends AppBaseController
         $slide = $this->slideRepository->find($id);
 
         if (empty($slide)) {
-            return $this->sendError('Slide not found');
+            return $this->sendError('Diapositive introuvable');
         }
 
         return $this->sendResponse($slide->toArray(), 'Slide retrieved successfully');
@@ -78,7 +78,7 @@ class SlideAPIController extends AppBaseController
         $slide = $this->slideRepository->find($id);
 
         if (empty($slide)) {
-            return $this->sendError('Slide not found');
+            return $this->sendError('Diapositive introuvable');
         }
 
         $slide = $this->slideRepository->update($input, $id);
@@ -98,7 +98,7 @@ class SlideAPIController extends AppBaseController
         $slide = $this->slideRepository->find($id);
 
         if (empty($slide)) {
-            return $this->sendError('Slide not found');
+            return $this->sendError('Diapositive introuvable');
         }
 
         $slide->delete();

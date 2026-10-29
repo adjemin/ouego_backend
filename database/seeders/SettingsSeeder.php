@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Setting;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -74,5 +75,8 @@ class SettingsSeeder extends Seeder
                 ['value' => $setting['value']]
             );
         }
+
+        // updateOrInsert ne déclenche pas les événements du modèle
+        Setting::flushCache();
     }
 }

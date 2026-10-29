@@ -55,7 +55,7 @@ class TypeEnginModelAPIController extends AppBaseController
             $input['slug'] = $input['slug'].'-'.Str::slug($input['subtitle']);
         }
 
-        if(strlen($input['subtitle']) < 1){
+        if(strlen($input['subtitle'] ?? '') < 1){
             if(array_key_exists('nombre_roues', $input) && strlen($input['nombre_roues']) > 0){
                 $input['slug'] = $input['slug'].'-'.Str::slug($input['nombre_roues']);
             }
@@ -88,7 +88,7 @@ class TypeEnginModelAPIController extends AppBaseController
         $typeEnginModel = $this->typeEnginModelRepository->find($id);
 
         if (empty($typeEnginModel)) {
-            return $this->sendError('Type Engin Model not found');
+            return $this->sendError("Modèle de type d'engin introuvable");
         }
 
         return $this->sendResponse($typeEnginModel->toArray(), 'Type Engin Model retrieved successfully');
@@ -106,7 +106,7 @@ class TypeEnginModelAPIController extends AppBaseController
         $typeEnginModel = $this->typeEnginModelRepository->find($id);
 
         if (empty($typeEnginModel)) {
-            return $this->sendError('Type Engin Model not found');
+            return $this->sendError("Modèle de type d'engin introuvable");
         }
 
         $typeEnginModel = $this->typeEnginModelRepository->update($input, $id);
@@ -126,7 +126,7 @@ class TypeEnginModelAPIController extends AppBaseController
         $typeEnginModel = $this->typeEnginModelRepository->find($id);
 
         if (empty($typeEnginModel)) {
-            return $this->sendError('Type Engin Model not found');
+            return $this->sendError("Modèle de type d'engin introuvable");
         }
 
         $typeEnginModel->delete();

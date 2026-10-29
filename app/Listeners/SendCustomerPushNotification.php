@@ -6,6 +6,7 @@ use App\Events\CustomerNotificationCreated;
 use App\Jobs\SendPushCustomerNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Log;
 use App\Models\CustomerDevice;
 
 class SendCustomerPushNotification
@@ -35,13 +36,13 @@ class SendCustomerPushNotification
                     try {
                         // Tentative d'envoi de la notification
                         SendPushCustomerNotification::dispatch($userDevice->firebase_id, $event->customerNotification);
-                    } catch (Kreait\Firebase\Exception\Messaging\NotFound $e) {
+                    } catch (\Kreait\Firebase\Exception\Messaging\NotFound $e) {
                         // Le token n'est plus valide, nous le supprimons
                         $userDevice->forceDelete();
-                        \Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $event->customerNotification->customer_id);
+                        Log::warning("Token Firebase invalide supprimé pour l'utilisateur " . $event->customerNotification->customer_id);
                     } catch (\Exception $e) {
                         // Gestion des autres exceptions
-                        \Log::error("SendCustomerPushNotification Erreur lors de l'envoi de la notification: " . $e->getMessage());
+                        Log::error("SendCustomerPushNotification Erreur lors de l'envoi de la notification: " . $e->getMessage());
                     }
 
                 }

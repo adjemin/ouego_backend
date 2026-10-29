@@ -56,7 +56,7 @@ class CustomerProfileAPIController extends AppBaseController
         $customerProfile = $this->customerProfileRepository->find($id);
 
         if (empty($customerProfile)) {
-            return $this->sendError('Customer Profile not found');
+            return $this->sendError('Profil du client introuvable');
         }
 
         return $this->sendResponse($customerProfile->toArray(), 'Customer Profile retrieved successfully');
@@ -79,7 +79,7 @@ class CustomerProfileAPIController extends AppBaseController
         $customerProfile = $this->customerProfileRepository->find($id);
 
         if (empty($customerProfile)) {
-            return $this->sendError('Customer Profile not found');
+            return $this->sendError('Profil du client introuvable');
         }
 
         $customerProfile = $this->customerProfileRepository->update($input, $id);
@@ -99,7 +99,7 @@ class CustomerProfileAPIController extends AppBaseController
         $customerProfile = $this->customerProfileRepository->find($id);
 
         if (empty($customerProfile)) {
-            return $this->sendError('Customer Profile not found');
+            return $this->sendError('Profil du client introuvable');
         }
 
         $customerProfile->delete();

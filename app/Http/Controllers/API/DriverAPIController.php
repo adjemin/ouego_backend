@@ -27,7 +27,6 @@ use MtnSmsCloud\MTNSMSApi;
 use App\Models\DriverOtp;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 use App\Services\OrangeSMSService;
 use App\Models\Order;
 use App\Models\DriverDevice;
@@ -63,7 +62,7 @@ class DriverAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($drivers->toArray(), 'Drivers retrieved successfully');
+        return $this->sendResponse($drivers->toArray(), 'Chauffeurs récupérés avec succès');
     }
 
     /**
@@ -76,7 +75,7 @@ class DriverAPIController extends AppBaseController
 
         $driver = $this->driverRepository->create($input);
 
-        return $this->sendResponse($driver->toArray(), 'Driver saved successfully');
+        return $this->sendResponse($driver->toArray(), 'Chauffeur enregistré avec succès');
     }
 
     /**
@@ -89,10 +88,10 @@ class DriverAPIController extends AppBaseController
         $driver = $this->driverRepository->find($id);
 
         if (empty($driver)) {
-            return $this->sendError('Driver not found');
+            return $this->sendError('Chauffeur introuvable');
         }
 
-        return $this->sendResponse($driver->toArray(), 'Driver retrieved successfully');
+        return $this->sendResponse($driver->toArray(), 'Chauffeur récupéré avec succès');
     }
 
     /**
@@ -111,7 +110,7 @@ class DriverAPIController extends AppBaseController
         $driver = $this->driverRepository->find($id);
 
         if (empty($driver)) {
-            return $this->sendError('Driver not found');
+            return $this->sendError('Chauffeur introuvable');
         }
 
         if(!empty($request->input("photo_url"))){
@@ -150,7 +149,7 @@ class DriverAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $driver
-        ], 'Driver saved successfully');
+        ], 'Chauffeur enregistré avec succès');
     }
 
     /**
@@ -165,12 +164,12 @@ class DriverAPIController extends AppBaseController
         $driver = $this->driverRepository->find($id);
 
         if (empty($driver)) {
-            return $this->sendError('Driver not found');
+            return $this->sendError('Chauffeur introuvable');
         }
 
         $driver->delete();
 
-        return $this->sendSuccess('Driver deleted successfully');
+        return $this->sendSuccess('Chauffeur supprimé avec succès');
     }
 
     public function register(Request $request){
@@ -182,19 +181,19 @@ class DriverAPIController extends AppBaseController
         }
 
         if (!array_key_exists('last_name', $input)) {
-            return $this->sendError('last_name is required');
+            return $this->sendError('Le champ last_name est obligatoire');
         }
 
         if (!array_key_exists('first_name', $input)) {
-            return $this->sendError('first_name is required');
+            return $this->sendError('Le champ first_name est obligatoire');
         }
 
         if (!array_key_exists('dialing_code', $input)) {
-            return $this->sendError('dialing_code is required');
+            return $this->sendError('Le champ dialing_code est obligatoire');
         }
 
         if(!array_key_exists('phone_number', $input)) {
-            return $this->sendError('phone_number is required');
+            return $this->sendError('Le champ phone_number est obligatoire');
         }
 
         $input['phone'] = $input['dialing_code'].''.$input['phone_number'];
@@ -246,7 +245,7 @@ class DriverAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $driver
-        ], 'Driver saved successfully');
+        ], 'Chauffeur enregistré avec succès');
 
     }
 
@@ -258,11 +257,11 @@ class DriverAPIController extends AppBaseController
         }
 
         if (!array_key_exists('dialing_code', $input)) {
-            return $this->sendError('dialing_code is required');
+            return $this->sendError('Le champ dialing_code est obligatoire');
         }
 
         if(!array_key_exists('phone_number', $input)) {
-            return $this->sendError('phone_number is required');
+            return $this->sendError('Le champ phone_number est obligatoire');
         }
 
         $input['phone'] = $input['dialing_code'].''.$input['phone_number'];
@@ -309,7 +308,7 @@ class DriverAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $driver
-        ], 'Driver saved successfully');
+        ], 'Chauffeur enregistré avec succès');
     }
 
     public function logout(Request $request){
@@ -318,11 +317,48 @@ class DriverAPIController extends AppBaseController
 
         return response()->json([
             'success' => true,
-            'message' => 'Successfully logged out',
+            'message' => 'Déconnexion réussie',
         ]);
 
     }
 
+
+    /**
+     * Suppression du compte par le chauffeur connecté.
+     * DELETE /drivers/account
+     *
+     * Soft delete : une nouvelle inscription avec le même numéro restaure le compte (voir register()).
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        /** @var Driver $driver */
+        $driver = auth('api-drivers')->user();
+
+        if (Order::where('driver_id', $driver->id)->inProgress()->exists()) {
+            return $this->sendError('Vous avez une commande en cours, vous ne pouvez pas supprimer votre compte', 400);
+        }
+
+        if ((float) $driver->current_balance != 0) {
+            return $this->sendError('Votre solde doit être à zéro pour supprimer votre compte, veuillez contacter le support', 400);
+        }
+
+        DB::transaction(function () use ($driver) {
+            // Libère les commandes en attente de sa réponse pour que la recherche passe à d'autres chauffeurs
+            OrderInvitation::where('driver_id', $driver->id)
+                ->where('is_waiting_acceptation', true)
+                ->update(['is_waiting_acceptation' => false, 'rejection_time' => now()]);
+
+            DriverDevice::where('driver_id', $driver->id)->delete();
+
+            $driver->is_available = false;
+            $driver->save();
+            $driver->delete();
+        });
+
+        auth('api-drivers')->logout();
+
+        return $this->sendSuccess('Compte supprimé avec succès');
+    }
 
     public function refresh()
     {
@@ -336,20 +372,20 @@ class DriverAPIController extends AppBaseController
                 'expires_in' => JWTAuth::factory()->getTTL(),
                 'server_time'=> now(),
                 'user' => auth('api-drivers')->user()
-            ], 'Token refreshed successfully');
+            ], 'Jeton actualisé avec succès');
 
         } catch (TokenExpiredException $e) {
             return response()->json([
                 'code' => 401,
                 'success' => false,
-                'message' => 'Token has expired and can no longer be refreshed',
+                'message' => 'Le jeton a expiré et ne peut plus être actualisé',
                 'status' => 'UNAUTHORIZED',
             ], 401);
         } catch (JWTException $e) {
             return response()->json([
                 'code' => 401,
                 'success' => false,
-                'message' => 'Could not refresh token',
+                'message' => "Impossible d'actualiser le jeton",
                 'status' => 'UNAUTHORIZED',
             ], 401);
         }
@@ -367,7 +403,7 @@ class DriverAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $driver
-        ], 'Driver got successfully');
+        ], 'Chauffeur récupéré avec succès');
 
 
     }
@@ -411,7 +447,7 @@ class DriverAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $driver
-        ], 'Driver got successfully');
+        ], 'Chauffeur récupéré avec succès');
 
 
     }
@@ -428,7 +464,7 @@ class DriverAPIController extends AppBaseController
         $engin = $this->enginRepository->find($id);
 
         if (empty($engin)) {
-            return $this->sendError('Engin not found');
+            return $this->sendError('Engin introuvable');
         }
 
         $engin = $this->enginRepository->update($input, $id);
@@ -443,25 +479,28 @@ class DriverAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $driver
-        ], 'Driver got successfully');
+        ], 'Chauffeur récupéré avec succès');
     }
 
     public function updateAvailability($id, Request $request){
 
         $input = $request->all();
 
-        $driver = Driver::where('id', $id)->first();
+        /** @var Driver $driver */
+        $driver = auth('api-drivers')->user();
 
-        if (empty($driver)) {
-            return $this->sendError('Driver not found');
+        // Un chauffeur ne met à jour que sa propre disponibilité et sa position (utilisées pour l'attribution des commandes).
+        // L'{id} est conservé dans l'URL pour la compatibilité avec l'app ; un autre identifiant répond comme un chauffeur inexistant.
+        if ((string) $id !== (string) $driver->id) {
+            return $this->sendError('Chauffeur introuvable');
         }
 
         if(!array_key_exists('latitude', $input)){
-            return $this->sendError('latitude is required', 400);
+            return $this->sendError('Le champ latitude est obligatoire', 400);
         }
 
         if(!array_key_exists('longitude', $input)){
-            return $this->sendError('longitude is required', 400);
+            return $this->sendError('Le champ longitude est obligatoire', 400);
         }
 
         $input_driver = [
@@ -479,7 +518,7 @@ class DriverAPIController extends AppBaseController
 
         return $this->sendResponse([
             'user' => $driver
-        ], 'Driver got successfully');
+        ], 'Chauffeur récupéré avec succès');
     }
 
     public function sendOTP(Request $request)
@@ -496,11 +535,16 @@ class DriverAPIController extends AppBaseController
             // Vérifier si le numéro de téléphone est déjà enregistré
             $driver = Driver::where('phone', $request->phone)->first();
             if ($driver && $driver->is_blocked) {
-                return $this->sendError('Votre compte été bloqué, veuillez contacter le support', 403);
+                return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
             }
 
+            // Compte de test : OTP fixe, pas d'envoi de SMS
+            $isTestPhone = in_array($request->phone, config('otp.test_phones'), true);
+
             // Générer un OTP à 6 chiffres
-            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $otp = $isTestPhone
+                ? config('otp.test_code')
+                : str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
             // Créer ou mettre à jour l'entrée DriverOtp
             $customerOTP = DriverOtp::updateOrCreate(
@@ -508,15 +552,17 @@ class DriverAPIController extends AppBaseController
                 [
                     'otp' => $otp,
                     'otp_expires_at' => Carbon::now()->addMinutes(5),
-                    'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
+                    'is_test_mode' => $isTestPhone
                 ]
             );
 
-            try {
-                // Envoyer l'OTP par SMS
-                $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
-            } catch (\Throwable $th) {
-                Log::error("Failed to send OTP SMS: " . $th->getMessage());
+            if (!$isTestPhone) {
+                try {
+                    // Envoyer l'OTP par SMS
+                    $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
+                } catch (\Throwable $th) {
+                    Log::error("Failed to send OTP SMS: " . $th->getMessage());
+                }
             }
             
             return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
@@ -591,7 +637,7 @@ class DriverAPIController extends AppBaseController
                 'expires_in' => JWTAuth::factory()->getTTL(),
                 'server_time'=> now(),
                 'user' => $customer
-            ], 'Driver got successfully');
+            ], 'Chauffeur récupéré avec succès');
         }
 
     }
@@ -648,21 +694,21 @@ class DriverAPIController extends AppBaseController
 
         try{
             // Validation des données d'entrée
+            // Le portefeuille est toujours celui du chauffeur connecté : un driver_id envoyé par l'app est ignoré
             $validator = Validator::make($request->all(), [
-                'driver_id' => 'required|exists:drivers,id',
                 'amount' => 'required|numeric|min:100'
             ]);
 
             if ($validator->fails()) {
-                return $this->sendError('Validation Error', 422);
+                return $this->sendError('Données invalides', 422);
             }
 
             // Récupération des données
             $input = $request->all();
             $amount = intval($input['amount']);
 
-            // Récupérer le chauffeur
-            $driver = Driver::findOrFail($input['driver_id']);
+            /** @var Driver $driver */
+            $driver = auth('api-drivers')->user();
 
             DB::beginTransaction();
 
@@ -710,7 +756,7 @@ class DriverAPIController extends AppBaseController
             DB::commit();
 
 
-            return $this->sendResponse($payment->toArray(), 'Payment created successfully');
+            return $this->sendResponse($payment->toArray(), 'Paiement créé avec succès');
         }catch (\Exception $e) {
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
@@ -723,13 +769,13 @@ class DriverAPIController extends AppBaseController
 
         try{
             // Validation des données d'entrée
+            // Le portefeuille est toujours celui du chauffeur connecté : un driver_id envoyé par l'app est ignoré
             $validator = Validator::make($request->all(), [
-                'driver_id' => 'required|exists:drivers,id',
                 'amount' => 'required|numeric|min:100'
             ]);
 
             if ($validator->fails()) {
-                return $this->sendError('Validation Error', 422);
+                return $this->sendError('Données invalides', 422);
             }
 
 
@@ -737,8 +783,8 @@ class DriverAPIController extends AppBaseController
             $input = $request->all();
             $amount = intval($input['amount']);
 
-            // Récupérer le chauffeur
-            $driver = Driver::findOrFail($input['driver_id']);
+            /** @var Driver $driver */
+            $driver = auth('api-drivers')->user();
 
             if(intval($driver->current_balance) < $amount){
                 return $this->sendError('Solde insuffisant',400);
@@ -788,7 +834,7 @@ class DriverAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($payment->toArray(), 'Payment created successfully');
+            return $this->sendResponse($payment->toArray(), 'Paiement créé avec succès');
         }catch (\Exception $e) {
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
         }
@@ -802,7 +848,7 @@ class DriverAPIController extends AppBaseController
             $driver = auth('api-drivers')->user();
 
             if (!$driver) {
-                return $this->sendError('Driver not authenticated', 401);
+                return $this->sendError('Chauffeur non authentifié', 401);
             }
 
             $today = Carbon::now();
@@ -825,7 +871,7 @@ class DriverAPIController extends AppBaseController
                 'daily_earnings' => floatval($dailyEarnings ?? 0),
                 'date' => $today->format('Y-m-d'),
                 'driver_id' => $driver->id
-            ], 'Daily earnings retrieved successfully');
+            ], 'Gains du jour récupérés avec succès');
 
         } catch (\Exception $e) {
             return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
@@ -840,13 +886,13 @@ class DriverAPIController extends AppBaseController
             ]);
 
             if ($validator->fails()) {
-                return $this->sendError('Validation Error', 422);
+                return $this->sendError('Données invalides', 422);
             }
 
             $driver = auth('api-drivers')->user();
             
             if (!$driver) {
-                return $this->sendError('Driver not authenticated', 401);
+                return $this->sendError('Chauffeur non authentifié', 401);
             }
 
             $zoneId = $request->zone_base_id;
@@ -874,7 +920,7 @@ class DriverAPIController extends AppBaseController
                 'driver' => $driver->fresh()->load('zoneBase'),
                 'assigned_carriers' => $carriersInZone,
                 'zone' => $zone
-            ], 'Zone de base mise à jour avec succès. Carriers assignés automatiquement.');
+            ], 'Zone de base mise à jour avec succès. Carrières assignées automatiquement.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -888,7 +934,7 @@ class DriverAPIController extends AppBaseController
             $driver = auth('api-drivers')->user();
             
             if (!$driver) {
-                return $this->sendError('Driver not authenticated', 401);
+                return $this->sendError('Chauffeur non authentifié', 401);
             }
 
             $pendingInvitations = OrderInvitation::where('driver_id', $driver->id)

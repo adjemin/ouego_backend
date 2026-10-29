@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Events\OrderAssigned;
 use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderInvitation;
@@ -55,25 +54,15 @@ class DriverLocationAssignmentService
             $startDate,
             $endDate,
             $limit,
-            $isUrgent
+            $isUrgent,
+            $order->id
         );
 
         Log::info("DriverLocationAssignmentService: Commande #{$order->id} ({$startDate} → {$endDate}) "
             . "— {$drivers->count()} chauffeur(s) éligible(s) trouvé(s) [urgent=" . ($isUrgent ? 'oui' : 'non') . "]");
 
         foreach ($drivers as $driver) {
-            $invitation = OrderInvitation::firstOrCreate(
-                ['driver_id' => $driver->id, 'order_id' => $order->id],
-                [
-                    'is_waiting_acceptation' => true,
-                    'acceptation_time'       => null,
-                    'rejection_time'         => null,
-                    'latitude'               => null,
-                    'longitude'              => null,
-                ]
-            );
-
-            event(new OrderAssigned($invitation));
+            OrderInvitation::inviteDriver($order->id, $driver);
         }
 
         return $drivers->pluck('id')->toArray();
@@ -85,6 +74,7 @@ class DriverLocationAssignmentService
      * Règles appliquées :
      *  - is_available + is_active + ping récent
      *  - service 'location' dans le JSON services
+     *  - pas d'invitation déjà close (refusée) pour cette commande
      *  - aucune location chevauchant [startDate, endDate] (Règle 2)
      *  - si urgent (<24h) : priorité aux chauffeurs sans location active aujourd'hui,
      *    puis tri par count cours en-semaine croissant (Règle 5)
@@ -97,7 +87,8 @@ class DriverLocationAssignmentService
         string $startDate,
         string $endDate,
         ?int $limit,
-        bool $isUrgent
+        bool $isUrgent,
+        ?int $orderId = null
     ) {
         $cancelledStatuses = [
             Order::CANCELLED,
@@ -115,6 +106,7 @@ class DriverLocationAssignmentService
             ->where('is_active', true)
             ->where('updated_at', '>=', now()->subMinutes($this->maxUpdateTime))
             ->whereJsonContains('services', $serviceSlug)
+            ->withoutClosedInvitationFor($orderId)
             // Règle 2 : pas de location chevauchante pour ce chauffeur
             ->whereDoesntHave('orders', function ($q) use ($startDate, $endDate, $cancelledStatuses) {
                 $q->where('is_location', true)

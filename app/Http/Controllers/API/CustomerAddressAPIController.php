@@ -69,7 +69,7 @@ class CustomerAddressAPIController extends AppBaseController
         $customerAddress = $this->customerAddressRepository->find($id);
 
         if (empty($customerAddress)) {
-            return $this->sendError('Customer Address not found');
+            return $this->sendError('Adresse du client introuvable');
         }
 
         return $this->sendResponse($customerAddress->toArray(), 'Customer Address retrieved successfully');
@@ -87,7 +87,7 @@ class CustomerAddressAPIController extends AppBaseController
         $customerAddress = $this->customerAddressRepository->find($id);
 
         if (empty($customerAddress)) {
-            return $this->sendError('Customer Address not found');
+            return $this->sendError('Adresse du client introuvable');
         }
 
         $customerAddress = $this->customerAddressRepository->update($input, $id);
@@ -107,7 +107,7 @@ class CustomerAddressAPIController extends AppBaseController
         $customerAddress = $this->customerAddressRepository->find($id);
 
         if (empty($customerAddress)) {
-            return $this->sendError('Customer Address not found');
+            return $this->sendError('Adresse du client introuvable');
         }
 
         $customerAddress->delete();

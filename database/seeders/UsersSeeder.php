@@ -5,20 +5,23 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-
-use function Symfony\Component\String\b;
+use Illuminate\Support\Str;
 
 class UsersSeeder extends Seeder
 {
     public function run(): void
     {
+        // Aucun mot de passe dans le code : SEED_ADMIN_PASSWORD s'il est défini, sinon un mot de passe aléatoire
+        // (à réinitialiser ensuite). Les comptes existants gardent leur mot de passe actuel.
+        $password = Hash::make(env('SEED_ADMIN_PASSWORD') ?: Str::random(32));
+
         $users = [
             [
                 'name' => 'Ouego',
                 'email' => 'admin.ouego@gmail.com',
                 'email_verified_at' => null,
-                'password' => Hash::make('NcZ#96G4NWJx'),
-                'remember_token' => 'GsYbMomBfnYrLEI5Q2r0yzZm5saIZGIPO3QAQFIeeb4rsOa4ELy3az8Pg3NZ',
+                'password' => $password,
+                'remember_token' => null,
                 'is_active' => true,
                 'role' => 'super-admin',
                 'deleted_at' => null,
@@ -29,8 +32,8 @@ class UsersSeeder extends Seeder
                 'name' => 'Wilfried N\'Guessan',
                 'email' => 'wilfried.nguessan@ouego.com',
                 'email_verified_at' => null,
-                'password' => Hash::make('NcZ#96G4NWJx'),
-                'remember_token' => 'NtseIqq06UQSCEPzPqYg74Vxz8PUXKYMpGD69aVceA40O0O3TQbQIamiHvgI',
+                'password' => $password,
+                'remember_token' => null,
                 'is_active' => true,
                 'role' => 'super-admin',
                 'deleted_at' => null,
@@ -41,8 +44,8 @@ class UsersSeeder extends Seeder
                 'name' => 'John Light',
                 'email' => 'dev.johnlight@gmail.com',
                 'email_verified_at' => null,
-                'password' => Hash::make('Password123456@'),
-                'remember_token' => 'NtseIqq06UQSCEPzPqYg74Vxz8PUXKYMpGD69aVceA40O0O3TQbQIamiHvgI',
+                'password' => $password,
+                'remember_token' => null,
                 'is_active' => true,
                 'role' => 'super-admin',
                 'deleted_at' => null,
@@ -52,10 +55,11 @@ class UsersSeeder extends Seeder
         ];
 
         foreach ($users as $user) {
-            DB::table('users')->updateOrInsert(
-                ['email' => $user['email']],
-                $user
-            );
+            if (DB::table('users')->where('email', $user['email'])->exists()) {
+                continue;
+            }
+
+            DB::table('users')->insert($user);
         }
     }
 }

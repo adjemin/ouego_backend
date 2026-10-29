@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Order;
 use App\Models\DeliveryType;
-use App\Models\Service;
 use App\Services\DriverAssignmentService;
 use Illuminate\Support\Facades\Log;
 

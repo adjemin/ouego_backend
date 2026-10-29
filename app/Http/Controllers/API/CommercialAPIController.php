@@ -5,15 +5,10 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCommercialAPIRequest;
 use App\Http\Requests\API\UpdateCommercialAPIRequest;
 use App\Models\Commercial;
-use App\Models\Transaction;
-use App\Models\Invoice;
-use App\Models\Payment;
 use App\Repositories\CommercialRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 
 /**
  * Class CommercialAPIController
@@ -39,7 +34,7 @@ class CommercialAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($commercials->toArray(), 'Commercials retrieved successfully');
+        return $this->sendResponse($commercials->toArray(), 'Commerciaux récupérés avec succès');
     }
 
     /**
@@ -51,17 +46,17 @@ class CommercialAPIController extends AppBaseController
         $input = $request->all();
 
         if (!array_key_exists('code', $input) || empty($input['code'])) {
-            return $this->sendError('code is required', 400);
+            return $this->sendError('Le champ code est obligatoire', 400);
         }
 
         $existing = Commercial::where('code', $input['code'])->first();
         if ($existing != null) {
-            return $this->sendError('A commercial with this code already exists', 400);
+            return $this->sendError('Un commercial avec ce code existe déjà', 400);
         }
 
         $commercial = $this->commercialRepository->create($input);
 
-        return $this->sendResponse($commercial->toArray(), 'Commercial saved successfully');
+        return $this->sendResponse($commercial->toArray(), 'Commercial enregistré avec succès');
     }
 
     /**
@@ -74,10 +69,10 @@ class CommercialAPIController extends AppBaseController
         $commercial = $this->commercialRepository->find($id);
 
         if (empty($commercial)) {
-            return $this->sendError('Commercial not found');
+            return $this->sendError('Commercial introuvable');
         }
 
-        return $this->sendResponse($commercial->toArray(), 'Commercial retrieved successfully');
+        return $this->sendResponse($commercial->toArray(), 'Commercial récupéré avec succès');
     }
 
     /**
@@ -89,10 +84,10 @@ class CommercialAPIController extends AppBaseController
         $commercial = Commercial::where('code', $code)->first();
 
         if (empty($commercial)) {
-            return $this->sendError('Commercial not found');
+            return $this->sendError('Commercial introuvable');
         }
 
-        return $this->sendResponse($commercial->toArray(), 'Commercial retrieved successfully');
+        return $this->sendResponse($commercial->toArray(), 'Commercial récupéré avec succès');
     }
 
     /**
@@ -107,12 +102,12 @@ class CommercialAPIController extends AppBaseController
         $commercial = $this->commercialRepository->find($id);
 
         if (empty($commercial)) {
-            return $this->sendError('Commercial not found');
+            return $this->sendError('Commercial introuvable');
         }
 
         $commercial = $this->commercialRepository->update($input, $id);
 
-        return $this->sendResponse($commercial->toArray(), 'Commercial updated successfully');
+        return $this->sendResponse($commercial->toArray(), 'Commercial mis à jour avec succès');
     }
 
     /**
@@ -125,11 +120,11 @@ class CommercialAPIController extends AppBaseController
         $commercial = $this->commercialRepository->find($id);
 
         if (empty($commercial)) {
-            return $this->sendError('Commercial not found');
+            return $this->sendError('Commercial introuvable');
         }
 
         $commercial->delete();
 
-        return $this->sendSuccess('Commercial deleted successfully');
+        return $this->sendSuccess('Commercial supprimé avec succès');
     }
 }

@@ -60,7 +60,7 @@ class InvoiceAPIController extends AppBaseController
         $invoice = $this->invoiceRepository->find($id);
 
         if (empty($invoice)) {
-            return $this->sendError('Invoice not found');
+            return $this->sendError('Facture introuvable');
         }
 
         return $this->sendResponse($invoice->toArray(), 'Invoice retrieved successfully');
@@ -78,7 +78,7 @@ class InvoiceAPIController extends AppBaseController
         $invoice = $this->invoiceRepository->find($id);
 
         if (empty($invoice)) {
-            return $this->sendError('Invoice not found');
+            return $this->sendError('Facture introuvable');
         }
 
         $invoice = $this->invoiceRepository->update($input, $id);
@@ -98,7 +98,7 @@ class InvoiceAPIController extends AppBaseController
         $invoice = $this->invoiceRepository->find($id);
 
         if (empty($invoice)) {
-            return $this->sendError('Invoice not found');
+            return $this->sendError('Facture introuvable');
         }
 
         $invoice->delete();

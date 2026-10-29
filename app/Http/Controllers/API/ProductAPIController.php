@@ -35,7 +35,7 @@ class ProductAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($products->toArray(), 'Products retrieved successfully');
+        return $this->sendResponse($products->toArray(), 'Produits récupérés avec succès');
     }
 
     /**
@@ -47,19 +47,19 @@ class ProductAPIController extends AppBaseController
         $input = $request->all();
 
         if(!array_key_exists('name', $input)){
-            return $this->sendError('name is required', 400);
+            return $this->sendError('Le champ name est obligatoire', 400);
         }
 
         $input['slug'] = Str::slug($input['name']);
 
         $product = Product::where('slug', $input['slug'])->first();
         if($product != null){
-            return $this->sendError('This product already exist', 400);
+            return $this->sendError('Ce produit existe déjà', 400);
         }
 
         $product = $this->productRepository->create($input);
 
-        return $this->sendResponse($product->toArray(), 'Product saved successfully');
+        return $this->sendResponse($product->toArray(), 'Produit enregistré avec succès');
     }
 
     /**
@@ -72,10 +72,10 @@ class ProductAPIController extends AppBaseController
         $product = $this->productRepository->find($id);
 
         if (empty($product)) {
-            return $this->sendError('Product not found');
+            return $this->sendError('Produit introuvable');
         }
 
-        return $this->sendResponse($product->toArray(), 'Product retrieved successfully');
+        return $this->sendResponse($product->toArray(), 'Produit récupéré avec succès');
     }
 
     /**
@@ -90,12 +90,12 @@ class ProductAPIController extends AppBaseController
         $product = $this->productRepository->find($id);
 
         if (empty($product)) {
-            return $this->sendError('Product not found');
+            return $this->sendError('Produit introuvable');
         }
 
         $product = $this->productRepository->update($input, $id);
 
-        return $this->sendResponse($product->toArray(), 'Product updated successfully');
+        return $this->sendResponse($product->toArray(), 'Produit mis à jour avec succès');
     }
 
     /**
@@ -110,11 +110,11 @@ class ProductAPIController extends AppBaseController
         $product = $this->productRepository->find($id);
 
         if (empty($product)) {
-            return $this->sendError('Product not found');
+            return $this->sendError('Produit introuvable');
         }
 
         $product->delete();
 
-        return $this->sendSuccess('Product deleted successfully');
+        return $this->sendSuccess('Produit supprimé avec succès');
     }
 }

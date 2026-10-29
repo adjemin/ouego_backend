@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\API;
 
-use App\Models\Zone;
 use InfyOm\Generator\Request\APIRequest;
 
 class CreateZoneAPIRequest extends APIRequest
@@ -24,6 +23,9 @@ class CreateZoneAPIRequest extends APIRequest
      */
     public function rules()
     {
-        return Zone::$rules;
+        return [
+            'name' => 'required|string',
+            'geometry' => 'required',
+        ];
     }
 }

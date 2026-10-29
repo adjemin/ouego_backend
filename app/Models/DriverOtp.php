@@ -15,6 +15,11 @@ class DriverOtp extends Model
         'is_test_mode'
     ];
 
+    // L'OTP ne doit jamais sortir dans une réponse API : seul le SMS le transmet
+    protected $hidden = [
+        'otp'
+    ];
+
     protected $casts = [
         'otp' => 'string',
         'phone' => 'string',

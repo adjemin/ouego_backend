@@ -60,7 +60,7 @@ class RoutePointHistoryAPIController extends AppBaseController
         $routePointHistory = $this->routePointHistoryRepository->find($id);
 
         if (empty($routePointHistory)) {
-            return $this->sendError('Route Point History not found');
+            return $this->sendError("Historique du point d'arrêt introuvable");
         }
 
         return $this->sendResponse($routePointHistory->toArray(), 'Route Point History retrieved successfully');
@@ -78,7 +78,7 @@ class RoutePointHistoryAPIController extends AppBaseController
         $routePointHistory = $this->routePointHistoryRepository->find($id);
 
         if (empty($routePointHistory)) {
-            return $this->sendError('Route Point History not found');
+            return $this->sendError("Historique du point d'arrêt introuvable");
         }
 
         $routePointHistory = $this->routePointHistoryRepository->update($input, $id);
@@ -98,7 +98,7 @@ class RoutePointHistoryAPIController extends AppBaseController
         $routePointHistory = $this->routePointHistoryRepository->find($id);
 
         if (empty($routePointHistory)) {
-            return $this->sendError('Route Point History not found');
+            return $this->sendError("Historique du point d'arrêt introuvable");
         }
 
         $routePointHistory->delete();

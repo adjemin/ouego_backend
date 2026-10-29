@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Events\OrderCreated;
 use App\Events\OrderStatusUpdated;
+use App\Jobs\SendSms;
+use App\Models\Concerns\SerializesAppendedRelations;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, SerializesAppendedRelations;
 
     public $table = 'orders';
 
@@ -72,6 +75,12 @@ class Order extends Model
 
    CONST PAYMENT_MODE_CASH = "cash";
    CONST PAYMENT_MODE_ONLINE = "online";
+
+    // Fenêtre de recherche des chauffeurs pour les commandes de nuit : de 20h à 07h
+    const NIGHT_LOOKUP_START_HOUR = 20;
+    const NIGHT_LOOKUP_END_HOUR = 7;
+    // Délai standard (en minutes) avant de déclarer « chauffeur non trouvé »
+    const PERFORMER_LOOKUP_TIMEOUT = 5;
 
     protected $appends = ['customer','driver', 'service','items', 'invoice', 'route_points'];
 
@@ -163,6 +172,11 @@ class Order extends Model
             if ($order->wasChanged(['status', 'driver_id'])) {
                 OrderStatusUpdated::dispatch($order, $order->getOriginal('status'));
             }
+
+            // Champs affichés dans l'invitation du chauffeur (OrderInvitation::broadcastPayload)
+            if ($order->wasChanged(['reference', 'service_slug', 'delivery_type_code', 'currency_code'])) {
+                OrderInvitation::notifyWaitingDriversOfUpdate($order->id);
+            }
         });
     }
 
@@ -187,8 +201,27 @@ class Order extends Model
         return $ref;
     }
 
+    public function serializedRelations(): array
+    {
+        return [
+            'customer',
+            'driver.zoneBase',
+            'service',
+            'items.service',
+            'items.routePoints.histories',
+            'items.carrier',
+            'invoice.payments',
+            'routePoints.histories',
+        ];
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(OrderItem::class, 'order_id', 'id');
+    }
+
     public function getItemsAttribute(){
-        return OrderItem::where('order_id', $this->id)->get();
+        return $this->serializedRelation('items');
     }
 
     public function invoice(){
@@ -196,12 +229,17 @@ class Order extends Model
     }
 
     public function getInvoiceAttribute(){
-        return Invoice::where('order_id', $this->id)->first();
+        return $this->serializedRelation('invoice');
+    }
+
+    public function routePoints(): HasMany
+    {
+        return $this->hasMany(RoutePoint::class, 'order_id', 'id')->orderBy('visit_order', 'ASC');
     }
 
     public function getRoutePointsAttribute()
     {
-        return RoutePoint::where(['order_id' => $this->id])->orderBy('visit_order', 'ASC')->get();
+        return $this->serializedRelation('routePoints');
     }
 
     public function customer(){
@@ -210,14 +248,16 @@ class Order extends Model
 
     public function getCustomerAttribute()
     {
+        return $this->serializedRelation('customer');
+    }
 
-        return Customer::where(['id' => $this->customer_id])->first();
+    public function driver(){
+        return $this->belongsTo(Driver::class, 'driver_id', 'id');
     }
 
     public function getDriverAttribute()
     {
-
-        return Driver::where(['id' => $this->driver_id])->first();
+        return $this->serializedRelation('driver');
     }
 
     public function getSource()
@@ -237,9 +277,13 @@ class Order extends Model
     }
 
 
+    public function service(){
+        return $this->belongsTo(Service::class, 'service_slug', 'slug');
+    }
+
     public function getServiceAttribute()
     {
-        return Service::where('slug', $this->service_slug)->first();
+        return $this->serializedRelation('service');
     }
 
     //chargeDriver()
@@ -264,6 +308,35 @@ class Order extends Model
 
         }
 
+    }
+
+    // Crédite le commercial dont le code a été appliqué sur la facture, une seule fois par commande
+    public function creditCommercial(){
+
+        $invoice = $this->getInvoiceAttribute();
+        if($invoice == null || empty($invoice->coupon)){
+            return;
+        }
+
+        $commercial = Commercial::where('code', $invoice->coupon)->first();
+        if($commercial == null){
+            return;
+        }
+
+        $alreadyCredited = Transaction::where([
+            'user_id' => $commercial->id,
+            'user_source' => $commercial->getTable(),
+            'type' => Transaction::TYPE_CREDIT,
+            'order_id' => $this->id
+        ])->exists();
+        if($alreadyCredited){
+            return;
+        }
+
+        $creditAmount = doubleval(Setting::get('COMMERCIAL_CREDIT_AMOUNT') ?? 2500);
+        $commercial->creditBalance($creditAmount, $this->id);
+
+        SendSms::dispatch("+" . $commercial->phone, "OUEGO: La commande #{$this->id} de votre client a été livrée. Votre compte a été credité de {$creditAmount} XOF. Votre nouveau solde est de {$commercial->current_balance} XOF.")->afterCommit();
     }
 
     // Ajout de la relation orderInvitations
@@ -294,9 +367,90 @@ class Order extends Model
         return $this->hasMany(OrderItem::class, 'order_id', 'id');
     }
 
+    public static function isNightLookupWindow(?Carbon $at = null): bool
+    {
+        $hour = ($at ?? now())->hour;
+
+        return $hour >= self::NIGHT_LOOKUP_START_HOUR || $hour < self::NIGHT_LOOKUP_END_HOUR;
+    }
+
+    public function isNightDelivery(): bool
+    {
+        return !$this->is_location && $this->delivery_type_code == DeliveryType::TYPE_DE_NUIT;
+    }
+
+    /**
+     * Moment de la confirmation par le client (order_date), ou de la création à défaut.
+     */
+    public function confirmedAt(): Carbon
+    {
+        return $this->order_date ? Carbon::parse($this->order_date) : $this->created_at->copy();
+    }
+
+    /**
+     * Moment à partir duquel on cherche des chauffeurs.
+     * Une commande de nuit confirmée en journée attend l'ouverture de la fenêtre de nuit (20h).
+     */
+    public function performerLookupStartsAt(): Carbon
+    {
+        $start = $this->confirmedAt();
+
+        if ($this->isNightDelivery() && !self::isNightLookupWindow($start)) {
+            return $start->setTime(self::NIGHT_LOOKUP_START_HOUR, 0);
+        }
+
+        return $start;
+    }
+
+    /**
+     * Moment après lequel une commande toujours sans chauffeur passe en « chauffeur non trouvé ».
+     *  - location : début du jour de location (au moins le délai standard après la confirmation)
+     *  - nuit : 07h, fin de la fenêtre de nuit
+     *  - autres : délai standard après la confirmation
+     */
+    public function performerLookupDeadline(): Carbon
+    {
+        $start = $this->performerLookupStartsAt();
+        $standardDeadline = $start->copy()->addMinutes(self::PERFORMER_LOOKUP_TIMEOUT);
+
+        if ($this->is_location) {
+            $item = $this->orderItems->firstWhere('service_slug', Service::LOCATION);
+
+            if ($item && $item->location_start_date) {
+                return Carbon::parse($item->location_start_date)->startOfDay()->max($standardDeadline);
+            }
+
+            return $standardDeadline;
+        }
+
+        if ($this->isNightDelivery()) {
+            $deadline = $start->copy()->setTime(self::NIGHT_LOOKUP_END_HOUR, 0);
+
+            return $start->hour >= self::NIGHT_LOOKUP_START_HOUR ? $deadline->addDay() : $deadline;
+        }
+
+        return $standardDeadline;
+    }
+
+
+    /**
+     * Commandes ni terminées, ni annulées, ni en échec : elles empêchent la suppression du compte.
+     */
+    public function scopeInProgress($q)
+    {
+        return $q->where('is_completed', false)
+                ->where(fn ($qq) => $qq->where('is_draft', false)->orWhereNull('is_draft'))
+                ->whereNotIn('status', [
+                    self::CANCELLED,
+                    self::CANCELLED_WITH_PAYMENT,
+                    self::CANCELLED_BY_TAXI,
+                    self::FAILED,
+                    self::PERFORMER_NOT_FOUND,
+                ]);
+    }
 
     // Order scops for driver
-   
+
     public function scopeActive($q)
     {
         return $q->where('is_draft', false)

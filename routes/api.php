@@ -27,11 +27,12 @@ Route::prefix('v1/')->group(function () {
 
     //Inscription par téléphone (Client)
     Route::post('customers/register', [App\Http\Controllers\API\CustomerAPIController::class, 'register']);
-    Route::post('customers/login', [App\Http\Controllers\API\CustomerAPIController::class, 'login']);
+    // Route::post('customers/login', [App\Http\Controllers\API\CustomerAPIController::class, 'login']);
     Route::post('customers/logout', [App\Http\Controllers\API\CustomerAPIController::class, 'logout'])->middleware("auth.customer:api-customers");
     Route::post('customers/refresh', [App\Http\Controllers\API\CustomerAPIController::class, 'refresh'])->middleware("auth.customer:api-customers");
     Route::put('customers/edit_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'update'])->middleware("auth.customer:api-customers");
     Route::get('customers/get_profil', [App\Http\Controllers\API\CustomerAPIController::class, 'getProfil'])->middleware("auth.customer:api-customers");
+    Route::delete('customers/account', [App\Http\Controllers\API\CustomerAPIController::class, 'deleteAccount'])->middleware("auth.customer:api-customers");
 
     Route::post('customers/devices/create', [App\Http\Controllers\API\CustomerDeviceAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
@@ -60,11 +61,11 @@ Route::prefix('v1/')->group(function () {
 
 
     //Confirmer une course (client)
-    Route::put('orders/{id}/confirm', [App\Http\Controllers\API\OrderAPIController::class, 'confirm']);
+    Route::put('orders/{id}/confirm', [App\Http\Controllers\API\OrderAPIController::class, 'confirm'])->middleware("auth.customer:api-customers");
 
-    Route::put('orders/{id}/cancel', [App\Http\Controllers\API\OrderAPIController::class, 'cancel']);
+    Route::put('orders/{id}/cancel', [App\Http\Controllers\API\OrderAPIController::class, 'cancel'])->middleware("auth.customer:api-customers");
 
-    Route::put('orders/{id}/rating', [App\Http\Controllers\API\OrderAPIController::class, 'rating']);
+    Route::put('orders/{id}/rating', [App\Http\Controllers\API\OrderAPIController::class, 'rating'])->middleware("auth.customer:api-customers");
 
 
     // Historique des commandes
@@ -75,7 +76,7 @@ Route::prefix('v1/')->group(function () {
     Route::get('orders/{id}/info', [App\Http\Controllers\API\OrderAPIController::class, 'show']);
 
     //Rechercher d'un livreur
-    Route::put('orders/{id}/perform_driver_lookup', [App\Http\Controllers\API\OrderAPIController::class, 'performDriverLookup']);
+    Route::put('orders/{id}/perform_driver_lookup', [App\Http\Controllers\API\OrderAPIController::class, 'performDriverLookup'])->middleware("auth.customer:api-customers");
 
     Route::get('customers/orders/list', [App\Http\Controllers\API\OrderAPIController::class, 'getCustomerOrders'])->middleware("auth.customer:api-customers");
 
@@ -100,8 +101,8 @@ Route::prefix('v1/')->group(function () {
 
 
     //Accepter ou Refuser une taches  (Livreur)
-    Route::put('order_invitations/{id}/accept', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'accept']);
-    Route::put('order_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse']);
+    Route::put('order_invitations/{id}/accept', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'accept'])->middleware("auth.driver:api-drivers");
+    Route::put('order_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse'])->middleware("auth.driver:api-drivers");
 
     //TODO Modifier le statut d’un ramassage ou livraison (ANNULER, DEMARRER, REUSSIR, ECHOUER ) (Livreur)
     Route::put('route_points/{id}/update_status', [App\Http\Controllers\API\RoutePointAPIController::class, 'updateStatus'])->middleware("auth.driver:api-drivers");
@@ -112,7 +113,7 @@ Route::prefix('v1/')->group(function () {
 
     //Inscription par téléphone Driver
     Route::post('drivers/register', [App\Http\Controllers\API\DriverAPIController::class, 'register']);
-    Route::post('drivers/login', [App\Http\Controllers\API\DriverAPIController::class, 'login']);
+    // Route::post('drivers/login', [App\Http\Controllers\API\DriverAPIController::class, 'login']);
 
     Route::post('drivers/send-otp', [App\Http\Controllers\API\DriverAPIController::class, 'sendOTP']);
 
@@ -122,6 +123,7 @@ Route::prefix('v1/')->group(function () {
     Route::post('drivers/refresh', [App\Http\Controllers\API\DriverAPIController::class, 'refresh'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/edit_profil', [App\Http\Controllers\API\DriverAPIController::class, 'update'])->middleware("auth.driver:api-drivers");
     Route::get('drivers/get_profil', [App\Http\Controllers\API\DriverAPIController::class, 'getProfil'])->middleware("auth.driver:api-drivers");
+    Route::delete('drivers/account', [App\Http\Controllers\API\DriverAPIController::class, 'deleteAccount'])->middleware("auth.driver:api-drivers");
 
     Route::post('drivers/cars/create', [App\Http\Controllers\API\DriverAPIController::class, 'createCar'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/cars/{id}/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateCar'])->middleware("auth.driver:api-drivers");
@@ -138,7 +140,7 @@ Route::prefix('v1/')->group(function () {
     Route::put('drivers/orders_invitations/{id}/refuse', [App\Http\Controllers\API\OrderInvitationAPIController::class, 'refuse'])->middleware("auth.driver:api-drivers");
 
 
-    Route::put('drivers/availabilities/{id}/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateAvailability']);
+    Route::put('drivers/availabilities/{id}/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateAvailability'])->middleware("auth.driver:api-drivers");
 
     Route::get('drivers/notifications/list', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'index'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/notifications/{id}/update', [App\Http\Controllers\API\DriverNotificationAPIController::class, 'update'])->middleware("auth.driver:api-drivers");
@@ -147,8 +149,8 @@ Route::prefix('v1/')->group(function () {
     Route::post('drivers/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'addCarrierToDriver'])->middleware("auth.driver:api-drivers");
     Route::delete('drivers/carriers/{carrierId}', [App\Http\Controllers\API\CarrierAPIController::class, 'removeCarrierFromDriver'])->middleware("auth.driver:api-drivers");
 
-    Route::post('drivers/transactions/balance/deposit', [App\Http\Controllers\API\DriverAPIController::class, 'depositBalance']);
-    Route::post('drivers/transactions/balance/withdraw', [App\Http\Controllers\API\DriverAPIController::class, 'withdrawBalance']);
+    Route::post('drivers/transactions/balance/deposit', [App\Http\Controllers\API\DriverAPIController::class, 'depositBalance'])->middleware("auth.driver:api-drivers");
+    Route::post('drivers/transactions/balance/withdraw', [App\Http\Controllers\API\DriverAPIController::class, 'withdrawBalance'])->middleware("auth.driver:api-drivers");
     Route::get('drivers/earnings/daily', [App\Http\Controllers\API\DriverAPIController::class, 'getDailyEarnings'])->middleware("auth.driver:api-drivers");
     Route::put('drivers/zone-base/update', [App\Http\Controllers\API\DriverAPIController::class, 'updateZoneBase'])->middleware("auth.driver:api-drivers");
     Route::get('drivers/order-invitations/pending', [App\Http\Controllers\API\DriverAPIController::class, 'getPendingOrderInvitations'])->middleware("auth.driver:api-drivers");
@@ -275,9 +277,6 @@ Route::prefix('v1/')->group(function () {
 //Route::resource('slides', App\Http\Controllers\API\SlideAPIController::class)
   //  ->except(['create', 'edit']);
 
-
-Route::resource('driver-otps', App\Http\Controllers\API\DriverOtpAPIController::class)
-    ->except(['create', 'edit']);
 
 Route::resource('driver-carriers', App\Http\Controllers\API\DriverCarrierAPIController::class)
     ->except(['create', 'edit']);

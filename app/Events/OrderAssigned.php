@@ -2,9 +2,7 @@
 
 namespace App\Events;
 
-use App\Models\Invoice;
 use App\Models\OrderInvitation;
-use App\Models\RoutePoint;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -60,27 +58,6 @@ class OrderAssigned implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
-        $invitation = $this->orderInvitation->fresh();
-        $order = $invitation->order;
-        $invoice = $order ? Invoice::where('order_id', $order->id)->first() : null;
-
-        return [
-            'invitation_id' => $invitation->id,
-            'order_id' => $invitation->order_id,
-            'status' => $invitation->status,
-            'created_at' => $invitation->created_at?->toIso8601String(),
-            'order' => $order ? [
-                'reference' => $order->reference,
-                'service_slug' => $order->service_slug,
-                'delivery_type_code' => $order->delivery_type_code,
-                'driver_due' => $invoice?->driver_due,
-                'currency_code' => $order->currency_code,
-                'route_points' => RoutePoint::where('order_id', $order->id)
-                    ->orderBy('visit_order')
-                    ->get()
-                    ->map(fn (RoutePoint $point) => $point->only(['type', 'address_name', 'latitude', 'longitude']))
-                    ->all(),
-            ] : null,
-        ];
+        return $this->orderInvitation->fresh()->broadcastPayload();
     }
 }

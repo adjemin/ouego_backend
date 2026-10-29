@@ -125,7 +125,7 @@ class CimentOrderFlowTest extends AggregatOrderTestCase
     {
         $this->createOrder($this->orderItem(['carrier_id' => 999999]))
             ->assertStatus(400)
-            ->assertJsonPath('message', 'Carrier introuvable');
+            ->assertJsonPath('message', 'Carrière introuvable');
     }
 
     /** @test */

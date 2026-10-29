@@ -5,8 +5,8 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Order;
 use App\Models\OrderInvitation;
+use App\Events\OrderInvitationCancelled;
 use App\Models\DeliveryType;
-use App\Models\Service;
 use App\Services\DriverAssignmentService;
 use Illuminate\Support\Facades\Log;
 
@@ -51,10 +51,12 @@ class ReassignNightOrders extends Command
 
         foreach ($orders as $order) {
             try {
-                // Annuler les invitations en attente existantes
-                OrderInvitation::where('order_id', $order->id)
-                    ->where('is_waiting_acceptation', true)
-                    ->update(['is_waiting_acceptation' => false]);
+                // Supprimer les invitations en attente : ces chauffeurs pourront être réinvités.
+                // L'invitation acceptée par le chauffeur retiré reste close : il n'est pas réinvité.
+                OrderInvitation::deleteWaiting(
+                    OrderInvitation::where('order_id', $order->id),
+                    OrderInvitationCancelled::REASSIGNED
+                );
 
                 // Réinitialiser le chauffeur assigné
                 $order->update([

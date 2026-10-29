@@ -61,8 +61,8 @@ class DriverAssignmentService {
        }
 
        if($order->delivery_type_code == DeliveryType::TYPE_DE_NUIT){
-            // Les commandes de nuit : recherche de chauffeurs lancée automatiquement à partir de 20h
-            if(now()->hour >= 20){
+            // Les commandes de nuit : recherche de chauffeurs uniquement de 20h à 07h
+            if(Order::isNightLookupWindow()){
                 $nuitService = app(DriverNuitAssignmentService::class);
                 if($order->service_slug == Service::COURSE)  {
                     $nuitService->assignCourseNearestDrivers($order, $distance, $this->maxDrivers);

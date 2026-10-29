@@ -18,6 +18,8 @@ use App\Models\Commercial;
 use Carbon\Carbon;
 use MtnSmsCloud\MTNSMSApi;
 use App\Models\CustomerDevice;
+use App\Models\Order;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -46,7 +48,7 @@ class CustomerAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($customers->toArray(), 'Customers retrieved successfully');
+        return $this->sendResponse($customers->toArray(), 'Clients récupérés avec succès');
     }
 
     /**
@@ -59,7 +61,7 @@ class CustomerAPIController extends AppBaseController
 
         $customer = $this->customerRepository->create($input);
 
-        return $this->sendResponse($customer->toArray(), 'Customer saved successfully');
+        return $this->sendResponse($customer->toArray(), 'Client enregistré avec succès');
     }
 
     /**
@@ -72,10 +74,10 @@ class CustomerAPIController extends AppBaseController
         $customer = $this->customerRepository->find($id);
 
         if (empty($customer)) {
-            return $this->sendError('Customer not found');
+            return $this->sendError('Client introuvable');
         }
 
-        return $this->sendResponse($customer->toArray(), 'Customer retrieved successfully');
+        return $this->sendResponse($customer->toArray(), 'Client récupéré avec succès');
     }
 
     /**
@@ -98,7 +100,7 @@ class CustomerAPIController extends AppBaseController
 
 
         if (empty($customer)) {
-            return $this->sendError('Customer not found');
+            return $this->sendError('Client introuvable');
         }
 
         // Empêcher la modification du code_commercial s'il existe déjà
@@ -128,7 +130,7 @@ class CustomerAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $customer
-        ], 'Customer updated successfully');
+        ], 'Client mis à jour avec succès');
     }
 
     /**
@@ -143,12 +145,12 @@ class CustomerAPIController extends AppBaseController
         $customer = $this->customerRepository->find($id);
 
         if (empty($customer)) {
-            return $this->sendError('Customer not found');
+            return $this->sendError('Client introuvable');
         }
 
         $customer->delete();
 
-        return $this->sendSuccess('Customer deleted successfully');
+        return $this->sendSuccess('Client supprimé avec succès');
     }
 
     public function register(Request $request){
@@ -160,26 +162,26 @@ class CustomerAPIController extends AppBaseController
         }
 
         if (!array_key_exists('last_name', $input)) {
-            return $this->sendError('last_name is required');
+            return $this->sendError('Le champ last_name est obligatoire');
         }
 
         if (!array_key_exists('first_name', $input)) {
-            return $this->sendError('first_name is required');
+            return $this->sendError('Le champ first_name est obligatoire');
         }
 
         if (!array_key_exists('dialing_code', $input)) {
-            return $this->sendError('dialing_code is required');
+            return $this->sendError('Le champ dialing_code est obligatoire');
         }
 
         if(!array_key_exists('phone_number', $input)) {
-            return $this->sendError('phone_number is required');
+            return $this->sendError('Le champ phone_number est obligatoire');
         }
 
         // Vérifier que le profile_id existe
         if (array_key_exists('profile_id', $input)) {
             $profile = CustomerProfile::find($input['profile_id']);
             if ($profile == null) {
-                return $this->sendError('Profile not found', 404);
+                return $this->sendError('Profil introuvable', 404);
             }
         }
 
@@ -241,7 +243,7 @@ class CustomerAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $customer
-        ], 'Customer saved successfully');
+        ], 'Client enregistré avec succès');
 
     }
 
@@ -253,11 +255,11 @@ class CustomerAPIController extends AppBaseController
         }
 
         if (!array_key_exists('dialing_code', $input)) {
-            return $this->sendError('dialing_code is required',400);
+            return $this->sendError('Le champ dialing_code est obligatoire',400);
         }
 
         if(!array_key_exists('phone_number', $input)) {
-            return $this->sendError('phone_number is required',400);
+            return $this->sendError('Le champ phone_number est obligatoire',400);
         }
 
         $input['phone'] = $input['dialing_code'].''.$input['phone_number'];
@@ -306,7 +308,7 @@ class CustomerAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $customer
-        ], 'Customer saved successfully');
+        ], 'Client enregistré avec succès');
     }
 
     public function logout(Request $request){
@@ -315,11 +317,37 @@ class CustomerAPIController extends AppBaseController
 
         return response()->json([
             'success' => true,
-            'message' => 'Successfully logged out',
+            'message' => 'Déconnexion réussie',
         ]);
 
     }
 
+
+    /**
+     * Suppression du compte par le client connecté.
+     * DELETE /customers/account
+     *
+     * Soft delete : une nouvelle inscription avec le même numéro restaure le compte (voir register()).
+     */
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        /** @var Customer $customer */
+        $customer = auth('api-customers')->user();
+
+        if (Order::where('customer_id', $customer->id)->inProgress()->exists()) {
+            return $this->sendError('Vous avez une commande en cours, vous ne pouvez pas supprimer votre compte', 400);
+        }
+
+        DB::transaction(function () use ($customer) {
+            // forceDelete : firebase_id est unique, une ligne soft-deleted bloquerait la réinscription depuis le même appareil
+            CustomerDevice::where('customer_id', $customer->id)->forceDelete();
+            $customer->delete();
+        });
+
+        auth('api-customers')->logout();
+
+        return $this->sendSuccess('Compte supprimé avec succès');
+    }
 
     public function refresh()
     {
@@ -332,7 +360,7 @@ class CustomerAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $customer
-        ], 'Token refreshed successfully');
+        ], 'Jeton actualisé avec succès');
     }
 
     public function getProfil(Request $request){
@@ -350,7 +378,7 @@ class CustomerAPIController extends AppBaseController
             'expires_in' => JWTAuth::factory()->getTTL(),
             'server_time'=> now(),
             'user' => $customer
-        ], 'Customer got successfully');
+        ], 'Client récupéré avec succès');
 
 
     }
@@ -372,8 +400,13 @@ class CustomerAPIController extends AppBaseController
                 return $this->sendError('Votre compte a été bloqué, veuillez contacter le support', 403);
             }
 
+            // Compte de test : OTP fixe, pas d'envoi de SMS
+            $isTestPhone = in_array($request->phone, config('otp.test_phones'), true);
+
             // Générer un OTP à 6 chiffres
-            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $otp = $isTestPhone
+                ? config('otp.test_code')
+                : str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
             // Créer ou mettre à jour l'entrée CustomerOTP
             $customerOTP = CustomerOTP::updateOrCreate(
@@ -381,15 +414,17 @@ class CustomerAPIController extends AppBaseController
                 [
                     'otp' => $otp,
                     'otp_expires_at' => Carbon::now()->addMinutes(5),
-                    'is_test_mode' => false // Vous pouvez ajuster cela selon vos besoins
+                    'is_test_mode' => $isTestPhone
                 ]
             );
 
-            try{
-                // Envoyer l'OTP par SMS
-                $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
-            } catch (\Exception $e) {
-                Log::error("Failed to send OTP SMS: " . $e->getMessage());
+            if (!$isTestPhone) {
+                try{
+                    // Envoyer l'OTP par SMS
+                    $this->orangeSMSService->sendSMS("+" . $request->phone, "Votre code OTP est: {$otp}");
+                } catch (\Exception $e) {
+                    Log::error("Failed to send OTP SMS: " . $e->getMessage());
+                }
             }
             
             return $this->sendResponse($customerOTP, 'OTP envoyé avec succès');
@@ -424,7 +459,7 @@ class CustomerAPIController extends AppBaseController
         $customer = Customer::where('phone', $request->phone)->first();
         if($customer == null){
 
-            return $this->sendResponse(true, 'OTP verified successfully');
+            return $this->sendResponse(true, 'OTP vérifié avec succès');
 
         }else{
             // Vérifier si le compte est bloquer
@@ -466,7 +501,7 @@ class CustomerAPIController extends AppBaseController
                 'expires_in' => JWTAuth::factory()->getTTL(),
                 'server_time'=> now(),
                 'user' => $customer
-            ], 'Customer got successfully');
+            ], 'Client récupéré avec succès');
         }
 
     }

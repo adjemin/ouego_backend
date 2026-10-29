@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SerializationScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
@@ -97,7 +98,11 @@ class Driver extends Authenticatable  implements JWTSubject
     }
 
     public function getCarsAttribute(){
-        return Engin::where('driver_id', $this->id)->get();
+        return SerializationScope::remember("Driver.cars:{$this->id}", function () {
+            $cars = Engin::where('driver_id', $this->id)->get();
+
+            return SerializationScope::active() ? $cars->load('pictures') : $cars;
+        });
     }
 
     public function getServicesAttribute($value){
@@ -113,6 +118,26 @@ class Driver extends Authenticatable  implements JWTSubject
         return $this->hasMany(Order::class, 'driver_id');
     }
 
+    public function orderInvitations(){
+        return $this->hasMany(OrderInvitation::class, 'driver_id');
+    }
+
+    /**
+     * Exclut les chauffeurs dont l'invitation pour cette commande est close (refusée, ou retirée par le système),
+     * pour laisser leur place à d'autres chauffeurs.
+     */
+    public function scopeWithoutClosedInvitationFor($query, ?int $orderId)
+    {
+        if ($orderId === null) {
+            return $query;
+        }
+
+        return $query->whereDoesntHave('orderInvitations', function ($q) use ($orderId) {
+            $q->where('order_id', $orderId)
+              ->where('is_waiting_acceptation', false);
+        });
+    }
+
     public function getDriverLicenseDocsAttribute($value){
         if($value == null){
             return [];
@@ -121,10 +146,10 @@ class Driver extends Authenticatable  implements JWTSubject
         return $json_array ;
     }
     public function getCurrentOrderCountAttribute(){
-        return Order::where('driver_id', $this->id)
+        return SerializationScope::remember("Driver.current_order_count:{$this->id}", fn () => Order::where('driver_id', $this->id)
             // ->where('is_draft', false)
             ->where('is_completed', false)
-            ->count();
+            ->count());
     }
 
     public function setLastLocationAttribute($value){
@@ -247,7 +272,10 @@ class Driver extends Authenticatable  implements JWTSubject
         }
 
         $zone = $this->zoneBase;
-        $carriers = $zone->carriers()->select(['carriers.id', 'carriers.name', 'carriers.location_latitude', 'carriers.location_longitude', 'carriers.phone'])->get();
+        $carriers = SerializationScope::remember(
+            "Zone.carriers:{$zone->id}",
+            fn () => $zone->carriers()->select(['carriers.id', 'carriers.name', 'carriers.location_latitude', 'carriers.location_longitude', 'carriers.phone'])->get()
+        );
         
         return [
             'id' => $zone->id,

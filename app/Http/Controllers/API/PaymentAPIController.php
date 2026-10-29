@@ -5,7 +5,6 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreatePaymentAPIRequest;
 use App\Http\Requests\API\UpdatePaymentAPIRequest;
 use App\Models\Payment;
-use App\Models\Order;
 use App\Models\Invoice;
 use App\Models\Driver;
 use App\Models\Customer;
@@ -65,7 +64,7 @@ class PaymentAPIController extends AppBaseController
         $payment = $this->paymentRepository->find($id);
 
         if (empty($payment)) {
-            return $this->sendError('Payment not found');
+            return $this->sendError('Paiement introuvable');
         }
 
         return $this->sendResponse($payment->toArray(), 'Payment retrieved successfully');
@@ -83,7 +82,7 @@ class PaymentAPIController extends AppBaseController
         $payment = $this->paymentRepository->find($id);
 
         if (empty($payment)) {
-            return $this->sendError('Payment not found');
+            return $this->sendError('Paiement introuvable');
         }
 
         $payment = $this->paymentRepository->update($input, $id);
@@ -103,7 +102,7 @@ class PaymentAPIController extends AppBaseController
         $payment = $this->paymentRepository->find($id);
 
         if (empty($payment)) {
-            return $this->sendError('Payment not found');
+            return $this->sendError('Paiement introuvable');
         }
 
         $payment->delete();
@@ -115,8 +114,8 @@ class PaymentAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $transaction_reference = $input['transaction_id'];
-        $status = $input['status'];
+        $transaction_reference = $input['transaction_id'] ?? null;
+        $status = $input['status'] ?? null;
 
         if (empty($transaction_reference)) {
             return response()->json([

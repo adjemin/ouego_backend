@@ -91,7 +91,7 @@ class RoutePointAPIController extends AppBaseController
         $routePoint = $this->routePointRepository->find($id);
 
         if (empty($routePoint)) {
-            return $this->sendError('Route Point not found');
+            return $this->sendError("Point d'arrêt introuvable");
         }
 
         return $this->sendResponse($routePoint->toArray(), 'Route Point retrieved successfully');
@@ -109,7 +109,7 @@ class RoutePointAPIController extends AppBaseController
         $routePoint = $this->routePointRepository->find($id);
 
         if (empty($routePoint)) {
-            return $this->sendError('Route Point not found');
+            return $this->sendError("Point d'arrêt introuvable");
         }
 
         $routePoint = $this->routePointRepository->update($input, $id);
@@ -129,7 +129,7 @@ class RoutePointAPIController extends AppBaseController
         $routePoint = $this->routePointRepository->find($id);
 
         if (empty($routePoint)) {
-            return $this->sendError('Route Point not found');
+            return $this->sendError("Point d'arrêt introuvable");
         }
 
         $routePoint->delete();
@@ -146,20 +146,23 @@ class RoutePointAPIController extends AppBaseController
         $driver = auth('api-drivers')->user();
 
         $input = $request->json()->all();
-        $input_route_point = [];
-        $input_route_point['status'] = $input['status'];
 
 
         /** @var RoutePoint $routePoint */
         $routePoint = $this->routePointRepository->find($id);
 
-        if (empty($routePoint)) {
-            return $this->sendError('Route Point not found', 400);
+        // Seul le chauffeur assigné à la commande fait avancer ses points d'arrêt.
+        // Même réponse qu'un point inexistant, pour ne pas révéler les commandes des autres chauffeurs.
+        if (empty($routePoint) || Order::find($routePoint->order_id)?->driver_id !== $driver->id) {
+            return $this->sendError("Point d'arrêt introuvable", 400);
         }
 
         if (!array_key_exists('status', $input) || empty($input['status'])) {
-            return $this->sendError('status is required', 400);
+            return $this->sendError('Le champ status est obligatoire', 400);
         }
+
+        $input_route_point = [];
+        $input_route_point['status'] = $input['status'];
 
         if(!in_array($input['status'], [
             RoutePoint::ACCEPTED,
@@ -403,6 +406,7 @@ class RoutePointAPIController extends AppBaseController
                 $order->completion_time = now();
                 $order->save();
                 $order->chargeDriver();
+                $order->creditCommercial();
 
                 // Register order history
                 $order->newOrderHistory(Order::DELIVERED_FINISH, $driver->table, $driver->id); 
@@ -416,6 +420,8 @@ class RoutePointAPIController extends AppBaseController
                         ]);
                     }
                 }
+
+                
 
             }
         }

@@ -51,11 +51,11 @@ class CustomerDeviceAPIController extends AppBaseController
         }
 
         if(!array_key_exists('customer_id', $input)){
-            return $this->sendError('customer_id is required');
+            return $this->sendError('Le champ customer_id est obligatoire');
         }
 
         if(!array_key_exists('firebase_id', $input)){
-            return $this->sendError('firebase_id is required');
+            return $this->sendError('Le champ firebase_id est obligatoire');
         }
 
         $customerDevices = CustomerDevice::where(['firebase_id' => $input['firebase_id']])->get();
@@ -80,7 +80,7 @@ class CustomerDeviceAPIController extends AppBaseController
         $customerDevice = $this->customerDeviceRepository->find($id);
 
         if (empty($customerDevice)) {
-            return $this->sendError('Customer Device not found');
+            return $this->sendError('Appareil du client introuvable');
         }
 
         return $this->sendResponse($customerDevice->toArray(), 'Customer Device retrieved successfully');
@@ -98,7 +98,7 @@ class CustomerDeviceAPIController extends AppBaseController
         $customerDevice = $this->customerDeviceRepository->find($id);
 
         if (empty($customerDevice)) {
-            return $this->sendError('Customer Device not found');
+            return $this->sendError('Appareil du client introuvable');
         }
 
         $customerDevice = $this->customerDeviceRepository->update($input, $id);
@@ -118,7 +118,7 @@ class CustomerDeviceAPIController extends AppBaseController
         $customerDevice = $this->customerDeviceRepository->find($id);
 
         if (empty($customerDevice)) {
-            return $this->sendError('Customer Device not found');
+            return $this->sendError('Appareil du client introuvable');
         }
 
         $customerDevice->delete();

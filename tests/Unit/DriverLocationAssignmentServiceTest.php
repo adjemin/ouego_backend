@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use Tests\TestCase;
 use App\Services\DriverLocationAssignmentService;
+use App\Models\Driver;
 use App\Models\Order;
 use App\Models\OrderInvitation;
 use App\Models\RoutePoint;
@@ -85,8 +86,8 @@ class DriverLocationAssignmentServiceTest extends TestCase
         Event::fake();
 
         $drivers = collect([
-            (object) ['id' => 1],
-            (object) ['id' => 2],
+            (new Driver())->forceFill(['id' => 1]),
+            (new Driver())->forceFill(['id' => 2]),
         ]);
 
         // Partial mock du service : on bypasse queryEligibleDrivers (requête PostGIS)

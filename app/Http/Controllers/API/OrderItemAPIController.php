@@ -60,7 +60,7 @@ class OrderItemAPIController extends AppBaseController
         $orderItem = $this->orderItemRepository->find($id);
 
         if (empty($orderItem)) {
-            return $this->sendError('Order Item not found');
+            return $this->sendError('Article de la commande introuvable');
         }
 
         return $this->sendResponse($orderItem->toArray(), 'Order Item retrieved successfully');
@@ -78,7 +78,7 @@ class OrderItemAPIController extends AppBaseController
         $orderItem = $this->orderItemRepository->find($id);
 
         if (empty($orderItem)) {
-            return $this->sendError('Order Item not found');
+            return $this->sendError('Article de la commande introuvable');
         }
 
         $orderItem = $this->orderItemRepository->update($input, $id);
@@ -98,7 +98,7 @@ class OrderItemAPIController extends AppBaseController
         $orderItem = $this->orderItemRepository->find($id);
 
         if (empty($orderItem)) {
-            return $this->sendError('Order Item not found');
+            return $this->sendError('Article de la commande introuvable');
         }
 
         $orderItem->delete();
