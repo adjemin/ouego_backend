@@ -40,6 +40,9 @@ Route::prefix('v1/')->group(function () {
 
     Route::get('slides/list', [App\Http\Controllers\API\SlideAPIController::class, 'index']);
 
+    // Contacts du support et liens légaux (public)
+    Route::get('support', [App\Http\Controllers\API\SupportAPIController::class, 'index']);
+
     Route::get('services/list', [App\Http\Controllers\API\ServiceAPIController::class, 'index']);
     Route::post('services/create', [App\Http\Controllers\API\ServiceAPIController::class, 'store'])->middleware("auth.customer:api-customers");
 
