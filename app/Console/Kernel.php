@@ -21,6 +21,9 @@ class Kernel extends ConsoleKernel
         // inviteraient les mêmes chauffeurs. Le verrou expire après 10 minutes si le processus meurt.
         $schedule->job(new ProcessPendingOrderAssignments)->everyTwoMinutes()->withoutOverlapping(10);
 
+        // Commandes Express acceptées mais non démarrées après EXPRESS_START_TIMEOUT_MINUTES : réattribution
+        $schedule->command('orders:release-unstarted-express')->everyMinute()->withoutOverlapping(10);
+
         // Attribuer les commandes de nuit tous les jours à 20h
         $schedule->command('orders:assign-night')->dailyAt('20:00')->withoutOverlapping(60);
 

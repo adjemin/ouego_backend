@@ -62,6 +62,9 @@ class SettingsSeeder extends Seeder
             // Journée
             ['name' => 'JOURNEE_CUTOFF_HOUR', 'value' => '12'],
 
+            // Express : délai (minutes) pour démarrer une course acceptée avant réattribution
+            ['name' => 'EXPRESS_START_TIMEOUT_MINUTES', 'value' => '15'],
+
             // Commercial
             ['name' => 'COMMERCIAL_DISCOUNT_AMOUNT', 'value' => '2500'],
             ['name' => 'COMMERCIAL_CREDIT_AMOUNT', 'value' => '2500'],
