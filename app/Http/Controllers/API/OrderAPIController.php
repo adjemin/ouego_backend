@@ -1498,7 +1498,16 @@ class OrderAPIController extends AppBaseController
         return $this->sendError('Commande introuvable');
     }
 
-    if($order->driver_id != null && $order->started){
+    if($order->service_slug == Service::AGREGATS_CONSTRUCTION){
+        // Agrégats : annulation possible tant que le chauffeur n'a pas chargé à la carrière
+        if($order->is_completed){
+            return $this->sendError('Cette commande est déjà terminée ou annulée', 400);
+        }
+
+        if($order->isLoaded()){
+            return $this->sendError('Vous ne pouvez plus annuler cette commande : le chauffeur a déjà chargé la marchandise', 400);
+        }
+    } elseif($order->driver_id != null && $order->is_started){
         return $this->sendError('Vous ne pouvez pas annuler cette commande car elle a commencé', 400);
     }
 
