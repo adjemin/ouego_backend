@@ -215,6 +215,36 @@ class Order extends Model
         ];
     }
 
+    /**
+     * Statuts atteints une fois la marchandise chargée (ou au-delà).
+     */
+    const LOADED_STATUSES = [
+        self::PICKUPED,
+        self::DELIVERY_ARRIVED,
+        self::PAY_WAITING,
+        self::READY_FOR_DELIVERY_CONFIRMATION,
+        self::DELIVERED,
+        self::DELIVERED_FINISH,
+        self::RETURNING,
+        self::RETURN_ARRIVED,
+        self::READY_FOR_RETURN_CONFIRMATION,
+        self::RETURNED_FINISH,
+        self::CANCELLED_WITH_ITEMS_ON_HANDS,
+    ];
+
+    /**
+     * Agrégats : le chauffeur a chargé dès que le point de départ (la carrière) est validé.
+     */
+    public function isLoaded(): bool
+    {
+        return in_array($this->status, self::LOADED_STATUSES, true)
+            || RoutePoint::where('order_id', $this->id)
+                ->where('type', RoutePoint::POINT_TYPE_SOURCE)
+                ->where('is_completed', true)
+                ->where('is_successful', true)
+                ->exists();
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class, 'order_id', 'id');
