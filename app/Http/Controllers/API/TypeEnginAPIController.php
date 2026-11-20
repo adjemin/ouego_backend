@@ -29,11 +29,18 @@ class TypeEnginAPIController extends AppBaseController
      */
     public function index(Request $request): JsonResponse
     {
-        $typeEngins = $this->typeEnginRepository->all(
-            $request->except(['skip', 'limit']),
+        $query = $this->typeEnginRepository->allQuery(
+            $request->except(['skip', 'limit', 'product_id']),
             $request->get('skip'),
             $request->get('limit')
         );
+
+        // ?product_id=X : uniquement les types d'engin capables de transporter ce produit
+        if ($request->filled('product_id')) {
+            $query->whereHas('products', fn ($q) => $q->where('products.id', $request->integer('product_id')));
+        }
+
+        $typeEngins = $query->get();
 
         return $this->sendResponse($typeEngins->toArray(), "Types d'engin récupérés avec succès");
     }

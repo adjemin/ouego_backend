@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateProductAPIRequest;
+use App\Http\Requests\API\SyncProductTypeEnginsAPIRequest;
 use App\Http\Requests\API\UpdateProductAPIRequest;
 use App\Models\Product;
 use App\Repositories\ProductRepository;
@@ -96,6 +97,25 @@ class ProductAPIController extends AppBaseController
         $product = $this->productRepository->update($input, $id);
 
         return $this->sendResponse($product->toArray(), 'Produit mis à jour avec succès');
+    }
+
+    /**
+     * Associe le produit aux types d'engin (camions) donnés.
+     * Remplace les associations existantes ; une liste vide les retire toutes.
+     * PUT /products/{id}/type-engins
+     */
+    public function syncTypeEngins($id, SyncProductTypeEnginsAPIRequest $request): JsonResponse
+    {
+        /** @var Product $product */
+        $product = $this->productRepository->find($id);
+
+        if (empty($product)) {
+            return $this->sendError('Produit introuvable');
+        }
+
+        $product->typeEngins()->sync($request->validated()['type_engin_ids']);
+
+        return $this->sendResponse($product->fresh()->toArray(), "Types d'engin du produit mis à jour avec succès");
     }
 
     /**
