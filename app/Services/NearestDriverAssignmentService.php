@@ -194,14 +194,16 @@ abstract class NearestDriverAssignmentService
         $query = $this->eligibleDriversQuery($service_slug, $latitude, $longitude, $order_id)
             ->whereIn('id', $driverIds);
 
-        // Pas de restriction de distance pour le gravier et le ciment
         $orderItem = OrderItem::where('order_id', $order_id)->first();
-        $isGravier = $orderItem
-            && isset($orderItem->meta_data['product_slug'])
-            && in_array($orderItem->meta_data['product_slug'], [
-                Product::GRAVIER_SLUG,
-                Product::CIMENT_SLUG,
-            ]);
+        $productSlug = $orderItem->meta_data['product_slug'] ?? null;
+
+        $this->withTruckTypeForProduct($query, $productSlug);
+
+        // Pas de restriction de distance pour le gravier et le ciment
+        $isGravier = in_array($productSlug, [
+            Product::GRAVIER_SLUG,
+            Product::CIMENT_SLUG,
+        ], true);
 
         if ($maxDistance && !$isGravier) {
             $this->withinDistance($query, $latitude, $longitude, $maxDistance);
@@ -268,6 +270,27 @@ abstract class NearestDriverAssignmentService
             ->whereColumn('drivers.id', 'orders.driver_id')
             ->active()
             ->{$deliveryTypeScope}();
+    }
+
+    /**
+     * Ne garde que les chauffeurs ayant au moins un camion (engins.type_engin = slug) d'un type
+     * d'engin associé au produit. Sans type associé au produit, aucun filtre n'est appliqué.
+     */
+    private function withTruckTypeForProduct(Builder $query, ?string $productSlug): void
+    {
+        $product = $productSlug ? Product::where('slug', $productSlug)->first() : null;
+        $typeEnginSlugs = $product ? $product->typeEngins()->pluck('type_engins.slug')->all() : [];
+
+        if (empty($typeEnginSlugs)) {
+            return;
+        }
+
+        // engins.driver_id est un varchar : comparaison avec drivers.id converti en texte
+        $query->whereExists(fn ($q) => $q->selectRaw('1')
+            ->from('engins')
+            ->whereRaw('engins.driver_id = drivers.id::text')
+            ->whereNull('engins.deleted_at')
+            ->whereIn('engins.type_engin', $typeEnginSlugs));
     }
 
     private function withinDistance(Builder $query, $latitude, $longitude, $maxDistance): void
