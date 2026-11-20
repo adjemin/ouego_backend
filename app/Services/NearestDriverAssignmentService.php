@@ -10,6 +10,7 @@ use App\Models\OrderInvitation;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\RoutePoint;
+use App\Models\TypeEnginModel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 
@@ -161,6 +162,8 @@ abstract class NearestDriverAssignmentService
     {
         $query = $this->eligibleDriversQuery($service_slug, $latitude, $longitude, $orderId);
 
+        $this->withVehicleModelForOrder($query, $orderId);
+
         if ($maxDistance) {
             $this->withinDistance($query, $latitude, $longitude, $maxDistance);
         }
@@ -270,6 +273,39 @@ abstract class NearestDriverAssignmentService
             ->whereColumn('drivers.id', 'orders.driver_id')
             ->active()
             ->{$deliveryTypeScope}();
+    }
+
+    /**
+     * Courses : ne garde que les chauffeurs ayant un camion du modèle choisi par le client (meta_data.engin_model).
+     * Les camions dont le modèle n'est pas encore renseigné sont retenus s'ils sont du même type d'engin.
+     * Sans modèle ni type sur la commande, aucun filtre n'est appliqué.
+     */
+    private function withVehicleModelForOrder(Builder $query, ?int $orderId): void
+    {
+        $metaData = $orderId ? (OrderItem::where('order_id', $orderId)->first()?->meta_data ?? []) : [];
+
+        $modelSlug = $metaData['engin_model'] ?? null;
+        $typeEnginSlug = ($modelSlug ? TypeEnginModel::where('slug', $modelSlug)->value('type_engin_slug') : null)
+            ?? ($metaData['type_engin_slug'] ?? null);
+
+        if (!$modelSlug && !$typeEnginSlug) {
+            return;
+        }
+
+        $query->whereExists(fn ($q) => $q->selectRaw('1')
+            ->from('engins')
+            ->whereRaw('engins.driver_id = drivers.id::text')
+            ->whereNull('engins.deleted_at')
+            ->where(function ($q) use ($modelSlug, $typeEnginSlug) {
+                if ($modelSlug) {
+                    $q->where('engins.type_engin_model_slug', $modelSlug);
+                }
+
+                if ($typeEnginSlug) {
+                    $q->orWhere(fn ($q) => $q->whereNull('engins.type_engin_model_slug')
+                        ->where('engins.type_engin', $typeEnginSlug));
+                }
+            }));
     }
 
     /**

@@ -73,6 +73,7 @@
                 "puissance_fiscale": null,
                 "serie": null,
                 "type_engin": null,
+                "type_engin_model_slug": null,
                 "updated_at": "2026-09-22T10:00:00.000000Z",
                 "usages": null
             }
