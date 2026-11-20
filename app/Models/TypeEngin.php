@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\SerializationScope;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TypeEngin extends Model
@@ -34,6 +35,16 @@ class TypeEngin extends Model
     public static array $rules = [
 
     ];
+
+    /**
+     * Produits que ce type d'engin peut transporter.
+     */
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'product_engin_relations', 'type_engin_id', 'product_id')
+            ->wherePivotNull('deleted_at')
+            ->withTimestamps();
+    }
 
     public function getModelsAttribute(){
 

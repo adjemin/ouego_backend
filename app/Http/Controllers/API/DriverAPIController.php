@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreateDriverAPIRequest;
 use App\Http\Requests\API\UpdateDriverAPIRequest;
 use App\Models\Driver;
 use App\Models\Engin;
+use App\Models\TypeEnginModel;
 use App\Models\EnginPicture;
 use App\Models\Invoice;
 use App\Models\Transaction;
@@ -418,9 +419,19 @@ class DriverAPIController extends AppBaseController
             $input = $request->all();
         }
 
+        $typeEnginModel = null;
+        if (!empty($input['type_engin_model_slug'] ?? null)) {
+            $typeEnginModel = TypeEnginModel::where('slug', $input['type_engin_model_slug'])->first();
+            if ($typeEnginModel === null) {
+                return $this->sendError("Modèle d'engin introuvable", 400);
+            }
+        }
+
         $car = Engin::create([
             "car_docs" => $request->input("car_docs"),
-            "driver_id" => $driver->id
+            "driver_id" => $driver->id,
+            "type_engin_model_slug" => $typeEnginModel?->slug,
+            "type_engin" => $typeEnginModel?->type_engin_slug,
         ]);
 
         $pictures = $request->input("pictures");
@@ -460,16 +471,34 @@ class DriverAPIController extends AppBaseController
             $input = $request->all();
         }
 
+        $driver = auth('api-drivers')->user();
+
+        // Un chauffeur ne peut modifier que ses propres camions
         /** @var Engin $engin */
-        $engin = $this->enginRepository->find($id);
+        $engin = Engin::where('id', $id)->where('driver_id', (string) $driver->id)->first();
 
         if (empty($engin)) {
             return $this->sendError('Engin introuvable');
         }
 
-        $engin = $this->enginRepository->update($input, $id);
+        // Le propriétaire du camion ne se change pas par cette route
+        unset($input['driver_id']);
 
-        $driver = auth('api-drivers')->user();
+        if (array_key_exists('type_engin_model_slug', $input)) {
+            if (empty($input['type_engin_model_slug'])) {
+                $input['type_engin_model_slug'] = null;
+            } else {
+                $typeEnginModel = TypeEnginModel::where('slug', $input['type_engin_model_slug'])->first();
+                if ($typeEnginModel === null) {
+                    return $this->sendError("Modèle d'engin introuvable", 400);
+                }
+
+                // Le type du camion découle de son modèle
+                $input['type_engin'] = $typeEnginModel->type_engin_slug;
+            }
+        }
+
+        $engin->fill($input)->save();
 
         $token = JWTAuth::fromUser($driver);
 
