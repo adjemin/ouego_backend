@@ -27,6 +27,11 @@ return [
             'webhook_secret' => env('JEKO_WEBHOOK_SECRET'),
             'max_amount' => 2000000,
             'timeout' => 15,
+            // Moyen de paiement OUEGO → paymentMethod d'un contact Jèko (remboursements).
+            // La doc des contacts écrit orange_money, celle des transferts orange : à confirmer avec Jèko.
+            'contact_methods' => [
+                'orange' => env('JEKO_CONTACT_METHOD_ORANGE', 'orange_money'),
+            ],
         ],
     ],
 ];

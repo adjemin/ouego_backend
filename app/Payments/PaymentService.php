@@ -4,6 +4,9 @@ namespace App\Payments;
 
 use App\Events\CustomerNotificationCreated;
 use App\Events\PaymentStatusUpdated;
+use App\Jobs\ProcessRefund;
+use App\Models\PaymentRefund;
+use App\Payments\Data\GatewayRefundResult;
 use App\Models\CustomerNotification;
 use App\Models\Order;
 use App\Services\OrderDispatchService;
@@ -25,6 +28,9 @@ use Illuminate\Support\Facades\Log;
  */
 class PaymentService
 {
+    /** Délais avant chaque nouvel essai de remboursement, en minutes (le dernier se répète). */
+    private const REFUND_BACKOFF = [5, 15, 30, 60];
+
     /** États qu'aucune confirmation ultérieure ne modifie. EXPIRED n'en fait pas partie : un paiement tardif reste crédité. */
     private const DEFINITIVE = [Payment::STATUS_SUCCESSFUL, Payment::STATUS_FAILED, Payment::STATUS_CANCELLED];
 
@@ -286,6 +292,7 @@ class PaymentService
                 'invoice_id' => $invoice->id,
                 'invoice_status' => $invoice->status,
             ]);
+            $this->afterCommit[] = fn () => $this->refundPayment($payment->fresh(), null);
 
             return;
         }
@@ -312,7 +319,14 @@ class PaymentService
             return;
         }
 
-        if (in_array($order->status, [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT], true) || $order->is_completed) {
+        if (in_array($order->status, [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT], true)) {
+            // Paiement arrivé après l'annulation : remboursé
+            $this->afterCommit[] = fn () => $this->requestRefund($order->fresh());
+
+            return;
+        }
+
+        if ($order->is_completed) {
             return;
         }
 
@@ -335,6 +349,236 @@ class PaymentService
             ]);
             event(new CustomerNotificationCreated($notification));
         };
+    }
+
+    // ---------------------------------------------------------------
+    // Remboursements
+    // ---------------------------------------------------------------
+
+    /**
+     * Commande en ligne annulée : rembourse intégralement chaque paiement réussi de sa facture, par son opérateur
+     * d'origine. La commande passe en CANCELLED_WITH_PAYMENT et la facture en REFUNDED. Idempotent.
+     */
+    public function requestRefund(Order $order): ?PaymentRefund
+    {
+        if (! $order->isPaidOnline()) {
+            return null;
+        }
+
+        $invoice = $order->orderInvoice();
+        if (! $invoice) {
+            return null;
+        }
+
+        $payments = Payment::where('invoice_id', $invoice->id)
+            ->where('status', Payment::STATUS_SUCCESSFUL)
+            ->whereNotNull('provider')
+            ->where('amount', '>', 0)
+            ->get();
+        if ($payments->isEmpty()) {
+            return null;
+        }
+
+        $refund = null;
+        foreach ($payments as $payment) {
+            $refund = $this->refundPayment($payment, $order);
+        }
+
+        DB::transaction(function () use ($order, $invoice) {
+            Order::whereKey($order->id)->whereIn('status', [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT])
+                ->update(['status' => Order::CANCELLED_WITH_PAYMENT]);
+            Invoice::whereKey($invoice->id)->update(['status' => Invoice::REFUNDED]);
+        });
+
+        return $refund;
+    }
+
+    /** Crée (une seule fois par paiement) le remboursement intégral d'un paiement et l'envoie à l'opérateur. */
+    public function refundPayment(Payment $payment, ?Order $order): PaymentRefund
+    {
+        $created = false;
+
+        $refund = DB::transaction(function () use ($payment, $order, &$created) {
+            Payment::whereKey($payment->id)->lockForUpdate()->first();
+
+            $existing = PaymentRefund::where('payment_id', $payment->id)->first();
+            if ($existing) {
+                return $existing;
+            }
+
+            $created = true;
+
+            return PaymentRefund::create([
+                'payment_id' => $payment->id,
+                'order_id' => $order?->id,
+                'provider' => $payment->provider,
+                'amount' => (int) $payment->amount,
+                'currency_code' => $payment->currency_code ?? 'XOF',
+                'reference' => 'RF-'.$payment->payment_reference,
+                'recipient_phone' => $payment->payment_gateway_buyer_reference ?: $this->payerPhone($payment),
+                'recipient_method' => $payment->payment_gateway_payment_method ?: $payment->payment_method_code,
+                'status' => PaymentRefund::PENDING,
+            ]);
+        });
+
+        if ($created) {
+            ProcessRefund::dispatch($refund->id);
+        }
+
+        return $refund->fresh();
+    }
+
+    /** Numéro du compte OUEGO qui a payé, si l'opérateur n'a pas renvoyé celui du payeur. */
+    private function payerPhone(Payment $payment): ?string
+    {
+        $invoice = Invoice::find($payment->invoice_id);
+        if ($invoice?->order_source === 'transactions'
+            && Transaction::find($invoice->order_id)?->user_source === 'drivers') {
+            return Driver::find($payment->user_id)?->phone;
+        }
+
+        return Customer::find($payment->user_id)?->phone;
+    }
+
+    /** Envoie un remboursement PENDING arrivé à échéance. Le verrou empêche deux envois simultanés. */
+    public function processRefund(int $refundId): void
+    {
+        $succeeded = DB::transaction(function () use ($refundId) {
+            /** @var PaymentRefund|null $refund */
+            $refund = PaymentRefund::whereKey($refundId)->lockForUpdate()->first();
+            if (! $refund || $refund->status !== PaymentRefund::PENDING
+                || ($refund->next_attempt_at && $refund->next_attempt_at->isFuture())) {
+                return false;
+            }
+
+            $refund->attempts++;
+
+            try {
+                $result = $this->gateways->driver($refund->provider)->refund($refund, $refund->payment);
+            } catch (\Throwable $e) {
+                // Issue inconnue : le transfert existe peut-être, le prochain essai garde la même référence
+                $this->scheduleRefundRetry($refund, $e->getMessage(), false);
+
+                return false;
+            }
+
+            return $this->applyRefundResult($refund, $result);
+        });
+
+        if ($succeeded) {
+            $this->notifyRefunded(PaymentRefund::find($refundId));
+        }
+    }
+
+    /** Relit chez l'opérateur un remboursement en cours de transfert. */
+    public function refreshRefund(PaymentRefund $refund): void
+    {
+        $succeeded = DB::transaction(function () use ($refund) {
+            /** @var PaymentRefund|null $locked */
+            $locked = PaymentRefund::whereKey($refund->id)->lockForUpdate()->first();
+            if (! $locked || $locked->status !== PaymentRefund::PROCESSING || empty($locked->provider_refund_id)) {
+                return false;
+            }
+
+            return $this->applyRefundResult($locked, $this->gateways->driver($locked->provider)->fetchRefundStatus($locked));
+        });
+
+        if ($succeeded) {
+            $this->notifyRefunded($refund->fresh());
+        }
+    }
+
+    /** Applique la réponse de l'opérateur ; renvoie true si le remboursement vient d'aboutir. */
+    private function applyRefundResult(PaymentRefund $refund, GatewayRefundResult $result): bool
+    {
+        if ($result->status === PaymentRefund::FAILED) {
+            // Refus définitif : le prochain essai crée un nouveau transfert, donc une nouvelle référence
+            $this->scheduleRefundRetry($refund, $result->error ?? 'Transfert refusé', true);
+
+            return false;
+        }
+
+        $refund->provider_refund_id = $result->providerRefundId ?? $refund->provider_refund_id;
+        $refund->status = $result->status;
+        $refund->next_attempt_at = null;
+        $refund->save();
+
+        return $result->status === PaymentRefund::SUCCESSFUL;
+    }
+
+    private function scheduleRefundRetry(PaymentRefund $refund, string $error, bool $newTransfer): void
+    {
+        $refund->last_error = mb_substr($error, 0, 1000);
+
+        if ($newTransfer) {
+            $refund->transfer_sequence = ($refund->transfer_sequence ?? 1) + 1;
+            $refund->provider_refund_id = null;
+        }
+
+        if ($refund->attempts >= (int) config('payments.refund_max_attempts')) {
+            $refund->status = PaymentRefund::FAILED;
+            $refund->next_attempt_at = null;
+            $refund->save();
+            Log::critical('Remboursement en échec', [
+                'refund_id' => $refund->id,
+                'payment_id' => $refund->payment_id,
+                'order_id' => $refund->order_id,
+                'amount' => $refund->amount,
+                'error' => $refund->last_error,
+            ]);
+
+            return;
+        }
+
+        $delay = self::REFUND_BACKOFF[min(max($refund->attempts - 1, 0), count(self::REFUND_BACKOFF) - 1)];
+        $refund->status = PaymentRefund::PENDING;
+        $refund->next_attempt_at = now()->addMinutes($delay);
+        $refund->save();
+    }
+
+    private function notifyRefunded(?PaymentRefund $refund): void
+    {
+        $payment = $refund?->payment;
+        if (! $payment) {
+            return;
+        }
+
+        $subtitle = 'Votre paiement de '.number_format($refund->amount, 0, ',', ' ').' F a été remboursé';
+        $invoice = Invoice::find($payment->invoice_id);
+
+        if ($invoice?->order_source === 'transactions'
+            && Transaction::find($invoice->order_id)?->user_source === 'drivers') {
+            $notification = \App\Models\DriverNotification::create([
+                'driver_id' => $payment->user_id,
+                'title' => 'Remboursement effectué',
+                'subtitle' => $subtitle,
+                'data_id' => $refund->id,
+                'type' => $refund->getTable(),
+                'is_read' => false,
+                'is_received' => false,
+            ]);
+            foreach (\App\Models\DriverDevice::where('driver_id', $payment->user_id)->get() as $device) {
+                try {
+                    \App\Jobs\SendPushNotificationDriver::dispatch($device->firebase_id, $notification);
+                } catch (\Throwable $e) {
+                    Log::error('Remboursement : push chauffeur impossible', ['refund_id' => $refund->id, 'error' => $e->getMessage()]);
+                }
+            }
+
+            return;
+        }
+
+        $notification = CustomerNotification::create([
+            'customer_id' => $payment->user_id,
+            'title' => 'Remboursement effectué',
+            'subtitle' => $subtitle,
+            'data_id' => $refund->order_id ?? $refund->id,
+            'type' => $refund->order_id ? 'orders' : $refund->getTable(),
+            'is_read' => false,
+            'is_received' => false,
+            'meta_data' => null,
+        ]);
+        event(new CustomerNotificationCreated($notification));
     }
 
     private function creditDeposit(Invoice $invoice): void

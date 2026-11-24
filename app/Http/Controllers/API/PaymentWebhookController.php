@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\PaymentRefund;
 use App\Payments\Data\GatewayWebhookEvent;
 use App\Payments\Exceptions\GatewayException;
 use App\Payments\Exceptions\InvalidWebhookSignature;
@@ -45,8 +46,12 @@ class PaymentWebhookController extends Controller
             return response()->json(['status' => 'KO', 'message' => 'Signature invalide'], 401);
         }
 
-        if ($event->event !== 'TRANSACTION_COMPLETED' || $event->kind !== GatewayWebhookEvent::KIND_PAYMENT) {
+        if ($event->event !== 'TRANSACTION_COMPLETED') {
             return response()->json(['status' => 'OK', 'message' => 'ignored']);
+        }
+
+        if ($event->kind === GatewayWebhookEvent::KIND_TRANSFER) {
+            return $this->handleTransfer($provider, $event);
         }
 
         $payment = $this->findPayment($provider, $event);
@@ -65,6 +70,42 @@ class PaymentWebhookController extends Controller
         } catch (GatewayException $e) {
             Log::error('Webhook de paiement : statut illisible chez l\'opérateur', [
                 'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return response()->json(['status' => 'OK', 'message' => 'received']);
+    }
+
+    /** Transfert terminé : seul un remboursement OUEGO en est l'origine. */
+    private function handleTransfer(string $provider, GatewayWebhookEvent $event): JsonResponse
+    {
+        $refund = ($event->providerPaymentId
+                ? PaymentRefund::where('provider', $provider)->where('provider_refund_id', $event->providerPaymentId)->first()
+                : null)
+            ?? PaymentRefund::findByProviderReference($event->reference);
+
+        if (! $refund || $refund->provider !== $provider) {
+            Log::warning('Webhook de transfert : remboursement introuvable', [
+                'provider' => $provider,
+                'transfer_id' => $event->providerPaymentId,
+                'reference' => $event->reference,
+            ]);
+
+            return response()->json(['status' => 'OK', 'message' => 'unknown transfer']);
+        }
+
+        // Transfert créé mais réponse perdue (409 au nouvel essai) : on rattache son id
+        if (empty($refund->provider_refund_id) && $event->providerPaymentId
+            && $event->reference === $refund->providerReference()) {
+            $refund->update(['provider_refund_id' => $event->providerPaymentId, 'status' => PaymentRefund::PROCESSING]);
+        }
+
+        try {
+            $this->payments->refreshRefund($refund);
+        } catch (GatewayException $e) {
+            Log::error('Webhook de transfert : statut illisible chez l\'opérateur', [
+                'refund_id' => $refund->id,
                 'error' => $e->getMessage(),
             ]);
         }

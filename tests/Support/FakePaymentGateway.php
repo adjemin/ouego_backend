@@ -39,6 +39,14 @@ class FakePaymentGateway implements PaymentGateway
 
     public bool $failStatus = false;
 
+    /** refund() lève une GatewayException (réponse ambiguë : réseau, 5xx). */
+    public bool $failRefund = false;
+
+    public int $refundStatusCalls = 0;
+
+    /** Références de transfert envoyées à chaque appel de refund(). */
+    public array $refundReferences = [];
+
     /** Installe le faux opérateur sous le code "fake" et le rend actif. */
     public static function install(bool $activate = true): self
     {
@@ -123,19 +131,26 @@ class FakePaymentGateway implements PaymentGateway
         return new GatewayWebhookEvent(
             'TRANSACTION_COMPLETED',
             $request->input('provider_payment_id'),
-            $request->input('reference')
+            $request->input('reference'),
+            $request->input('kind', GatewayWebhookEvent::KIND_PAYMENT)
         );
     }
 
     public function refund(PaymentRefund $refund, Payment $payment): GatewayRefundResult
     {
         $this->refundCalls++;
+        $this->refundReferences[] = $refund->providerReference();
+        if ($this->failRefund) {
+            throw new GatewayException('fake: remboursement sans réponse');
+        }
 
         return $this->nextRefund ?? new GatewayRefundResult(PaymentRefund::PROCESSING, 'fake-refund-'.$refund->id);
     }
 
     public function fetchRefundStatus(PaymentRefund $refund): GatewayRefundResult
     {
+        $this->refundStatusCalls++;
+
         return $this->nextRefundStatus ?? new GatewayRefundResult(PaymentRefund::PROCESSING, $refund->provider_refund_id);
     }
 }

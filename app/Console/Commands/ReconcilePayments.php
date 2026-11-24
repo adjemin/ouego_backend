@@ -6,7 +6,9 @@ use App\Events\CustomerNotificationCreated;
 use App\Models\CustomerNotification;
 use App\Models\Invoice;
 use App\Models\Order;
+use App\Jobs\ProcessRefund;
 use App\Models\Payment;
+use App\Models\PaymentRefund;
 use App\Models\Setting;
 use App\Payments\PaymentService;
 use Illuminate\Console\Command;
@@ -17,7 +19,9 @@ use Illuminate\Support\Facades\Log;
 /**
  * Rattrapage des paiements, chaque minute :
  *  1. relit chez l'opérateur les paiements en attente (Jèko n'envoie aucun webhook d'échec, et un webhook peut se perdre) ;
- *  2. annule les commandes en ligne jamais payées après ONLINE_ORDER_PAYMENT_TIMEOUT_MINUTES.
+ *  2. annule les commandes en ligne jamais payées après ONLINE_ORDER_PAYMENT_TIMEOUT_MINUTES ;
+ *  3. rembourse les commandes en ligne annulées hors API (dashboard, base) dont le paiement a réussi ;
+ *  4. relit les remboursements en cours de transfert et relance ceux dont l'essai suivant est dû.
  */
 class ReconcilePayments extends Command
 {
@@ -29,10 +33,14 @@ class ReconcilePayments extends Command
 
     private const DEFAULT_TIMEOUT_MINUTES = 30;
 
+    private const REFUND_BATCH = 100;
+
     public function handle(PaymentService $payments): int
     {
         $this->refreshPendingPayments($payments);
         $this->cancelUnpaidOnlineOrders();
+        $this->refundCancelledPaidOrders($payments);
+        $this->processRefunds($payments);
 
         return self::SUCCESS;
     }
@@ -96,6 +104,57 @@ class ReconcilePayments extends Command
             ->limit(self::BATCH)
             ->get()
             ->each(fn (Order $order) => $this->cancel($order));
+    }
+
+    private function refundCancelledPaidOrders(PaymentService $payments): void
+    {
+        Order::whereIn('status', [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT])
+            ->where('payment_method_code', '<>', Order::PAYMENT_MODE_CASH)
+            ->whereExists(fn ($q) => $q->select(DB::raw(1))->from('payments')
+                ->join('invoices', 'invoices.id', '=', 'payments.invoice_id')
+                ->whereColumn('invoices.order_id', 'orders.id')
+                ->where(fn ($q) => $q->whereNull('invoices.order_source')->orWhere('invoices.order_source', '<>', 'transactions'))
+                ->where('payments.status', Payment::STATUS_SUCCESSFUL)
+                ->whereNotNull('payments.provider')
+                ->where('payments.amount', '>', 0)
+                ->whereNull('payments.deleted_at')
+                ->whereNotExists(fn ($q) => $q->select(DB::raw(1))->from('payment_refunds')
+                    ->whereColumn('payment_refunds.payment_id', 'payments.id')))
+            ->limit(self::REFUND_BATCH)
+            ->get()
+            ->each(function (Order $order) use ($payments) {
+                try {
+                    $payments->requestRefund($order);
+                } catch (\Throwable $e) {
+                    Log::error('payments:reconcile : remboursement impossible à créer', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            });
+    }
+
+    private function processRefunds(PaymentService $payments): void
+    {
+        PaymentRefund::where('status', PaymentRefund::PROCESSING)
+            ->whereNotNull('provider_refund_id')
+            ->orderBy('updated_at')
+            ->limit(self::REFUND_BATCH)
+            ->get()
+            ->each(function (PaymentRefund $refund) use ($payments) {
+                try {
+                    $payments->refreshRefund($refund);
+                } catch (\Throwable $e) {
+                    Log::warning('payments:reconcile : transfert illisible', ['refund_id' => $refund->id, 'error' => $e->getMessage()]);
+                }
+            });
+
+        PaymentRefund::where('status', PaymentRefund::PENDING)
+            ->where(fn (Builder $q) => $q->whereNull('next_attempt_at')->orWhere('next_attempt_at', '<=', now()))
+            ->orderBy('id')
+            ->limit(self::REFUND_BATCH)
+            ->pluck('id')
+            ->each(fn (int $id) => ProcessRefund::dispatch($id));
     }
 
     private function cancel(Order $order): void

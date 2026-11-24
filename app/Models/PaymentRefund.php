@@ -24,6 +24,7 @@ class PaymentRefund extends Model
         'amount',
         'currency_code',
         'reference',
+        'transfer_sequence',
         'provider_refund_id',
         'recipient_phone',
         'recipient_method',
@@ -38,8 +39,25 @@ class PaymentRefund extends Model
         'order_id' => 'integer',
         'amount' => 'integer',
         'attempts' => 'integer',
+        'transfer_sequence' => 'integer',
         'next_attempt_at' => 'datetime',
     ];
+
+    /** Référence du transfert en cours chez l'opérateur (voir la migration transfer_sequence). */
+    public function providerReference(): string
+    {
+        return $this->reference.'-'.($this->transfer_sequence ?? 1);
+    }
+
+    /** Retrouve un remboursement depuis la référence d'un de ses transferts. */
+    public static function findByProviderReference(?string $providerReference): ?self
+    {
+        if (! $providerReference || ! preg_match('/^(.+)-\d+$/', $providerReference, $m)) {
+            return null;
+        }
+
+        return static::where('reference', $m[1])->first();
+    }
 
     public function payment(): BelongsTo
     {

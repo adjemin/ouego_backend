@@ -3,6 +3,7 @@
 namespace Tests\Unit\Payments;
 
 use App\Models\Payment;
+use App\Models\PaymentRefund;
 use App\Payments\Data\GatewayPaymentStatus;
 use App\Payments\Data\GatewayWebhookEvent;
 use App\Payments\Exceptions\GatewayException;
@@ -214,6 +215,124 @@ class JekoGatewayTest extends TestCase
         config(['payments.providers.jeko.api_key' => null]);
 
         $this->assertFalse($this->gateway()->isConfigured());
+    }
+
+    private function refund(array $attributes = []): PaymentRefund
+    {
+        return PaymentRefund::create($attributes + [
+            'payment_id' => $this->payment()->id,
+            'provider' => 'jeko',
+            'amount' => 5000,
+            'reference' => 'RF-OUEGO-REF-1',
+            'recipient_phone' => '+2250700000001',
+            'recipient_method' => 'orange',
+            'status' => PaymentRefund::PENDING,
+        ]);
+    }
+
+    /** @test */
+    public function refund_creates_a_contact_then_a_transfer()
+    {
+        Http::fake([
+            'api.jeko.africa/partner_api/contacts' => Http::response(['id' => 'contact-uuid']),
+            'api.jeko.africa/partner_api/transfers' => Http::response(['id' => 'wth_abc', 'status' => 'pending']),
+        ]);
+        $refund = $this->refund();
+
+        $result = $this->gateway()->refund($refund, $refund->payment);
+
+        $this->assertSame(PaymentRefund::PROCESSING, $result->status);
+        $this->assertSame('wth_abc', $result->providerRefundId);
+        Http::assertSentInOrder([
+            fn (HttpRequest $request) => $request->url() === 'https://api.jeko.africa/partner_api/contacts'
+                && $request->hasHeader('X-API-KEY', 'key_test')
+                && $request['paymentMethod'] === 'orange_money'
+                && $request['identifier'] === ['number' => '+2250700000001']
+                && ! empty($request['name']),
+            fn (HttpRequest $request) => $request->url() === 'https://api.jeko.africa/partner_api/transfers'
+                && $request['storeId'] === 'store-uuid'
+                && $request['contactId'] === 'contact-uuid'
+                && $request['amountCents'] === 500000
+                && $request['currency'] === 'XOF'
+                && $request['reference'] === 'RF-OUEGO-REF-1-1'
+                && mb_strlen($request['description']) <= 255,
+        ]);
+    }
+
+    /** @test */
+    public function a_local_phone_number_is_sent_in_international_format()
+    {
+        Http::fake([
+            'api.jeko.africa/partner_api/contacts' => Http::response(['id' => 'contact-uuid']),
+            'api.jeko.africa/partner_api/transfers' => Http::response(['id' => 'wth_abc', 'status' => 'success']),
+        ]);
+        $refund = $this->refund(['recipient_phone' => '07 00 00 00 01', 'recipient_method' => 'wave']);
+
+        $result = $this->gateway()->refund($refund, $refund->payment);
+
+        $this->assertSame(PaymentRefund::SUCCESSFUL, $result->status);
+        Http::assertSent(fn (HttpRequest $request) => str_ends_with($request->url(), '/contacts')
+            && $request['identifier'] === ['number' => '+2250700000001']
+            && $request['paymentMethod'] === 'wave');
+    }
+
+    /** @test */
+    public function a_conflict_on_transfer_is_treated_as_already_sent()
+    {
+        Http::fake([
+            'api.jeko.africa/partner_api/contacts' => Http::response(['id' => 'contact-uuid']),
+            'api.jeko.africa/partner_api/transfers' => Http::response(['message' => 'Conflict'], 409),
+        ]);
+        $refund = $this->refund();
+
+        $result = $this->gateway()->refund($refund, $refund->payment);
+
+        // Pas d'appel documenté pour retrouver un transfert par référence : le webhook rattachera son id
+        $this->assertSame(PaymentRefund::PROCESSING, $result->status);
+        $this->assertNull($result->providerRefundId);
+    }
+
+    /** @test */
+    public function a_refused_transfer_is_a_definitive_failure()
+    {
+        Http::fake([
+            'api.jeko.africa/partner_api/contacts' => Http::response(['id' => 'contact-uuid']),
+            'api.jeko.africa/partner_api/transfers' => Http::response(['message' => 'Solde insuffisant'], 400),
+        ]);
+        $refund = $this->refund();
+
+        $result = $this->gateway()->refund($refund, $refund->payment);
+
+        $this->assertSame(PaymentRefund::FAILED, $result->status);
+        $this->assertStringContainsString('Solde insuffisant', $result->error);
+    }
+
+    /** @test */
+    public function a_server_error_on_transfer_is_ambiguous()
+    {
+        Http::fake([
+            'api.jeko.africa/partner_api/contacts' => Http::response(['id' => 'contact-uuid']),
+            'api.jeko.africa/partner_api/transfers' => Http::response('oops', 502),
+        ]);
+        $refund = $this->refund();
+
+        $this->expectException(GatewayException::class);
+
+        $this->gateway()->refund($refund, $refund->payment);
+    }
+
+    /** @test */
+    public function the_transfer_status_is_read_and_mapped()
+    {
+        Http::fake(['api.jeko.africa/partner_api/transfers/wth_abc' => Http::sequence()
+            ->push(['id' => 'wth_abc', 'status' => 'pending'])
+            ->push(['id' => 'wth_abc', 'status' => 'success'])
+            ->push(['id' => 'wth_abc', 'status' => 'error'])]);
+        $refund = $this->refund(['provider_refund_id' => 'wth_abc', 'status' => PaymentRefund::PROCESSING]);
+
+        $this->assertSame(PaymentRefund::PROCESSING, $this->gateway()->fetchRefundStatus($refund)->status);
+        $this->assertSame(PaymentRefund::SUCCESSFUL, $this->gateway()->fetchRefundStatus($refund)->status);
+        $this->assertSame(PaymentRefund::FAILED, $this->gateway()->fetchRefundStatus($refund)->status);
     }
 
     private function webhookRequest(string $body, ?string $signature): Request

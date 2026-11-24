@@ -1550,6 +1550,11 @@ class OrderAPIController extends AppBaseController
         \App\Events\OrderInvitationCancelled::ORDER_CANCELLED
     );
 
+    // Commande déjà payée en ligne : remboursement intégral automatique
+    if (app(\App\Payments\PaymentService::class)->requestRefund($order)) {
+        $order->refresh();
+    }
+
     return $this->sendResponse($order->toArray(), 'Commande mise à jour avec succès');
 
   }

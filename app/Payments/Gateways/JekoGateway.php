@@ -136,14 +136,97 @@ class JekoGateway implements PaymentGateway
         );
     }
 
+    /**
+     * Remboursement = transfert Mobile Money vers le payeur : création d'un contact, puis transfert.
+     * Doc : https://developer.jeko.africa/docs/transfers/integration et /docs/transfers/beneficiary
+     *
+     *  - 2xx : transfert accepté (pending ou déjà success) ;
+     *  - 409 : un transfert existe déjà avec cette référence (réponse précédente perdue) ; aucun appel documenté
+     *    ne le retrouve par référence, le webhook TRANSACTION_COMPLETED rattachera son id ;
+     *  - autre 4xx : refus définitif, renvoyé en FAILED (le prochain essai prendra une nouvelle référence) ;
+     *  - réseau / 5xx / 429 : issue inconnue, GatewayException (le prochain essai garde la même référence).
+     */
     public function refund(PaymentRefund $refund, Payment $payment): GatewayRefundResult
     {
-        throw new GatewayException('Jèko : remboursement non implémenté');
+        if (empty($refund->recipient_phone)) {
+            return new GatewayRefundResult(PaymentRefund::FAILED, null, 'Numéro du payeur inconnu');
+        }
+
+        $method = (string) ($refund->recipient_method ?: $payment->payment_method_code);
+        $contact = $this->send(fn (PendingRequest $http) => $http->post('/partner_api/contacts', [
+            'name' => 'Remboursement '.$refund->reference,
+            'paymentMethod' => $this->config("contact_methods.{$method}") ?? $method,
+            'identifier' => ['number' => self::internationalNumber($refund->recipient_phone)],
+        ]), 'création du contact de remboursement');
+
+        $contactId = $contact->json('id');
+        if (empty($contactId)) {
+            throw new GatewayException('Jèko : réponse de création de contact sans id : '.$contact->body());
+        }
+
+        try {
+            $response = $this->http()->post('/partner_api/transfers', [
+                'storeId' => $this->config('store_id'),
+                'contactId' => $contactId,
+                'amountCents' => (int) $refund->amount * 100,
+                'currency' => 'XOF',
+                'description' => 'Remboursement OUEGO '.$payment->payment_reference,
+                'reference' => $refund->providerReference(),
+            ]);
+        } catch (ConnectionException $e) {
+            throw new GatewayException('Jèko : transfert de remboursement sans réponse : '.$e->getMessage(), 0, $e);
+        }
+
+        if ($response->status() === 409) {
+            return new GatewayRefundResult(PaymentRefund::PROCESSING);
+        }
+        if ($response->clientError() && $response->status() !== 429) {
+            return new GatewayRefundResult(
+                PaymentRefund::FAILED,
+                null,
+                mb_substr("HTTP {$response->status()} : ".($response->json('message') ?? $response->body()), 0, 1000)
+            );
+        }
+        if (! $response->successful()) {
+            throw new GatewayException("Jèko : transfert de remboursement refusé (HTTP {$response->status()}) : ".$response->body());
+        }
+
+        return $this->transferResult($response);
     }
 
     public function fetchRefundStatus(PaymentRefund $refund): GatewayRefundResult
     {
-        throw new GatewayException('Jèko : remboursement non implémenté');
+        if (empty($refund->provider_refund_id)) {
+            throw new GatewayException("Jèko : remboursement {$refund->id} sans id de transfert");
+        }
+
+        return $this->transferResult($this->send(
+            fn (PendingRequest $http) => $http->get('/partner_api/transfers/'.rawurlencode($refund->provider_refund_id)),
+            'lecture du transfert'
+        ));
+    }
+
+    private function transferResult(Response $response): GatewayRefundResult
+    {
+        $status = match ($response->json('status')) {
+            'success' => PaymentRefund::SUCCESSFUL,
+            'error' => PaymentRefund::FAILED,
+            default => PaymentRefund::PROCESSING,
+        };
+
+        return new GatewayRefundResult(
+            $status,
+            $response->json('id'),
+            $status === PaymentRefund::FAILED ? 'Transfert en erreur chez Jèko' : null
+        );
+    }
+
+    /** "07 00 00 00 01", "2250700000001" ou "+225 07…" → "+2250700000001". */
+    private static function internationalNumber(string $phone): string
+    {
+        $digits = preg_replace('/\D+/', '', $phone);
+
+        return '+'.(strlen($digits) === 10 ? '225'.$digits : $digits);
     }
 
     private function http(): PendingRequest
