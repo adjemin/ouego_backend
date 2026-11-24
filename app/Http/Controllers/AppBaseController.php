@@ -25,6 +25,19 @@ class AppBaseController extends Controller
         return response()->json(ResponseUtil::makeError($error), $code);
     }
 
+    /**
+     * Réponse d'erreur d'un paiement en ligne : message en français pour l'app, détail technique dans les logs.
+     */
+    protected function paymentErrorResponse(\Throwable $e)
+    {
+        return match (true) {
+            $e instanceof \App\Payments\Exceptions\PaymentRefused => $this->sendError($e->getMessage(), 400),
+            $e instanceof \App\Payments\Exceptions\PaymentProviderUnavailable => $this->sendError('Le paiement en ligne est momentanément indisponible', 503),
+            $e instanceof \App\Payments\Exceptions\GatewayException => $this->sendError("Le service de paiement n'a pas répondu, veuillez réessayer", 502),
+            default => throw $e,
+        };
+    }
+
     public function sendSuccess($message)
     {
         return response()->json([

@@ -110,6 +110,19 @@ class PaymentAPIController extends AppBaseController
         return $this->sendSuccess('Payment deleted successfully');
     }
 
+    /**
+     * Moyens de paiement proposés par l'opérateur actif (Wave, Orange Money…).
+     * GET /payments/methods
+     */
+    public function methods(\App\Payments\PaymentGatewayManager $gateways): JsonResponse
+    {
+        try {
+            return $this->sendResponse($gateways->active()->supportedMethods(), 'Moyens de paiement récupérés avec succès');
+        } catch (\App\Payments\Exceptions\PaymentProviderUnavailable $e) {
+            return $this->paymentErrorResponse($e);
+        }
+    }
+
     public function webhook(Request $request){
 
         $input = $request->all();

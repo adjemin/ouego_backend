@@ -1133,18 +1133,7 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Commande introuvable');
         }
 
-        $input['is_draft'] = false;
-        $input['order_date'] = now();
-        $input['status'] = Order::PERFORMER_LOOKUP;
-
-        $order->update($input);
-
-        // Register order history
-        $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
-
-        // Recherche de chauffeurs et envoi d'invitations
-        $expressService = app(DriverAssignmentService::class);
-        $expressService->sendInvitations($order, 10);
+        app(\App\Services\OrderDispatchService::class)->startDriverLookup($order, $customer->table, $customer->id);
 
         return $this->sendResponse($order->toArray(), 'Commande mise à jour avec succès');
     }
