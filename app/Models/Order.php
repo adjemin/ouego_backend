@@ -489,7 +489,6 @@ class Order extends Model
                     self::CANCELLED_WITH_PAYMENT,
                     self::CANCELLED_BY_TAXI,
                     self::FAILED,
-                    self::PERFORMER_NOT_FOUND,
                 ]);
     }
 

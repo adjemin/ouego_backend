@@ -1169,6 +1169,14 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Veuillez d\'abord payer la commande', 400);
         }
 
+        // Aucun chauffeur trouvé : le client relance une nouvelle recherche complète (pas de nouveau paiement)
+        if ($order->status === Order::PERFORMER_NOT_FOUND) {
+            $customer = auth('api-customers')->user();
+            app(\App\Services\OrderDispatchService::class)->startDriverLookup($order, $customer->table, $customer->id);
+
+            return $this->sendResponse($order->fresh()->toArray(), 'Recherche de chauffeur relancée');
+        }
+
         if($order->driver_id == null || $order->acceptation_time == null){
 
                 $orderInvitations = OrderInvitation::where([
