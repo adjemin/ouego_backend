@@ -11,6 +11,10 @@ use App\Models\Setting;
 use App\Models\Commercial;
 use App\Models\Product;
 use App\Models\Payment;
+use App\Payments\Exceptions\GatewayException;
+use App\Payments\Exceptions\PaymentProviderUnavailable;
+use App\Payments\Exceptions\PaymentRefused;
+use App\Payments\PaymentService;
 use App\Models\ProductType;
 use App\Models\TypeEngin;
 use App\Models\TypeEnginModel;
@@ -890,7 +894,19 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Commande introuvable');
         }
 
-        $invoice = Invoice::where('order_id', $order->id)->first();
+        if (! is_string($request->input('payment_method')) || $request->input('payment_method') === '') {
+            return $this->sendError('Le champ payment_method est obligatoire', 422);
+        }
+
+        if (! $order->isPaidOnline()) {
+            return $this->sendError('Cette commande se paie en espèces', 400);
+        }
+
+        if ($order->is_completed || in_array($order->status, [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT], true)) {
+            return $this->sendError('Cette commande ne peut plus être payée', 400);
+        }
+
+        $invoice = $order->orderInvoice();
 
         if (empty($invoice)) {
             return $this->sendError('Facture introuvable');
@@ -900,21 +916,20 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Facture déjà payée', 400);
         }
 
-        //Create Payment
-        $payment = Payment::create([
-            'payment_method_code' => 'online',
-            'invoice_id' => $invoice->id,
-            'user_id' => $order->customer_id,
-            'payment_reference' => Payment::generateReference(),
-            'amount' => $invoice->total,
-            'currency_code' => $invoice->currency_code ?? 'XOF',
-            'status' => Payment::STATUS_PENDING,
-            'is_waiting' => true,
-            'is_completed' => false
-        ]);
+        try {
+            $payment = app(PaymentService::class)->start($invoice, $order->customer_id, $request->input('payment_method'), 'customers');
+        } catch (GatewayException|PaymentProviderUnavailable|PaymentRefused $e) {
+            return $this->paymentErrorResponse($e);
+        }
 
         return $this->sendResponse($payment->toArray(), 'Paiement enregistré avec succès');
 
+    }
+
+    /** Une commande en ligne ne part en recherche de chauffeur qu'une fois payée. */
+    private function awaitsOnlinePayment(Order $order): bool
+    {
+        return $order->isPaidOnline() && $order->orderInvoice()?->status !== Invoice::PAID;
     }
 
     /**
@@ -1133,6 +1148,10 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Commande introuvable');
         }
 
+        if ($this->awaitsOnlinePayment($order)) {
+            return $this->sendError('Veuillez d\'abord payer la commande', 400);
+        }
+
         app(\App\Services\OrderDispatchService::class)->startDriverLookup($order, $customer->table, $customer->id);
 
         return $this->sendResponse($order->toArray(), 'Commande mise à jour avec succès');
@@ -1144,6 +1163,10 @@ class OrderAPIController extends AppBaseController
 
         if (empty($order)) {
             return $this->sendError('Commande introuvable', 400);
+        }
+
+        if ($this->awaitsOnlinePayment($order)) {
+            return $this->sendError('Veuillez d\'abord payer la commande', 400);
         }
 
         if($order->driver_id == null || $order->acceptation_time == null){

@@ -2,7 +2,11 @@
 
 namespace App\Payments;
 
+use App\Events\CustomerNotificationCreated;
 use App\Events\PaymentStatusUpdated;
+use App\Models\CustomerNotification;
+use App\Models\Order;
+use App\Services\OrderDispatchService;
 use App\Models\Customer;
 use App\Models\Driver;
 use App\Models\Invoice;
@@ -23,6 +27,9 @@ class PaymentService
 {
     /** États qu'aucune confirmation ultérieure ne modifie. EXPIRED n'en fait pas partie : un paiement tardif reste crédité. */
     private const DEFINITIVE = [Payment::STATUS_SUCCESSFUL, Payment::STATUS_FAILED, Payment::STATUS_CANCELLED];
+
+    /** Actions à lancer une fois la transaction validée (recherche de chauffeur, notifications). */
+    private array $afterCommit = [];
 
     public function __construct(private readonly PaymentGatewayManager $gateways)
     {
@@ -175,6 +182,17 @@ class PaymentService
         if ($event) {
             $this->broadcast($event);
         }
+
+        $this->runAfterCommit();
+    }
+
+    private function runAfterCommit(): void
+    {
+        $actions = $this->afterCommit;
+        $this->afterCommit = [];
+        foreach ($actions as $action) {
+            $action();
+        }
     }
 
     /**
@@ -276,7 +294,47 @@ class PaymentService
 
         if ($invoice->order_source === 'transactions') {
             $this->creditDeposit($invoice);
+
+            return;
         }
+
+        $this->releaseOrder($invoice);
+    }
+
+    /**
+     * Commande payée : la recherche de chauffeur démarre, hors transaction (envoi d'invitations et de notifications).
+     * Une commande annulée entre-temps n'est pas relancée.
+     */
+    private function releaseOrder(Invoice $invoice): void
+    {
+        $order = Order::find($invoice->order_id);
+        if (! $order) {
+            return;
+        }
+
+        if (in_array($order->status, [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT], true) || $order->is_completed) {
+            return;
+        }
+
+        if ($order->status !== Order::INITIATED) {
+            return;
+        }
+
+        $this->afterCommit[] = function () use ($order) {
+            app(OrderDispatchService::class)->startDriverLookup($order->fresh(), 'system', null);
+
+            $notification = CustomerNotification::create([
+                'customer_id' => $order->customer_id,
+                'title' => 'Paiement reçu',
+                'subtitle' => 'Paiement reçu, recherche de chauffeur en cours',
+                'data_id' => $order->id,
+                'type' => $order->getTable(),
+                'is_read' => false,
+                'is_received' => false,
+                'meta_data' => null,
+            ]);
+            event(new CustomerNotificationCreated($notification));
+        };
     }
 
     private function creditDeposit(Invoice $invoice): void
