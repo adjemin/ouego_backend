@@ -156,13 +156,53 @@ class DriverWalletPaymentFlowTest extends TestCase
     /** @test */
     public function a_webhook_with_an_unknown_status_changes_nothing()
     {
-        $payment = $this->deposit(5000);
+        $reference = $this->withdraw(400);
 
-        $this->webhook($payment->payment_reference, 'WHATEVER')
+        $this->webhook($reference, 'WHATEVER')
             ->assertOk()
             ->assertJsonPath('error.message', 'MISSING_TRANSACTION_STATUS');
 
+        $this->assertEquals(1000, $this->driver->fresh()->current_balance);
+    }
+
+    /** @test */
+    public function the_legacy_webhook_cannot_validate_a_deposit()
+    {
+        $payment = $this->deposit(5000);
+
+        $this->webhook($payment->payment_reference, Payment::STATUS_SUCCESSFUL)
+            ->assertOk()
+            ->assertJson(['status' => 'KO']);
+
+        $this->assertSame(Payment::STATUS_PENDING, $payment->fresh()->status);
         $this->assertSame(Invoice::UNPAID, Invoice::find($payment->invoice_id)->status);
+        $this->assertEquals(1000, $this->driver->fresh()->current_balance);
+    }
+
+    /** @test */
+    public function the_legacy_webhook_cannot_validate_an_order_payment()
+    {
+        $invoice = Invoice::create([
+            'order_id' => 999, 'customer_id' => 1, 'reference' => 'ORDER-999',
+            'total' => 5000, 'status' => Invoice::UNPAID, 'currency_code' => 'XOF',
+        ]);
+        Payment::create([
+            'invoice_id' => $invoice->id, 'payment_reference' => 'OUEGO-ORDER-1', 'amount' => 5000,
+            'status' => Payment::STATUS_PENDING, 'is_waiting' => true, 'is_completed' => false,
+        ]);
+
+        $this->webhook('OUEGO-ORDER-1', Payment::STATUS_SUCCESSFUL)->assertJson(['status' => 'KO']);
+
+        $this->assertSame(Invoice::UNPAID, $invoice->fresh()->status);
+    }
+
+    /** @test */
+    public function a_failed_withdrawal_webhook_keeps_the_balance()
+    {
+        $reference = $this->withdraw(400);
+
+        $this->webhook($reference, Payment::STATUS_FAILED)->assertJson(['status' => 'OK']);
+
         $this->assertEquals(1000, $this->driver->fresh()->current_balance);
     }
 
@@ -292,6 +332,17 @@ class DriverWalletPaymentFlowTest extends TestCase
         $this->app['auth']->forgetGuards();
 
         return Payment::findOrFail($id);
+    }
+
+    private function withdraw(int $amount): string
+    {
+        $reference = $this->actingAs($this->driver, 'api-drivers')
+            ->postJson('/api/v1/drivers/transactions/balance/withdraw', ['amount' => $amount])
+            ->assertOk()
+            ->json('data.payment_reference');
+        $this->app['auth']->forgetGuards();
+
+        return $reference;
     }
 
     private function confirm(Payment $payment, GatewayPaymentStatus $status): void

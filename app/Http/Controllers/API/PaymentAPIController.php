@@ -156,6 +156,15 @@ class PaymentAPIController extends AppBaseController
             'id' =>  $transaction->invoice_id
         ])->first();
 
+        // Seuls les retraits chauffeur sont confirmés ici. Commandes et recharges passent par le webhook signé
+        // de l'opérateur : sans signature, ce webhook permettrait de valider un paiement jamais encaissé.
+        if (! $this->isWithdrawal($invoice)) {
+            return response()->json([
+                'status' => "KO",
+                'message' => "nothing",
+            ], 200);
+        }
+
 
         if ($transaction->is_waiting && $invoice != null && $invoice->status == Invoice::UNPAID) {
             $transaction->payment_gateway_trans_id = array_key_exists('payment_gateway_trans_id', $input)?$input['payment_gateway_trans_id']:null;
@@ -223,6 +232,15 @@ class PaymentAPIController extends AppBaseController
             'message' => "nothing",
         ], 200);
 
+    }
+
+    private function isWithdrawal(?Invoice $invoice): bool
+    {
+        if ($invoice === null || $invoice->order_source !== 'transactions') {
+            return false;
+        }
+
+        return Transaction::whereKey($invoice->order_id)->value('type') === Transaction::TYPE_WITHDRAWAL;
     }
 
     public function  validateTransaction($ref){
