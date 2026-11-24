@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Payment extends Model
 {
@@ -41,7 +43,13 @@ class Payment extends Model
         'payment_gateway_buyer_name',
         'payment_gateway_buyer_reference',
         'payment_gateway_trans_status',
-        'payment_gateway_designation'
+        'payment_gateway_designation',
+        'provider',
+        'provider_payment_id',
+        'payment_url',
+        'expires_at',
+        'last_checked_at',
+        'check_attempts'
     ];
 
     protected $casts = [
@@ -63,7 +71,12 @@ class Payment extends Model
         'payment_gateway_payment_method' => 'string',
         'payment_gateway_buyer_reference' => 'string',
         'payment_gateway_trans_status' => 'string',
-        'payment_gateway_designation' => 'string'
+        'payment_gateway_designation' => 'string',
+        'provider' => 'string',
+        'provider_payment_id' => 'string',
+        'expires_at' => 'datetime',
+        'last_checked_at' => 'datetime',
+        'check_attempts' => 'integer'
     ];
 
     public static array $rules = [
@@ -72,19 +85,25 @@ class Payment extends Model
 
     //Static methods
 
-    //Generate a payment reference
+    // Référence unique, transmise à l'opérateur (Jèko : 5 à 100 caractères)
     public static function generateReference(): string
     {
-        $reference = substr(md5(time()), 0, 8);
-        //check if the reference already exists
-        $payment = Payment::where('payment_reference', $reference)->first();
-        if ($payment) {
-            return self::generateReference();
-        }
-        return $reference;
+        return 'OUEGO-'.Str::ulid();
     }
 
-   
+    // Un paiement dans un état final ne change plus : les confirmations en double sont ignorées
+    public function isFinal(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_SUCCESSFUL,
+            self::STATUS_FAILED,
+            self::STATUS_CANCELLED,
+            self::STATUS_EXPIRED,
+        ], true);
+    }
 
-
+    public function refund(): HasOne
+    {
+        return $this->hasOne(PaymentRefund::class);
+    }
 }

@@ -316,6 +316,12 @@ class Order extends Model
         return $this->serializedRelation('service');
     }
 
+    // Tout ce qui n'est pas du cash se paie en ligne, avant la recherche de chauffeur (même règle que chargeDriver)
+    public function isPaidOnline(): bool
+    {
+        return $this->payment_method_code !== self::PAYMENT_MODE_CASH;
+    }
+
     //chargeDriver()
     public function chargeDriver(){
 

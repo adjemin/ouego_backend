@@ -13,6 +13,7 @@ class Invoice extends Model
 
     const UNPAID = "UNPAID";
     const PAID = "PAID";
+    const REFUNDED = "REFUNDED";
 
     public $appends = ['payments'];
 
