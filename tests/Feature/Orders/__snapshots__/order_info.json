@@ -147,13 +147,16 @@
         "payments": [
             {
                 "amount": 1000,
+                "check_attempts": 0,
                 "created_at": "2026-09-22T10:00:00.000000Z",
                 "currency_code": "XOF",
                 "deleted_at": null,
+                "expires_at": null,
                 "id": "<id>",
                 "invoice_id": "<id>",
                 "is_completed": false,
                 "is_waiting": true,
+                "last_checked_at": null,
                 "payment_gateway_amount": null,
                 "payment_gateway_buyer_name": null,
                 "payment_gateway_buyer_reference": null,
@@ -167,6 +170,9 @@
                 "payment_gateway_trans_status": null,
                 "payment_method_code": "cash",
                 "payment_reference": "PAY-TEST",
+                "payment_url": null,
+                "provider": null,
+                "provider_payment_id": null,
                 "status": "pending",
                 "updated_at": "2026-09-22T10:00:00.000000Z",
                 "user_id": null

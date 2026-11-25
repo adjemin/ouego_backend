@@ -11,6 +11,10 @@ use App\Models\EnginPicture;
 use App\Models\Invoice;
 use App\Models\Transaction;
 use App\Models\Payment;
+use App\Payments\Exceptions\GatewayException;
+use App\Payments\Exceptions\PaymentProviderUnavailable;
+use App\Payments\Exceptions\PaymentRefused;
+use App\Payments\PaymentService;
 use App\Models\Zone;
 use App\Models\DriverCarrier;
 use App\Models\OrderInvitation;
@@ -721,27 +725,24 @@ class DriverAPIController extends AppBaseController
 
     public function depositBalance(Request $request){
 
-        try{
-            // Validation des données d'entrée
-            // Le portefeuille est toujours celui du chauffeur connecté : un driver_id envoyé par l'app est ignoré
-            $validator = Validator::make($request->all(), [
-                'amount' => 'required|numeric|min:100'
-            ]);
+        // Le portefeuille est toujours celui du chauffeur connecté : un driver_id envoyé par l'app est ignoré
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|numeric|min:100',
+            'payment_method' => 'required|string',
+        ]);
 
-            if ($validator->fails()) {
-                return $this->sendError('Données invalides', 422);
-            }
+        if ($validator->fails()) {
+            return $this->sendError('Données invalides', 422);
+        }
 
-            // Récupération des données
-            $input = $request->all();
-            $amount = intval($input['amount']);
+        $amount = intval($request->input('amount'));
 
-            /** @var Driver $driver */
-            $driver = auth('api-drivers')->user();
+        /** @var Driver $driver */
+        $driver = auth('api-drivers')->user();
 
-            DB::beginTransaction();
+        DB::beginTransaction();
 
-
+        try {
             $transaction = Transaction::create([
                 'user_id' => $driver->id,
                 'status' => Transaction::CREATED,
@@ -768,29 +769,24 @@ class DriverAPIController extends AppBaseController
                 'service_due' => 0
             ]);
 
-            $payment = Payment::create([
-                'invoice_id' => $invoice->id,
-                'payment_method_code' => 'online',
-                'payment_reference' => Payment::generateReference(),
-                'amount' => $invoice->total,
-                'currency_code' => $invoice->currency_code,
-                'user_id' => $driver->id,
-                'status' => Payment::STATUS_INITIATED,
-                'is_waiting' => true,
-                'is_completed' => false
-            ]);
-
-            $payment = Payment::where(['id' => $payment->id])->first();
+            $payment = app(PaymentService::class)->start($invoice, $driver->id, (string) $request->input('payment_method'), $driver->getTable());
 
             DB::commit();
 
-
             return $this->sendResponse($payment->toArray(), 'Paiement créé avec succès');
-        }catch (\Exception $e) {
-            return $this->sendError('Une erreur est survenue => '.$e->getMessage(), 500);
+        } catch (GatewayException $e) {
+            // Le paiement et la recharge sont conservés en échec pour la traçabilité
+            DB::commit();
+
+            return $this->paymentErrorResponse($e);
+        } catch (PaymentProviderUnavailable|PaymentRefused $e) {
+            DB::rollBack();
+
+            return $this->paymentErrorResponse($e);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
         }
-
-
     }
 
 

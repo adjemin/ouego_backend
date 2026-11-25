@@ -110,6 +110,19 @@ class PaymentAPIController extends AppBaseController
         return $this->sendSuccess('Payment deleted successfully');
     }
 
+    /**
+     * Moyens de paiement proposés par l'opérateur actif (Wave, Orange Money…).
+     * GET /payments/methods
+     */
+    public function methods(\App\Payments\PaymentGatewayManager $gateways): JsonResponse
+    {
+        try {
+            return $this->sendResponse($gateways->active()->supportedMethods(), 'Moyens de paiement récupérés avec succès');
+        } catch (\App\Payments\Exceptions\PaymentProviderUnavailable $e) {
+            return $this->paymentErrorResponse($e);
+        }
+    }
+
     public function webhook(Request $request){
 
         $input = $request->all();
@@ -142,6 +155,15 @@ class PaymentAPIController extends AppBaseController
         $invoice = Invoice::where([
             'id' =>  $transaction->invoice_id
         ])->first();
+
+        // Seuls les retraits chauffeur sont confirmés ici. Commandes et recharges passent par le webhook signé
+        // de l'opérateur : sans signature, ce webhook permettrait de valider un paiement jamais encaissé.
+        if (! $this->isWithdrawal($invoice)) {
+            return response()->json([
+                'status' => "KO",
+                'message' => "nothing",
+            ], 200);
+        }
 
 
         if ($transaction->is_waiting && $invoice != null && $invoice->status == Invoice::UNPAID) {
@@ -210,6 +232,15 @@ class PaymentAPIController extends AppBaseController
             'message' => "nothing",
         ], 200);
 
+    }
+
+    private function isWithdrawal(?Invoice $invoice): bool
+    {
+        if ($invoice === null || $invoice->order_source !== 'transactions') {
+            return false;
+        }
+
+        return Transaction::whereKey($invoice->order_id)->value('type') === Transaction::TYPE_WITHDRAWAL;
     }
 
     public function  validateTransaction($ref){

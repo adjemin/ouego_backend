@@ -27,6 +27,8 @@ class ApiRoutesSmokeTest extends TestCase
     private const SKIPPED = [
         // actingAs() ne fournit pas de jeton à actualiser ; parcours réel couvert par OtpAuthenticationFlowTest
         'POST api/v1/customers/refresh' => 'nécessite un vrai jeton JWT',
+        // 503 voulu tant qu'aucun opérateur de paiement n'est actif ; couvert par PaymentServiceTest
+        'GET api/v1/payments/methods' => 'aucun opérateur de paiement actif dans ce test',
     ];
 
     private Customer $customer;

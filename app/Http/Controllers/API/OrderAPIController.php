@@ -11,6 +11,10 @@ use App\Models\Setting;
 use App\Models\Commercial;
 use App\Models\Product;
 use App\Models\Payment;
+use App\Payments\Exceptions\GatewayException;
+use App\Payments\Exceptions\PaymentProviderUnavailable;
+use App\Payments\Exceptions\PaymentRefused;
+use App\Payments\PaymentService;
 use App\Models\ProductType;
 use App\Models\TypeEngin;
 use App\Models\TypeEnginModel;
@@ -890,7 +894,19 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Commande introuvable');
         }
 
-        $invoice = Invoice::where('order_id', $order->id)->first();
+        if (! is_string($request->input('payment_method')) || $request->input('payment_method') === '') {
+            return $this->sendError('Le champ payment_method est obligatoire', 422);
+        }
+
+        if (! $order->isPaidOnline()) {
+            return $this->sendError('Cette commande se paie en espèces', 400);
+        }
+
+        if ($order->is_completed || in_array($order->status, [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT], true)) {
+            return $this->sendError('Cette commande ne peut plus être payée', 400);
+        }
+
+        $invoice = $order->orderInvoice();
 
         if (empty($invoice)) {
             return $this->sendError('Facture introuvable');
@@ -900,21 +916,20 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Facture déjà payée', 400);
         }
 
-        //Create Payment
-        $payment = Payment::create([
-            'payment_method_code' => 'online',
-            'invoice_id' => $invoice->id,
-            'user_id' => $order->customer_id,
-            'payment_reference' => Payment::generateReference(),
-            'amount' => $invoice->total,
-            'currency_code' => $invoice->currency_code ?? 'XOF',
-            'status' => Payment::STATUS_PENDING,
-            'is_waiting' => true,
-            'is_completed' => false
-        ]);
+        try {
+            $payment = app(PaymentService::class)->start($invoice, $order->customer_id, $request->input('payment_method'), 'customers');
+        } catch (GatewayException|PaymentProviderUnavailable|PaymentRefused $e) {
+            return $this->paymentErrorResponse($e);
+        }
 
         return $this->sendResponse($payment->toArray(), 'Paiement enregistré avec succès');
 
+    }
+
+    /** Une commande en ligne ne part en recherche de chauffeur qu'une fois payée. */
+    private function awaitsOnlinePayment(Order $order): bool
+    {
+        return $order->isPaidOnline() && $order->orderInvoice()?->status !== Invoice::PAID;
     }
 
     /**
@@ -1133,18 +1148,16 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Commande introuvable');
         }
 
-        $input['is_draft'] = false;
-        $input['order_date'] = now();
-        $input['status'] = Order::PERFORMER_LOOKUP;
+        if ($this->awaitsOnlinePayment($order)) {
+            return $this->sendError('Veuillez d\'abord payer la commande', 400);
+        }
 
-        $order->update($input);
+        // Ne relance rien sur une commande déjà en recherche, acceptée ou close (ex. confirm appelé après le paiement)
+        $started = app(\App\Services\OrderDispatchService::class)->startDriverLookup($order, $customer->table, $customer->id);
 
-        // Register order history
-        $order->newOrderHistory(Order::PERFORMER_LOOKUP, $customer->table, $customer->id);
-
-        // Recherche de chauffeurs et envoi d'invitations
-        $expressService = app(DriverAssignmentService::class);
-        $expressService->sendInvitations($order, 10);
+        if (! $started && ($order->is_completed || in_array($order->status, [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT], true))) {
+            return $this->sendError('Cette commande ne peut plus être confirmée', 400);
+        }
 
         return $this->sendResponse($order->toArray(), 'Commande mise à jour avec succès');
     }
@@ -1155,6 +1168,20 @@ class OrderAPIController extends AppBaseController
 
         if (empty($order)) {
             return $this->sendError('Commande introuvable', 400);
+        }
+
+        if ($this->awaitsOnlinePayment($order)) {
+            return $this->sendError('Veuillez d\'abord payer la commande', 400);
+        }
+
+        // Aucun chauffeur trouvé : le client relance une nouvelle recherche complète (pas de nouveau paiement)
+        if ($order->status === Order::PERFORMER_NOT_FOUND) {
+            $customer = auth('api-customers')->user();
+            if (! app(\App\Services\OrderDispatchService::class)->startDriverLookup($order, $customer->table, $customer->id)) {
+                return $this->sendError('Cette commande est close, veuillez en passer une nouvelle', 400);
+            }
+
+            return $this->sendResponse($order->fresh()->toArray(), 'Recherche de chauffeur relancée');
         }
 
         if($order->driver_id == null || $order->acceptation_time == null){
@@ -1511,24 +1538,34 @@ class OrderAPIController extends AppBaseController
         return $this->sendError('Vous ne pouvez pas annuler cette commande car elle a commencé', 400);
     }
 
-    $input['status'] = Order::CANCELLED;
+    // Sous verrou : un paiement confirmé au même instant voit soit la commande ouverte (et la recherche part
+    // avant l'annulation, puis le remboursement ci-dessous), soit annulée (et il la rembourse lui-même)
+    $order = \Illuminate\Support\Facades\DB::transaction(function () use ($order, $customer) {
+        $order = Order::whereKey($order->id)->lockForUpdate()->first();
 
-    $order->is_completed = true;
-    $order->completion_time = now();
-    $order->is_waiting = false;
-    $order->is_draft = false;
-    $order->is_successful = false;
+        $order->is_completed = true;
+        $order->completion_time = now();
+        $order->is_waiting = false;
+        $order->is_draft = false;
+        $order->is_successful = false;
+        $order->status = Order::CANCELLED;
+        $order->save();
 
-    $order->update($input);
+        $order->newOrderHistory(Order::CANCELLED, $customer->table, $customer->id);
 
-    // Register order history
-    $order->newOrderHistory(Order::CANCELLED, $customer->table, $customer->id);
+        return $order;
+    });
 
     // Retirer la commande de la liste des chauffeurs invités
     \App\Models\OrderInvitation::cancelWaiting(
         \App\Models\OrderInvitation::where('order_id', $order->id),
         \App\Events\OrderInvitationCancelled::ORDER_CANCELLED
     );
+
+    // Commande déjà payée en ligne : remboursement intégral automatique
+    if (app(\App\Payments\PaymentService::class)->requestRefund($order)) {
+        $order->refresh();
+    }
 
     return $this->sendResponse($order->toArray(), 'Commande mise à jour avec succès');
 

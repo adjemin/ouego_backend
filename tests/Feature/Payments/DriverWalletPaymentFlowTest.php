@@ -5,17 +5,23 @@ namespace Tests\Feature\Payments;
 use App\Models\Driver;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\Setting;
 use App\Models\Transaction;
+use App\Payments\Data\GatewayPaymentStatus;
+use App\Payments\PaymentService;
 use Illuminate\Support\Facades\Event;
+use Tests\Support\FakePaymentGateway;
 use Tests\TestCase;
 
 /**
- * Dépôt / retrait sur le portefeuille chauffeur, puis confirmation par le webhook
- * de l'agrégateur de paiement. Le solde ne doit bouger qu'au webhook SUCCESSFUL, une seule fois.
+ * Dépôt sur le portefeuille chauffeur via l'opérateur actif : le solde ne bouge qu'à la confirmation
+ * de l'opérateur, une seule fois. Retrait : confirmé par l'ancien webhook générique, inchangé.
  */
 class DriverWalletPaymentFlowTest extends TestCase
 {
     private Driver $driver;
+
+    private FakePaymentGateway $gateway;
 
     protected function setUp(): void
     {
@@ -23,17 +29,22 @@ class DriverWalletPaymentFlowTest extends TestCase
 
         Event::fake();
 
+        $this->gateway = FakePaymentGateway::install();
+
         $this->driver = Driver::factory()->create(['current_balance' => 1000, 'old_balance' => 1000]);
     }
 
     /** @test */
-    public function a_deposit_creates_a_pending_payment_without_touching_the_balance()
+    public function a_deposit_returns_a_payment_url_without_touching_the_balance()
     {
         $payment = $this->deposit(5000);
 
-        $this->assertSame(Payment::STATUS_INITIATED, $payment->status);
-        $this->assertTrue((bool) $payment->is_waiting);
+        $this->assertSame(Payment::STATUS_PENDING, $payment->status);
+        $this->assertSame('fake', $payment->provider);
+        $this->assertSame('https://pay.fake/'.$payment->payment_reference, $payment->payment_url);
+        $this->assertSame('wave', $payment->payment_method_code);
         $this->assertEquals(5000, $payment->amount);
+        $this->assertNotNull($payment->expires_at);
 
         $invoice = Invoice::find($payment->invoice_id);
         $this->assertSame(Invoice::UNPAID, $invoice->status);
@@ -47,18 +58,18 @@ class DriverWalletPaymentFlowTest extends TestCase
     }
 
     /** @test */
-    public function a_successful_webhook_credits_the_driver_balance()
+    public function a_successful_status_credits_the_driver_once()
     {
         $payment = $this->deposit(5000);
 
-        $this->webhook($payment->payment_reference, Payment::STATUS_SUCCESSFUL)
-            ->assertOk()
-            ->assertJson(['status' => 'OK']);
+        $this->confirm($payment, new GatewayPaymentStatus(GatewayPaymentStatus::SUCCESSFUL, 5000, '+2250700000000', 'wave'));
+        $this->confirm($payment, new GatewayPaymentStatus(GatewayPaymentStatus::SUCCESSFUL, 5000, '+2250700000000', 'wave'));
 
         $payment->refresh();
         $this->assertSame(Payment::STATUS_SUCCESSFUL, $payment->status);
         $this->assertFalse((bool) $payment->is_waiting);
         $this->assertTrue((bool) $payment->is_completed);
+        $this->assertSame('+2250700000000', $payment->payment_gateway_buyer_reference);
 
         $invoice = Invoice::find($payment->invoice_id);
         $this->assertSame(Invoice::PAID, $invoice->status);
@@ -68,50 +79,130 @@ class DriverWalletPaymentFlowTest extends TestCase
     }
 
     /** @test */
-    public function a_replayed_successful_webhook_credits_only_once()
+    public function a_failed_status_leaves_the_balance_and_keeps_the_payment()
     {
         $payment = $this->deposit(5000);
 
-        $this->webhook($payment->payment_reference, Payment::STATUS_SUCCESSFUL)->assertJson(['status' => 'OK']);
-        $this->webhook($payment->payment_reference, Payment::STATUS_SUCCESSFUL)->assertJson(['status' => 'KO']);
+        $this->confirm($payment, new GatewayPaymentStatus(GatewayPaymentStatus::FAILED));
 
-        $this->assertEquals(6000, $this->driver->fresh()->current_balance);
+        $payment->refresh();
+        $this->assertSame(Payment::STATUS_FAILED, $payment->status);
+        $invoice = Invoice::find($payment->invoice_id);
+        $this->assertSame(Invoice::UNPAID, $invoice->status);
+        $this->assertSame(Transaction::FAILED, Transaction::find($invoice->order_id)->status);
+        $this->assertEquals(1000, $this->driver->fresh()->current_balance);
     }
 
-    /**
-     * @test
-     * @dataProvider unsuccessfulStatuses
-     */
-    public function an_unsuccessful_webhook_leaves_the_balance_unchanged(string $status)
+    /** @test */
+    public function a_short_paid_amount_is_not_validated()
     {
         $payment = $this->deposit(5000);
 
-        $this->webhook($payment->payment_reference, $status)->assertOk();
+        $this->confirm($payment, new GatewayPaymentStatus(GatewayPaymentStatus::SUCCESSFUL, 4000));
 
-        $this->assertNull(Payment::withTrashed()->find($payment->id), 'Le paiement échoué est supprimé');
+        $this->assertSame(Payment::STATUS_FAILED, $payment->fresh()->status);
         $this->assertSame(Invoice::UNPAID, Invoice::find($payment->invoice_id)->status);
         $this->assertEquals(1000, $this->driver->fresh()->current_balance);
     }
 
-    public static function unsuccessfulStatuses(): array
+    /** @test */
+    public function a_deposit_without_active_provider_returns_503()
     {
-        return [
-            'failed' => [Payment::STATUS_FAILED],
-            'cancelled' => [Payment::STATUS_CANCELLED],
-            'expired' => [Payment::STATUS_EXPIRED],
-        ];
+        Setting::where('name', 'PAYMENT_ACTIVE_PROVIDER')->delete();
+        Setting::flushCache();
+
+        $this->actingAs($this->driver, 'api-drivers')
+            ->postJson('/api/v1/drivers/transactions/balance/deposit', ['amount' => 5000, 'payment_method' => 'wave'])
+            ->assertStatus(503);
+
+        $this->assertSame(0, Payment::count());
+    }
+
+    /** @test */
+    public function a_deposit_with_an_unsupported_method_returns_400()
+    {
+        $this->actingAs($this->driver, 'api-drivers')
+            ->postJson('/api/v1/drivers/transactions/balance/deposit', ['amount' => 5000, 'payment_method' => 'bitcoin'])
+            ->assertStatus(400);
+
+        $this->assertSame(0, Payment::count());
+    }
+
+    /** @test */
+    public function a_deposit_without_payment_method_is_refused()
+    {
+        $this->actingAs($this->driver, 'api-drivers')
+            ->postJson('/api/v1/drivers/transactions/balance/deposit', ['amount' => 5000])
+            ->assertStatus(422);
+
+        $this->assertSame(0, Payment::count());
+    }
+
+    /** @test */
+    public function a_gateway_error_returns_502_and_marks_the_payment_failed()
+    {
+        $this->gateway->willFailCreate();
+
+        $this->actingAs($this->driver, 'api-drivers')
+            ->postJson('/api/v1/drivers/transactions/balance/deposit', ['amount' => 5000, 'payment_method' => 'wave'])
+            ->assertStatus(502);
+
+        $payment = Payment::sole();
+        $this->assertSame(Payment::STATUS_FAILED, $payment->status);
+        $this->assertSame(Transaction::FAILED, Transaction::find(Invoice::find($payment->invoice_id)->order_id)->status);
+        $this->assertEquals(1000, $this->driver->fresh()->current_balance);
     }
 
     /** @test */
     public function a_webhook_with_an_unknown_status_changes_nothing()
     {
-        $payment = $this->deposit(5000);
+        $reference = $this->withdraw(400);
 
-        $this->webhook($payment->payment_reference, 'WHATEVER')
+        $this->webhook($reference, 'WHATEVER')
             ->assertOk()
             ->assertJsonPath('error.message', 'MISSING_TRANSACTION_STATUS');
 
+        $this->assertEquals(1000, $this->driver->fresh()->current_balance);
+    }
+
+    /** @test */
+    public function the_legacy_webhook_cannot_validate_a_deposit()
+    {
+        $payment = $this->deposit(5000);
+
+        $this->webhook($payment->payment_reference, Payment::STATUS_SUCCESSFUL)
+            ->assertOk()
+            ->assertJson(['status' => 'KO']);
+
+        $this->assertSame(Payment::STATUS_PENDING, $payment->fresh()->status);
         $this->assertSame(Invoice::UNPAID, Invoice::find($payment->invoice_id)->status);
+        $this->assertEquals(1000, $this->driver->fresh()->current_balance);
+    }
+
+    /** @test */
+    public function the_legacy_webhook_cannot_validate_an_order_payment()
+    {
+        $invoice = Invoice::create([
+            'order_id' => 999, 'customer_id' => 1, 'reference' => 'ORDER-999',
+            'total' => 5000, 'status' => Invoice::UNPAID, 'currency_code' => 'XOF',
+        ]);
+        Payment::create([
+            'invoice_id' => $invoice->id, 'payment_reference' => 'OUEGO-ORDER-1', 'amount' => 5000,
+            'status' => Payment::STATUS_PENDING, 'is_waiting' => true, 'is_completed' => false,
+        ]);
+
+        $this->webhook('OUEGO-ORDER-1', Payment::STATUS_SUCCESSFUL)->assertJson(['status' => 'KO']);
+
+        $this->assertSame(Invoice::UNPAID, $invoice->fresh()->status);
+    }
+
+    /** @test */
+    public function a_failed_withdrawal_webhook_keeps_the_balance()
+    {
+        $reference = $this->withdraw(400);
+
+        $this->webhook($reference, Payment::STATUS_FAILED)->assertJson(['status' => 'OK']);
+
         $this->assertEquals(1000, $this->driver->fresh()->current_balance);
     }
 
@@ -163,7 +254,7 @@ class DriverWalletPaymentFlowTest extends TestCase
     public function a_deposit_below_the_minimum_is_refused()
     {
         $this->actingAs($this->driver, 'api-drivers')
-            ->postJson('/api/v1/drivers/transactions/balance/deposit', ['amount' => 50])
+            ->postJson('/api/v1/drivers/transactions/balance/deposit', ['amount' => 50, 'payment_method' => 'wave'])
             ->assertStatus(422);
 
         $this->assertSame(0, Payment::count());
@@ -195,14 +286,14 @@ class DriverWalletPaymentFlowTest extends TestCase
     {
         $other = Driver::factory()->create(['current_balance' => 1000, 'old_balance' => 1000]);
 
-        $reference = $this->actingAs($this->driver, 'api-drivers')
-            ->postJson('/api/v1/drivers/transactions/balance/deposit', ['driver_id' => $other->id, 'amount' => 5000])
+        $id = $this->actingAs($this->driver, 'api-drivers')
+            ->postJson('/api/v1/drivers/transactions/balance/deposit', ['driver_id' => $other->id, 'amount' => 5000, 'payment_method' => 'wave'])
             ->assertOk()
             ->assertJsonPath('data.user_id', $this->driver->id)
-            ->json('data.payment_reference');
+            ->json('data.id');
         $this->app['auth']->forgetGuards();
 
-        $this->webhook($reference, Payment::STATUS_SUCCESSFUL)->assertJson(['status' => 'OK']);
+        $this->confirm(Payment::findOrFail($id), new GatewayPaymentStatus(GatewayPaymentStatus::SUCCESSFUL, 5000));
 
         $this->assertEquals(6000, $this->driver->fresh()->current_balance);
         $this->assertEquals(1000, $other->fresh()->current_balance);
@@ -234,13 +325,29 @@ class DriverWalletPaymentFlowTest extends TestCase
     private function deposit(int $amount): Payment
     {
         $id = $this->actingAs($this->driver, 'api-drivers')
-            ->postJson('/api/v1/drivers/transactions/balance/deposit', ['amount' => $amount])
+            ->postJson('/api/v1/drivers/transactions/balance/deposit', ['amount' => $amount, 'payment_method' => 'wave'])
             ->assertOk()
             ->json('data.id');
 
         $this->app['auth']->forgetGuards();
 
         return Payment::findOrFail($id);
+    }
+
+    private function withdraw(int $amount): string
+    {
+        $reference = $this->actingAs($this->driver, 'api-drivers')
+            ->postJson('/api/v1/drivers/transactions/balance/withdraw', ['amount' => $amount])
+            ->assertOk()
+            ->json('data.payment_reference');
+        $this->app['auth']->forgetGuards();
+
+        return $reference;
+    }
+
+    private function confirm(Payment $payment, GatewayPaymentStatus $status): void
+    {
+        app(PaymentService::class)->applyStatus($payment, $status);
     }
 
     private function webhook(string $reference, string $status)

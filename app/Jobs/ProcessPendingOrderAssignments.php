@@ -99,11 +99,10 @@ class ProcessPendingOrderAssignments
 
     private function markAsNotFound(Order $order): void
     {
+        // Pas une fin : la commande reste ouverte, le client peut relancer la recherche ou annuler
         $order->update([
-            'status' => Order::PERFORMER_NOT_FOUND, 
+            'status' => Order::PERFORMER_NOT_FOUND,
             'is_waiting' => false,
-            'is_completed' => true,
-            'is_successful' =>false
         ]);
         $order->newOrderHistory(Order::PERFORMER_NOT_FOUND, 'system', null);
 

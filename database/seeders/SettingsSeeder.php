@@ -65,6 +65,9 @@ class SettingsSeeder extends Seeder
             // Express : délai (minutes) pour démarrer une course acceptée avant réattribution
             ['name' => 'EXPRESS_START_TIMEOUT_MINUTES', 'value' => '15'],
 
+            // Paiement en ligne : délai (minutes) avant annulation d'une commande non payée
+            ['name' => 'ONLINE_ORDER_PAYMENT_TIMEOUT_MINUTES', 'value' => '30'],
+
             // Commercial
             ['name' => 'COMMERCIAL_DISCOUNT_AMOUNT', 'value' => '2500'],
             ['name' => 'COMMERCIAL_CREDIT_AMOUNT', 'value' => '2500'],

@@ -59,6 +59,13 @@ Route::prefix('v1/')->group(function () {
     Route::put('orders/{id}/pay', [App\Http\Controllers\API\OrderAPIController::class, 'pay'])->middleware("auth.customer:api-customers");
 
     //Webhook
+    // Moyens de paiement en ligne de l'opérateur actif (public)
+    Route::get('payments/methods', [App\Http\Controllers\API\PaymentAPIController::class, 'methods']);
+
+    // Webhook signé d'un opérateur de paiement (Jèko : /payments/webhook/jeko)
+    Route::post('payments/webhook/{provider}', [App\Http\Controllers\API\PaymentWebhookController::class, 'handle'])->name('payments.webhook.provider');
+
+    // Ancien webhook générique : confirme uniquement les retraits chauffeur
     Route::post('payments/webhook', [App\Http\Controllers\API\PaymentAPIController::class, 'webhook']);
 
     Route::get('payments/webhook', [App\Http\Controllers\API\PaymentAPIController::class, 'webhook']);

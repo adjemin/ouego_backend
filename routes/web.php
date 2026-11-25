@@ -14,3 +14,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Retour du client après la page de paiement de l'opérateur (successUrl / errorUrl) : redirige vers l'app
+Route::get('payments/return/{reference}/{result}', [App\Http\Controllers\PaymentReturnController::class, 'show'])->name('payments.return');

@@ -154,8 +154,8 @@ class OrderDeliveryLifecycleTest extends AggregatOrderTestCase
 
         $this->deliver();
 
-        // Le paiement en ligne passe par le webhook : la livraison ne marque pas la facture payée
-        $this->assertSame(Invoice::UNPAID, $invoice->fresh()->status);
+        // Une commande en ligne est payée avant la recherche de chauffeur : la livraison ne change pas la facture
+        $this->assertSame(Invoice::PAID, $invoice->fresh()->status);
         $this->assertEquals(50000 + $invoice->driver_due, $this->driver->fresh()->current_balance);
     }
 
@@ -364,6 +364,11 @@ class OrderDeliveryLifecycleTest extends AggregatOrderTestCase
             'carrier_id' => $this->carrier->id,
             'route_points' => [$this->destination()],
         ], $paymentMethod)->assertOk()->json('data.id');
+
+        // Une commande en ligne n'est confirmée qu'une fois payée chez l'opérateur
+        if ($paymentMethod !== 'cash') {
+            Order::findOrFail($orderId)->orderInvoice()->update(['status' => Invoice::PAID, 'is_paid_by_customer' => true]);
+        }
 
         $this->actingAs($this->customer, 'api-customers')
             ->putJson("/api/v1/orders/{$orderId}/confirm")

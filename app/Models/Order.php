@@ -316,6 +316,20 @@ class Order extends Model
         return $this->serializedRelation('service');
     }
 
+    // Facture de la commande, sans confondre avec une facture de recharge portefeuille (order_id = id de transaction)
+    public function orderInvoice(): ?Invoice
+    {
+        return Invoice::where('order_id', $this->id)
+            ->where(fn ($q) => $q->whereNull('order_source')->orWhere('order_source', '<>', 'transactions'))
+            ->first();
+    }
+
+    // Tout ce qui n'est pas du cash se paie en ligne, avant la recherche de chauffeur (même règle que chargeDriver)
+    public function isPaidOnline(): bool
+    {
+        return $this->payment_method_code !== self::PAYMENT_MODE_CASH;
+    }
+
     //chargeDriver()
     public function chargeDriver(){
 
@@ -475,7 +489,6 @@ class Order extends Model
                     self::CANCELLED_WITH_PAYMENT,
                     self::CANCELLED_BY_TAXI,
                     self::FAILED,
-                    self::PERFORMER_NOT_FOUND,
                 ]);
     }
 
