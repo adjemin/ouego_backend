@@ -58,6 +58,19 @@ VALUES ('ONLINE_ORDER_PAYMENT_TIMEOUT_MINUTES', '30', now(), now());
 
 Une commande en ligne non payée après ce délai, sans paiement encore en cours, est annulée et le client notifié.
 
+**Avant le premier déploiement**, compter les anciennes commandes que le premier passage de `payments:reconcile`
+annulerait (toute commande non `cash` restée `INITIATED`, même antérieure à cette fonctionnalité) :
+
+```sql
+SELECT count(*) FROM orders
+WHERE status = 'initiated' AND is_completed = false AND payment_method_code <> 'cash'
+  AND created_at <= now() - interval '30 minutes';
+```
+
+Si le résultat n'est pas nul, les clore sans notification avant de déployer
+(`UPDATE orders SET status = 'cancelled', is_completed = true, completion_time = now() WHERE …`), sinon chacune
+recevra une notification « Commande annulée : paiement non reçu ».
+
 ## 3. Déclarer le webhook dans le Dashboard Jèko
 
 - URL : `https://<domaine-api>/api/v1/payments/webhook/jeko`
@@ -77,7 +90,8 @@ L'ancien webhook `api/v1/payments/webhook` (sans opérateur) ne traite plus que 
 - `payments:reconcile` tourne **chaque minute** (`app/Console/Kernel.php`) ; le service cron doit exécuter
   `php artisan schedule:run`. Il :
   1. relit les paiements en attente (Jèko n'envoie **aucun webhook d'échec**) : chaque minute pendant 10 min,
-     puis toutes les 5 min, et les marque `EXPIRED` après 30 min ;
+     puis toutes les 5 min, et les marque `EXPIRED` après 30 min ; un paiement expiré est encore relu toutes
+     les heures pendant 24 h (paiement tardif) ;
   2. annule les commandes en ligne non payées (§2) ;
   3. rembourse les commandes en ligne annulées hors API (dashboard, SQL) dont le paiement a réussi ;
   4. relit les remboursements en cours et relance ceux dont l'essai suivant est dû.
@@ -106,7 +120,9 @@ Le magasin doit avoir un **solde suffisant** pour payer les remboursements : sin
 Une commande payée en ligne puis annulée (par le client, le dashboard, ou un paiement confirmé après annulation)
 est remboursée **intégralement**, par transfert Mobile Money vers le numéro qui a payé. La commande passe
 `CANCELLED_WITH_PAYMENT` et la facture `REFUNDED`. Un second paiement sur une facture déjà réglée est aussi
-remboursé.
+remboursé, de même qu'un paiement arrivé sur une commande close sans avoir été servie (`FAILED`,
+`CANCELLED_BY_TAXI`) et tout argent encaissé par l'opérateur sur un paiement que nous avions clos (échec, montant
+incomplet : seul le montant reçu est rendu) — ce dernier cas écrit aussi un log `critical`.
 
 Suivi dans `payment_refunds` :
 
@@ -136,7 +152,8 @@ Le log `critical` « Remboursement en échec » donne `refund_id`, `order_id`, `
    `payments:reconcile` l'enverra à la minute suivante.
 4. Ou rembourser à la main hors OUEGO, puis `UPDATE payment_refunds SET status = 'SUCCESSFUL' WHERE id = …`.
 
-Un remboursement resté `PROCESSING` sans `provider_refund_id` signifie que Jèko a répondu 409 (transfert déjà
+Un remboursement resté `PROCESSING` plus de 24 h déclenche une fois le log `critical` « Remboursement bloqué en
+cours de transfert » (et `last_error` le signale). Un remboursement resté `PROCESSING` sans `provider_refund_id` signifie que Jèko a répondu 409 (transfert déjà
 créé) et que le webhook n'est pas arrivé : retrouver le transfert dans le Dashboard Jèko par sa référence et
 reporter son id dans `provider_refund_id`.
 

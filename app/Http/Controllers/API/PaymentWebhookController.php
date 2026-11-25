@@ -72,6 +72,12 @@ class PaymentWebhookController extends Controller
                 'payment_id' => $payment->id,
                 'error' => $e->getMessage(),
             ]);
+        } catch (\Throwable $e) {
+            // Jamais de 500 : Jèko couperait le webhook après 15 échecs ; payments:reconcile prendra le relais
+            Log::critical('Webhook de paiement : erreur après validation du statut', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return response()->json(['status' => 'OK', 'message' => 'received']);
@@ -105,6 +111,12 @@ class PaymentWebhookController extends Controller
             $this->payments->refreshRefund($refund);
         } catch (GatewayException $e) {
             Log::error('Webhook de transfert : statut illisible chez l\'opérateur', [
+                'refund_id' => $refund->id,
+                'error' => $e->getMessage(),
+            ]);
+        } catch (\Throwable $e) {
+            // Jamais de 500 : Jèko couperait le webhook après 15 échecs ; payments:reconcile prendra le relais
+            Log::critical('Webhook de paiement : erreur après validation du statut', [
                 'refund_id' => $refund->id,
                 'error' => $e->getMessage(),
             ]);

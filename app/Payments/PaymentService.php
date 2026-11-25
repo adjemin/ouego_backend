@@ -28,6 +28,9 @@ use Illuminate\Support\Facades\Log;
  */
 class PaymentService
 {
+    /** Commandes closes sans avoir été servies : un paiement qui leur arrive est remboursé. */
+    public const CLOSED_UNSERVED = [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT, Order::CANCELLED_BY_TAXI, Order::FAILED];
+
     /** Délais avant chaque nouvel essai de remboursement, en minutes (le dernier se répète). */
     private const REFUND_BACKOFF = [5, 15, 30, 60];
 
@@ -145,7 +148,24 @@ class PaymentService
         $event = DB::transaction(function () use ($payment, $status) {
             /** @var Payment $locked */
             $locked = Payment::whereKey($payment->id)->lockForUpdate()->first();
-            if (! $locked || in_array($locked->status, self::DEFINITIVE, true)) {
+            if (! $locked) {
+                return null;
+            }
+
+            if (in_array($locked->status, self::DEFINITIVE, true)) {
+                // L'opérateur a encaissé un paiement que nous avions clos sans crédit (échec, annulation,
+                // montant incomplet) : l'argent est rendu, jamais gardé en silence
+                if ($status->status === GatewayPaymentStatus::SUCCESSFUL && $locked->status !== Payment::STATUS_SUCCESSFUL
+                    && ! PaymentRefund::where('payment_id', $locked->id)->exists()) {
+                    Log::critical('Paiement encaissé par l\'opérateur sur un paiement déjà clos : remboursement', [
+                        'payment_id' => $locked->id,
+                        'local_status' => $locked->status,
+                        'amount' => $status->amount,
+                    ]);
+                    $this->rememberPayer($locked, $status);
+                    $this->afterCommit[] = fn () => $this->refundPayment($locked->fresh(), null, $status->amount);
+                }
+
                 return null;
             }
 
@@ -159,14 +179,18 @@ class PaymentService
                             'expected' => $locked->amount,
                             'received' => $status->amount,
                         ]);
+                        $this->rememberPayer($locked, $status);
                         $this->finish($locked, Payment::STATUS_FAILED, 'Montant reçu inférieur au montant attendu');
                         $this->markDepositFailed($locked->invoice_id);
+                        // Ce qui a été reçu est rendu ; le client peut payer à nouveau
+                        if ($status->amount > 0) {
+                            $this->afterCommit[] = fn () => $this->refundPayment($locked->fresh(), null, $status->amount);
+                        }
 
                         return $locked;
                     }
 
-                    $locked->payment_gateway_buyer_reference = $status->payerPhone ?? $locked->payment_gateway_buyer_reference;
-                    $locked->payment_gateway_payment_method = $status->payerMethod ?? $locked->payment_gateway_payment_method;
+                    $this->rememberPayer($locked, $status);
                     $this->finish($locked, Payment::STATUS_SUCCESSFUL);
                     $this->applySuccessEffects($locked);
 
@@ -190,6 +214,13 @@ class PaymentService
         }
 
         $this->runAfterCommit();
+    }
+
+    private function rememberPayer(Payment $payment, GatewayPaymentStatus $status): void
+    {
+        $payment->payment_gateway_buyer_reference = $status->payerPhone ?? $payment->payment_gateway_buyer_reference;
+        $payment->payment_gateway_payment_method = $status->payerMethod ?? $payment->payment_gateway_payment_method;
+        $payment->save();
     }
 
     private function runAfterCommit(): void
@@ -305,37 +336,51 @@ class PaymentService
             return;
         }
 
-        $this->releaseOrder($invoice);
+        $this->releaseOrder($invoice, $payment);
     }
 
     /**
      * Commande payée : la recherche de chauffeur démarre, hors transaction (envoi d'invitations et de notifications).
-     * Une commande annulée entre-temps n'est pas relancée.
+     * La commande est verrouillée : une annulation concurrente passe avant ou après, jamais entre les deux.
+     * Une commande close sans avoir été servie (annulée, en échec) est remboursée au lieu d'être relancée.
      */
-    private function releaseOrder(Invoice $invoice): void
+    private function releaseOrder(Invoice $invoice, Payment $payment): void
     {
-        $order = Order::find($invoice->order_id);
+        $order = Order::whereKey($invoice->order_id)->lockForUpdate()->first();
         if (! $order) {
+            Log::critical('Paiement réussi sur une facture sans commande', ['payment_id' => $payment->id, 'invoice_id' => $invoice->id]);
+
             return;
         }
 
-        if (in_array($order->status, [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT], true)) {
-            // Paiement arrivé après l'annulation : remboursé
+        if (in_array($order->status, self::CLOSED_UNSERVED, true)) {
             $this->afterCommit[] = fn () => $this->requestRefund($order->fresh());
 
             return;
         }
 
-        if ($order->is_completed) {
-            return;
-        }
+        if ($order->status !== Order::INITIATED || $order->is_completed) {
+            // Commande déjà en cours ou servie : le paiement la règle, rien à relancer
+            Log::warning('Paiement reçu pour une commande déjà engagée', [
+                'payment_id' => $payment->id,
+                'order_id' => $order->id,
+                'status' => $order->status,
+            ]);
 
-        if ($order->status !== Order::INITIATED) {
             return;
         }
 
         $this->afterCommit[] = function () use ($order) {
-            app(OrderDispatchService::class)->startDriverLookup($order->fresh(), 'system', null);
+            $order = $order->fresh();
+
+            // Annulée entre la validation du paiement et ce lancement : remboursement
+            if (! app(OrderDispatchService::class)->startDriverLookup($order, 'system', null)) {
+                if (in_array($order->status, self::CLOSED_UNSERVED, true)) {
+                    $this->requestRefund($order);
+                }
+
+                return;
+            }
 
             $notification = CustomerNotification::create([
                 'customer_id' => $order->customer_id,
@@ -393,12 +438,15 @@ class PaymentService
         return $refund;
     }
 
-    /** Crée (une seule fois par paiement) le remboursement intégral d'un paiement et l'envoie à l'opérateur. */
-    public function refundPayment(Payment $payment, ?Order $order): PaymentRefund
+    /**
+     * Crée (une seule fois par paiement) le remboursement d'un paiement et l'envoie à son opérateur.
+     * $amount : montant réellement encaissé s'il diffère de celui du paiement (par défaut, le paiement entier).
+     */
+    public function refundPayment(Payment $payment, ?Order $order, ?int $amount = null): PaymentRefund
     {
         $created = false;
 
-        $refund = DB::transaction(function () use ($payment, $order, &$created) {
+        $refund = DB::transaction(function () use ($payment, $order, $amount, &$created) {
             Payment::whereKey($payment->id)->lockForUpdate()->first();
 
             $existing = PaymentRefund::where('payment_id', $payment->id)->first();
@@ -412,7 +460,7 @@ class PaymentService
                 'payment_id' => $payment->id,
                 'order_id' => $order?->id,
                 'provider' => $payment->provider,
-                'amount' => (int) $payment->amount,
+                'amount' => $amount ?? (int) $payment->amount,
                 'currency_code' => $payment->currency_code ?? 'XOF',
                 'reference' => 'RF-'.$payment->payment_reference,
                 'recipient_phone' => $payment->payment_gateway_buyer_reference ?: $this->payerPhone($payment),

@@ -315,4 +315,123 @@ class OrderRefundTest extends AggregatOrderTestCase
         $this->assertSame('wth_found', $refund->provider_refund_id);
         $this->assertSame(PaymentRefund::SUCCESSFUL, $refund->status);
     }
+
+    // ---------------------------------------------------------------
+    // Relecture finale : argent reçu sans issue
+    // ---------------------------------------------------------------
+
+    /** @test */
+    public function a_success_reported_on_a_failed_payment_is_refunded_with_an_alert()
+    {
+        Log::spy();
+        $order = $this->makeOrder();
+        $payment = $this->startPayment($order);
+        app(PaymentService::class)->applyStatus($payment, new GatewayPaymentStatus(GatewayPaymentStatus::FAILED));
+
+        $this->confirm($payment);
+
+        $this->assertSame(Payment::STATUS_FAILED, $payment->fresh()->status);
+        $refund = PaymentRefund::sole();
+        $this->assertSame($payment->id, $refund->payment_id);
+        $this->assertSame(self::PAID, $refund->amount);
+        $this->assertSame('+2250700000001', $refund->recipient_phone);
+        $this->assertSame(Order::INITIATED, $order->fresh()->status);
+        Log::shouldHaveReceived('critical')->withArgs(fn ($message) => str_contains($message, 'déjà clos'))->once();
+    }
+
+    /** @test */
+    public function a_short_amount_is_refunded_for_what_was_received()
+    {
+        $order = $this->makeOrder();
+        $payment = $this->startPayment($order);
+
+        app(PaymentService::class)->applyStatus($payment, new GatewayPaymentStatus(
+            GatewayPaymentStatus::SUCCESSFUL, 2375, '+2250700000001', 'wave'
+        ));
+
+        $this->assertSame(Payment::STATUS_FAILED, $payment->fresh()->status);
+        $this->assertSame(2375, PaymentRefund::sole()->amount);
+        $this->assertSame(Invoice::UNPAID, $order->orderInvoice()->status);
+    }
+
+    /** @test */
+    public function an_expired_payment_is_still_polled_for_a_late_success()
+    {
+        $order = $this->makeOrder();
+        $payment = $this->startPayment($order);
+        $this->travel(31)->minutes();
+        app(PaymentService::class)->refresh($payment);
+        $this->assertSame(Payment::STATUS_EXPIRED, $payment->fresh()->status);
+
+        $this->travel(2)->hours();
+        $this->gateway->willReturnStatus(new GatewayPaymentStatus(GatewayPaymentStatus::SUCCESSFUL, self::PAID, '+2250700000001', 'wave'));
+        $this->reconcile();
+
+        $this->assertSame(Payment::STATUS_SUCCESSFUL, $payment->fresh()->status);
+    }
+
+    /** @test */
+    public function a_refund_stuck_in_processing_alerts_once()
+    {
+        Log::spy();
+        $this->gateway->willReturnRefund(new GatewayRefundResult(PaymentRefund::PROCESSING, null));
+        $this->cancel($this->paidOrder());
+
+        $this->travel(25)->hours();
+        $this->reconcile();
+        $this->reconcile();
+
+        Log::shouldHaveReceived('critical')->withArgs(fn ($message) => $message === 'Remboursement bloqué en cours de transfert')->once();
+    }
+
+    /** @test */
+    public function a_payment_on_an_order_failed_by_the_dashboard_is_refunded()
+    {
+        $order = $this->makeOrder();
+        $payment = $this->startPayment($order);
+        $order->update(['status' => Order::FAILED, 'is_completed' => true]);
+
+        $this->confirm($payment);
+
+        $this->assertSame(self::PAID, PaymentRefund::sole()->amount);
+        $this->assertSame(Order::FAILED, $order->fresh()->status);
+    }
+
+    /** @test */
+    public function confirm_does_not_rewind_an_order_a_driver_accepted()
+    {
+        $order = $this->paidOrder();
+        $order->update(['status' => Order::ACCEPTED, 'driver_id' => \App\Models\Driver::factory()->create()->id]);
+
+        $this->actingAs($this->customer, 'api-customers')->putJson("/api/v1/orders/{$order->id}/confirm");
+
+        $this->assertSame(Order::ACCEPTED, $order->fresh()->status);
+    }
+
+    /** @test */
+    public function a_closed_legacy_not_found_order_cannot_be_relaunched()
+    {
+        $order = $this->makeOrder('cash');
+        $order->update(['status' => Order::PERFORMER_NOT_FOUND, 'is_completed' => true, 'is_draft' => false]);
+
+        $this->actingAs($this->customer, 'api-customers')
+            ->putJson("/api/v1/orders/{$order->id}/perform_driver_lookup")
+            ->assertStatus(400);
+
+        $this->assertSame(Order::PERFORMER_NOT_FOUND, $order->fresh()->status);
+    }
+
+    /** @test */
+    public function an_error_after_the_payment_is_applied_still_answers_200_to_the_webhook()
+    {
+        $order = $this->makeOrder();
+        $payment = $this->startPayment($order);
+        $this->mock(DriverAssignmentService::class)->shouldReceive('sendInvitations')->andThrow(new \RuntimeException('FCM down'));
+        $this->gateway->willReturnStatus(new GatewayPaymentStatus(GatewayPaymentStatus::SUCCESSFUL, self::PAID));
+
+        $this->postJson('/api/v1/payments/webhook/fake', ['provider_payment_id' => $payment->provider_payment_id], ['X-Fake-Signature' => 'ok'])
+            ->assertOk();
+
+        $this->assertSame(Payment::STATUS_SUCCESSFUL, $payment->fresh()->status);
+    }
 }

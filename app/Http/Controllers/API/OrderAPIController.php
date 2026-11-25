@@ -1152,7 +1152,12 @@ class OrderAPIController extends AppBaseController
             return $this->sendError('Veuillez d\'abord payer la commande', 400);
         }
 
-        app(\App\Services\OrderDispatchService::class)->startDriverLookup($order, $customer->table, $customer->id);
+        // Ne relance rien sur une commande déjà en recherche, acceptée ou close (ex. confirm appelé après le paiement)
+        $started = app(\App\Services\OrderDispatchService::class)->startDriverLookup($order, $customer->table, $customer->id);
+
+        if (! $started && ($order->is_completed || in_array($order->status, [Order::CANCELLED, Order::CANCELLED_WITH_PAYMENT], true))) {
+            return $this->sendError('Cette commande ne peut plus être confirmée', 400);
+        }
 
         return $this->sendResponse($order->toArray(), 'Commande mise à jour avec succès');
     }
@@ -1172,7 +1177,9 @@ class OrderAPIController extends AppBaseController
         // Aucun chauffeur trouvé : le client relance une nouvelle recherche complète (pas de nouveau paiement)
         if ($order->status === Order::PERFORMER_NOT_FOUND) {
             $customer = auth('api-customers')->user();
-            app(\App\Services\OrderDispatchService::class)->startDriverLookup($order, $customer->table, $customer->id);
+            if (! app(\App\Services\OrderDispatchService::class)->startDriverLookup($order, $customer->table, $customer->id)) {
+                return $this->sendError('Cette commande est close, veuillez en passer une nouvelle', 400);
+            }
 
             return $this->sendResponse($order->fresh()->toArray(), 'Recherche de chauffeur relancée');
         }
@@ -1531,18 +1538,23 @@ class OrderAPIController extends AppBaseController
         return $this->sendError('Vous ne pouvez pas annuler cette commande car elle a commencé', 400);
     }
 
-    $input['status'] = Order::CANCELLED;
+    // Sous verrou : un paiement confirmé au même instant voit soit la commande ouverte (et la recherche part
+    // avant l'annulation, puis le remboursement ci-dessous), soit annulée (et il la rembourse lui-même)
+    $order = \Illuminate\Support\Facades\DB::transaction(function () use ($order, $customer) {
+        $order = Order::whereKey($order->id)->lockForUpdate()->first();
 
-    $order->is_completed = true;
-    $order->completion_time = now();
-    $order->is_waiting = false;
-    $order->is_draft = false;
-    $order->is_successful = false;
+        $order->is_completed = true;
+        $order->completion_time = now();
+        $order->is_waiting = false;
+        $order->is_draft = false;
+        $order->is_successful = false;
+        $order->status = Order::CANCELLED;
+        $order->save();
 
-    $order->update($input);
+        $order->newOrderHistory(Order::CANCELLED, $customer->table, $customer->id);
 
-    // Register order history
-    $order->newOrderHistory(Order::CANCELLED, $customer->table, $customer->id);
+        return $order;
+    });
 
     // Retirer la commande de la liste des chauffeurs invités
     \App\Models\OrderInvitation::cancelWaiting(
